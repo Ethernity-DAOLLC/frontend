@@ -1,0 +1,181 @@
+import { useAccount, useChainId, useSwitchChain } from 'wagmi';
+import { useCallback, useEffect, useState } from 'react';
+import type { Chain } from 'viem/chains';
+import { arbitrumSepolia, anvil, sepolia, mainnet } from 'viem/chains';
+
+export const SUPPORTED_CHAINS = {
+  anvil: anvil,
+  arbitrumSepolia: arbitrumSepolia,
+  sepolia: sepolia,
+  mainnet: mainnet,
+} as const;
+
+// Red por defecto según environment
+const DEFAULT_CHAIN_ID = import.meta.env.VITE_CHAIN_ID
+  ? Number(import.meta.env.VITE_CHAIN_ID)
+  : arbitrumSepolia.id;
+
+export interface NetworkState {
+  chainId: number | undefined;
+  chain: Chain | undefined;
+  isSupported: boolean;
+  isCorrectNetwork: boolean;
+  networkName: string;
+  explorerUrl: string | undefined;
+}
+
+export interface UseNetworkReturn {
+  network: NetworkState;
+  switchToNetwork: (chainId: number) => Promise<void>;
+  switchToDefaultNetwork: () => Promise<void>;
+  isLoading: boolean;
+  error: Error | null;
+  isSwitching: boolean;
+}
+
+export function useNetwork(): UseNetworkReturn {
+  const { isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChainAsync, isPending: isSwitching, error: switchError } = useSwitchChain();
+
+  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Obtener información de la red actual
+  const getCurrentChain = useCallback((): Chain | undefined => {
+    return Object.values(SUPPORTED_CHAINS).find((chain) => chain.id === chainId);
+  }, [chainId]);
+
+  const chain = getCurrentChain();
+
+  // Verificar si la red está soportada
+  const isSupported = useCallback((): boolean => {
+    return Object.values(SUPPORTED_CHAINS).some((c) => c.id === chainId);
+  }, [chainId]);
+
+  // Verificar si está en la red correcta
+  const isCorrectNetwork = chainId === DEFAULT_CHAIN_ID;
+
+  // Obtener nombre de la red
+  const networkName = chain?.name || `Unknown Network (${chainId})`;
+
+  // Obtener explorer URL
+  const explorerUrl = chain?.blockExplorers?.default.url;
+
+  const network: NetworkState = {
+    chainId,
+    chain,
+    isSupported: isSupported(),
+    isCorrectNetwork,
+    networkName,
+    explorerUrl,
+  };
+
+  const switchToNetwork = useCallback(
+    async (targetChainId: number) => {
+      if (!isConnected) {
+        setError(new Error('Wallet not connected'));
+        return;
+      }
+
+      if (chainId === targetChainId) {
+        console.log(`Already on chain ${targetChainId}`);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        await switchChainAsync({ chainId: targetChainId });
+        console.log(`✅ Switched to chain ${targetChainId}`);
+      } catch (err: any) {
+        console.error('Failed to switch network:', err);
+
+        // Error codes comunes de MetaMask
+        if (err.code === 4902) {
+          setError(new Error('Network not found in wallet. Please add it manually.'));
+        } else if (err.code === 4001) {
+          setError(new Error('User rejected network switch'));
+        } else {
+          setError(err);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isConnected, chainId, switchChainAsync]
+  );
+
+  const switchToDefaultNetwork = useCallback(async () => {
+    await switchToNetwork(DEFAULT_CHAIN_ID);
+  }, [switchToNetwork]);
+
+  // Auto-switch si está en red incorrecta
+  // useEffect(() => {
+  //   if (isConnected && !isCorrectNetwork && isSupported()) {
+  //     console.warn(`⚠️ Wrong network. Switching to ${DEFAULT_CHAIN_ID}...`);
+  //     switchToDefaultNetwork();
+  //   }
+  // }, [isConnected, isCorrectNetwork, isSupported, switchToDefaultNetwork]);
+
+  // Limpiar errores al cambiar de red exitosamente
+  useEffect(() => {
+    if (chainId && !switchError) {
+      setError(null);
+    }
+  }, [chainId, switchError]);
+
+  // Sincronizar error de switchChain
+  useEffect(() => {
+    if (switchError) {
+      setError(switchError);
+    }
+  }, [switchError]);
+
+  return {
+    network,
+    switchToNetwork,
+    switchToDefaultNetwork,
+    isLoading: isLoading || isSwitching,
+    error,
+    isSwitching,
+  };
+}
+
+export function useIsCorrectNetwork(): boolean {
+  const { network } = useNetwork();
+  return network.isCorrectNetwork;
+}
+
+export function useCurrentChainId(): number | undefined {
+  return useChainId();
+}
+
+export function useChainInfo(chainId: number): Chain | undefined {
+  return Object.values(SUPPORTED_CHAINS).find((chain) => chain.id === chainId);
+}
+
+export async function addNetworkToWallet(chain: Chain): Promise<void> {
+  if (!window.ethereum) {
+    throw new Error('No wallet detected');
+  }
+
+  try {
+    await window.ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [
+        {
+          chainId: `0x${chain.id.toString(16)}`,
+          chainName: chain.name,
+          nativeCurrency: chain.nativeCurrency,
+          rpcUrls: chain.rpcUrls.default.http,
+          blockExplorerUrls: chain.blockExplorers ? [chain.blockExplorers.default.url] : undefined,
+        },
+      ],
+    });
+  } catch (error) {
+    console.error('Failed to add network:', error);
+    throw error;
+  }
+}
