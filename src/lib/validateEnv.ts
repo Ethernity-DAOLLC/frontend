@@ -1,22 +1,22 @@
 interface EnvVars {
   VITE_WALLETCONNECT_PROJECT_ID: string;
   VITE_TOKEN_ADDRESS: string;
-  VITE_TREASURE_ADDRESS: string;
+  VITE_TREASURY_ADDRESS: string;
   VITE_GOVERNANCE_ADDRESS: string;
-  VITE_FACTORY_ADDRESS: string;
+  VITE_PERSONALFUNDFACTORY_ADDRESS: string;
   VITE_API_URL: string;
 }
 
 const REQUIRED_ENV_VARS: (keyof EnvVars)[] = [
   'VITE_WALLETCONNECT_PROJECT_ID',
   'VITE_TOKEN_ADDRESS',
-  'VITE_TREASURE_ADDRESS',
+  'VITE_TREASURY_ADDRESS',
   'VITE_GOVERNANCE_ADDRESS',
-  'VITE_FACTORY_ADDRESS',
+  'VITE_PERSONALFUNDFACTORY_ADDRESS',
 ];
 
 const OPTIONAL_ENV_VARS: (keyof EnvVars)[] = [
-  'VITE_API_URL',                           // Defaults to http://localhost:4000
+  'VITE_API_URL',
 ];
 
 export function validateEnv(): void {
@@ -53,9 +53,6 @@ export function validateEnv(): void {
   console.log('✅ Environment variables validated successfully');
 }
 
-/**
- * Get environment variable with fallback
- */
 export function getEnv(key: keyof EnvVars, fallback?: string): string {
   const value = import.meta.env[key];
   
@@ -71,9 +68,9 @@ export function getEnv(key: keyof EnvVars, fallback?: string): string {
 
 export const CONTRACT_ADDRESSES = {
   token: import.meta.env.VITE_TOKEN_ADDRESS as `0x${string}`,
-  treasure: import.meta.env.VITE_TREASURE_ADDRESS as `0x${string}`,
+  treasure: import.meta.env.VITE_TREASURY_ADDRESS as `0x${string}`,
   governance: import.meta.env.VITE_GOVERNANCE_ADDRESS as `0x${string}`,
-  factory: import.meta.env.VITE_FACTORY_ADDRESS as `0x${string}`,
+  factory: import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`,
 } as const;
 
 export const API_URL = getEnv('VITE_API_URL', 'http://localhost:4000');

@@ -16,7 +16,6 @@ export default defineConfig({
         warn(warning);
       },
       output: {
-
         assetFileNames: (assetInfo) => {
           const info = assetInfo.name?.split('.') || [];
           const ext = info[info.length - 1];
@@ -61,9 +60,14 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:4000',
+        target: process.env.VITE_API_URL || 'http://localhost:4000',
         changeOrigin: true,
+        secure: false,
       },
     },
+  },
+
+  define: {
+    '__VERCEL_ENV__': JSON.stringify(process.env.VITE_VERCEL_ENV),
   },
 })

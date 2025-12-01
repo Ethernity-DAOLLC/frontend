@@ -49,6 +49,8 @@ interface ImportMetaEnv {
   readonly VITE_USDC_ADDRESS?: string;
   readonly VITE_ADMIN_ADDRESS?: string;
 
+  readonly VITE_WALLETCONNECT_PROJECT_ID?: string;
+
   readonly VITE_CHAIN_ID?: string;
 
   readonly VITE_ARBITRUM_SEPOLIA_RPC?: string;

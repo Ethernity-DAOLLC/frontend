@@ -1,8 +1,9 @@
 {
-  "buildCommand": "cd apps/frontend && pnpm run build",
-  "outputDirectory": "apps/frontend/dist",
-  "devCommand": "cd apps/frontend && pnpm run dev",
-  "installCommand": "cd apps/frontend && pnpm install",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist",
+  "devCommand": "pnpm run dev",
+  "installCommand": "pnpm install",
   "framework": "vite",
   "rewrites": [
     {

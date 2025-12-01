@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useAuth } from '@/context/AuthContext';
-import { formatCurrency, formatYears } from '@/utils';
+import { formatCurrency, formatYears } from '@/lib';
 import {
   Calculator,
   TrendingUp,
