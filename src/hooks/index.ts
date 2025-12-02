@@ -1,6 +1,8 @@
+'use client';
 export { useEthernityDAO, useContractAddresses } from './useEthernityDAO';
-export { useWallet } from './web3/useWallet';
-export type { WalletState } from './web3/useWallet';
+export { useWallet } from '@/hooks/web3/useWallet.client';
+export type { WalletState } from '@/hooks/web3/useWallet.client';
+
 
 export {
   useNetwork,
