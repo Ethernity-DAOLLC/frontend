@@ -54,7 +54,10 @@ export default defineConfig({
       'react-router-dom',
       'wagmi',
       'viem',
+      '@wagmi/core',
+      '@wagmi/connectors',
     ],
+    force: true,
     exclude: [],
   },
   
