@@ -2,7 +2,7 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import { useContractAddresses } from './hooks/useEthernityDAO';
-import { useWallet } from './hooks/web3/useWallet';
+import { useWallet } from '@/hooks/web3';
 import { useRetirementPlan } from './context/RetirementContext';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
