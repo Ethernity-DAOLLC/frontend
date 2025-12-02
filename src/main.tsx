@@ -149,7 +149,6 @@ ReactDOM.createRoot(rootElement).render(
     <ErrorBoundary>
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <ConnectKitProvider
             mode="light"
             theme="rounded"
             options={{
@@ -162,7 +161,6 @@ ReactDOM.createRoot(rootElement).render(
                 <App />
               </RetirementProvider>
             </AuthProvider>
-          </ConnectKitProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ErrorBoundary>
