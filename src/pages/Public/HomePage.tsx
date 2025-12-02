@@ -3,11 +3,13 @@ import { Shield, GraduationCap, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../../context/AuthContext';
 import { useDisconnect } from 'wagmi';
+import { useAppKit } from '@reown/appkit/react';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { isConnected, connect } = useAuth();
+  const { isConnected } = useAuth();
   const { disconnect } = useDisconnect();
+  const { open } = useAppKit();
 
   useEffect(() => {
     const shouldAutoDisconnect = sessionStorage.getItem('autoDisconnectHome');
@@ -16,18 +18,19 @@ const HomePage: React.FC = () => {
       disconnect();
       sessionStorage.removeItem('autoDisconnectHome');
     }
-  }, []);
+  }, [isConnected, disconnect]);
 
   const handleGetStarted = () => {
     if (isConnected) {
       navigate('/calculator');
     } else {
-      connect();
+      open();
     }
   };
 
   return (
     <div className="pt-4">
+      {/* Hero Section */}
       <section className="bg-gradient-to-b from-gray-800 to-green-800 text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl font-bold mb-6">
@@ -50,12 +53,15 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* Features Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center mb-12 text-gray-800">
             Why Choose Us?
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
+
+
             <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
               <Shield className="text-green-600 mb-4" size={40} />
               <h3 className="text-xl font-semibold mb-3 text-gray-800">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useConnect, useAccount, useDisconnect, useBalance, useChainId, useSwitchChain } from 'wagmi';
+import { useAccount, useDisconnect, useBalance, useChainId, useSwitchChain } from 'wagmi';
+import { useAppKit } from '@reown/appkit/react';
 import { Wallet, ChevronDown, AlertTriangle, ExternalLink, CheckCircle, Menu, X } from 'lucide-react';
 import { 
   appConfig, 
@@ -14,11 +15,11 @@ import logo from '@/public/logo.ico';
 const Navbar: React.FC = () => {
   const location = useLocation();
   const { address, isConnected, chain } = useAccount();
-  const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
   const { data: balance } = useBalance({ address });
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
+  const { open } = useAppKit();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -40,7 +41,6 @@ const Navbar: React.FC = () => {
   const isCorrectNetwork = isValidChain(chainId);
   const chainConfig = appConfig.chain;
   const faucetUrl = getFaucetUrl();
-
   const formatAddress = (addr: string) =>
     `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   
@@ -65,6 +65,7 @@ const Navbar: React.FC = () => {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-lg overflow-hidden transition-transform group-hover:scale-110">
             <img 
@@ -91,7 +92,9 @@ const Navbar: React.FC = () => {
           ))}
         </nav>
 
+        {/* Wallet Section */}
         <div className="flex items-center gap-3">
+
           <div className="hidden md:block relative">
             {isConnected ? (
               <>
@@ -119,6 +122,7 @@ const Navbar: React.FC = () => {
                     />
                     
                     <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+                      {/* Header */}
                       <div className="p-4 bg-gradient-to-r from-forest-green/10 to-dark-blue/10 border-b border-gray-200">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-semibold text-gray-900">Connected Wallet</h3>
@@ -130,6 +134,7 @@ const Navbar: React.FC = () => {
                       </div>
 
                       <div className="p-4 space-y-3">
+
                         <div>
                           <div className="text-xs text-gray-500 mb-1">Balance</div>
                           <div className="text-lg font-bold text-gray-900">
@@ -159,6 +164,7 @@ const Navbar: React.FC = () => {
                           </div>
                         </div>
 
+                        {/* Network Status */}
                         {isCorrectNetwork ? (
                           <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-2">
                             <CheckCircle className="text-green-600 flex-shrink-0" size={16} />
@@ -175,16 +181,17 @@ const Navbar: React.FC = () => {
                           </div>
                         )}
 
-                        {appConfig.isDevelopment && (
-                          <Link
-                            to="/wallet-test"
-                            onClick={() => setIsDropdownOpen(false)}
-                            className="block w-full px-4 py-2 text-sm text-center bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-                          >
-                            View Full Test →
-                          </Link>
-                        )}
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            open({ view: 'Account' });
+                          }}
+                          className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
+                        >
+                          View Full Account
+                        </button>
 
+                        {/* Disconnect Button */}
                         <button
                           onClick={() => {
                             disconnect();
@@ -196,6 +203,7 @@ const Navbar: React.FC = () => {
                         </button>
                       </div>
 
+                      {/* Faucet Link */}
                       {chainConfig.isTestnet && faucetUrl && (
                         <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
                           <a
@@ -214,29 +222,33 @@ const Navbar: React.FC = () => {
                 )}
               </>
             ) : (
-              <div className="flex gap-2">
-                {connectors
-                  .filter((c) => c.id === 'injected')
-                  .map((connector) => (
-                    <button
-                      key={connector.id}
-                      onClick={() => connect({ connector })}
-                      className="btn btn-primary flex items-center gap-2"
-                    >
-                      <Wallet size={18} />
-                      <span>Connect Wallet</span>
-                    </button>
-                  ))}
-              </div>
+              <button
+                onClick={() => open()}
+                className="btn btn-primary flex items-center gap-2"
+              >
+                <Wallet size={18} />
+                <span>Connect Wallet</span>
+              </button>
             )}
           </div>
 
+          {/* Mobile Buttons */}
           <div className="md:hidden flex items-center gap-2">
             {isConnected && (
               <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onClick={() => open({ view: 'Account' })}
                 className="p-2 bg-gradient-to-r from-forest-green to-dark-blue text-white rounded-lg hover:opacity-90 transition"
                 aria-label="Wallet menu mobile"
+              >
+                <Wallet size={20} />
+              </button>
+            )}
+            
+            {!isConnected && (
+              <button
+                onClick={() => open()}
+                className="p-2 bg-gradient-to-r from-forest-green to-dark-blue text-white rounded-lg hover:opacity-90 transition"
+                aria-label="Connect wallet mobile"
               >
                 <Wallet size={20} />
               </button>
@@ -253,6 +265,7 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <>
           <div 
@@ -278,22 +291,6 @@ const Navbar: React.FC = () => {
               ))}
 
               <div className="pt-4 border-t border-gray-200">
-                {!isConnected && connectors
-                  .filter((c) => c.id === 'injected')
-                  .map((connector) => (
-                    <button
-                      key={connector.id}
-                      onClick={() => {
-                        connect({ connector });
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-forest-green to-dark-blue text-white rounded-lg hover:opacity-90 transition font-semibold"
-                    >
-                      <Wallet size={20} />
-                      Connect Wallet
-                    </button>
-                  ))}
-
                 {isConnected && (
                   <div className="space-y-3">
                     <div className="bg-gray-50 rounded-lg p-4">
@@ -333,62 +330,6 @@ const Navbar: React.FC = () => {
             </nav>
           </div>
         </>
-      )}
-
-      {isDropdownOpen && isConnected && (
-        <div className="md:hidden">
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setIsDropdownOpen(false)}
-            aria-hidden="true"
-          />
-          
-          <div className="absolute right-4 top-[73px] w-[calc(100vw-2rem)] max-w-sm bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
-            <div className="p-4 bg-gradient-to-r from-forest-green/10 to-dark-blue/10 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-900">Connected Wallet</h3>
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              </div>
-              <div className="text-xs text-gray-600 font-mono break-all">
-                {address}
-              </div>
-            </div>
-
-            <div className="p-4 space-y-3">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Balance</div>
-                <div className="text-lg font-bold text-gray-900">
-                  {balance ? `${formatBalance(balance)} ${balance.symbol}` : 'Loading...'}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Network</div>
-                <div className="font-medium text-gray-900">{chain?.name || 'Unknown'}</div>
-                <div className="text-xs text-gray-500">Chain ID: {chainId}</div>
-              </div>
-
-              {!isCorrectNetwork && (
-                <button
-                  onClick={() => switchChain({ chainId: chainConfig.id })}
-                  className="w-full px-3 py-2 bg-yellow-100 text-yellow-800 text-sm rounded-lg border border-yellow-300 hover:bg-yellow-200 transition"
-                >
-                  Switch to {chainConfig.name}
-                </button>
-              )}
-
-              <button
-                onClick={() => {
-                  disconnect();
-                  setIsDropdownOpen(false);
-                }}
-                className="w-full px-4 py-2 bg-red-50 text-red-600 rounded-lg border border-red-200 hover:bg-red-100 transition text-sm font-medium"
-              >
-                Disconnect Wallet
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </header>
   );
