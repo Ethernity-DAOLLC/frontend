@@ -68,7 +68,7 @@ export function getEnv(key: keyof EnvVars, fallback?: string): string {
 
 export const CONTRACT_ADDRESSES = {
   token: import.meta.env.VITE_TOKEN_ADDRESS as `0x${string}`,
-  treasure: import.meta.env.VITE_TREASURY_ADDRESS as `0x${string}`,
+  treasury: import.meta.env.VITE_TREASURY_ADDRESS as `0x${string}`,
   governance: import.meta.env.VITE_GOVERNANCE_ADDRESS as `0x${string}`,
   factory: import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`,
 } as const;
