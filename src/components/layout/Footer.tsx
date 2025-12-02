@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Github, Twitter, Linkedin, Mail } from 'lucide-react';
-import logo from '@/assets/images/logo.svg';
+import logo from '@/public/logo.ico';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
