@@ -1,68 +1,50 @@
-import { useAppKit, type Chain } from '@reown/appkit/react';
-import { useAccount, useSwitchChain, useDisconnect } from 'wagmi';
+import { useAccount, useChainId, useDisconnect, useSwitchChain } from 'wagmi';
+import { open } from '@reown/appkit/react';
 import { arbitrumSepolia, sepolia } from '@reown/appkit/networks';
 
-export function useAppKitCustom() {
-  const {
-    open,
-    isOpen,
-    close, 
-    supportedWallets,
-    wallet, 
-    chains, 
-    currentChain,
-    ...appKitState 
-  } = useAppKit();
+const SUPPORTED_CHAINS = [arbitrumSepolia, sepolia] as const;
 
-  const { address, isConnected, chain } = useAccount(); 
-  const { switchChain, isPending: isSwitching } = useSwitchChain(); 
-  const { disconnect } = useDisconnect(); 
+export function useWallet() {
+  const { address, isConnected, connector } = useAccount();
+  const chainId = useChainId();
+  const { disconnectAsync } = useDisconnect();
+  const { switchChainAsync, isPending: isSwitching } = useSwitchChain();
+  const openModal = () => open();
+  const openNetworks = () => open({ view: 'Networks' });
+  const openAccount = () => open({ view: 'Account' });
 
-  const connect = () => {
-    if (!isConnected) {
-      open();
+  const switchToArbitrum = async () => {
+    if (chainId !== arbitrumSepolia.id) {
+      await switchChainAsync?.({ chainId: arbitrumSepolia.id });
     }
   };
 
-  const handleDisconnect = async () => {
-    await disconnect();
-    close();
-  };
-
-  const switchToNetwork = async (targetChain: Chain) => {
-    if (chain?.id !== targetChain.id) {
-      try {
-        await switchChain({ chainId: targetChain.id });
-      } catch (error) {
-        console.error('Error switching chain:', error);
-        open({ view: 'Networks' });
-      }
+  const switchToSepolia = async () => {
+    if (chainId !== sepolia.id) {
+      await switchChainAsync?.({ chainId: sepolia.id });
     }
   };
 
-  const switchToArbitrum = () => switchToNetwork(arbitrumSepolia);
-  const switchToSepolia = () => switchToNetwork(sepolia);
+  const disconnect = async () => {
+    await disconnectAsync?.();
+  };
 
   return {
-
-    isConnected,
     address,
-    currentChain: chain || currentChain,
-    isOpen,
-    isSwitching,
-    wallet,
+    isConnected,
+    chainId,
+    connector,
 
-    connect,
-    disconnect: handleDisconnect,
-    open,
-    close,
-    switchToNetwork,
+    connect: openModal,
+    disconnect,
+    openModal,
+    openAccount,
+    openNetworks,
     switchToArbitrum,
     switchToSepolia,
-    switchChain, 
+    isSwitching,
 
-    chains: chains || [arbitrumSepolia, sepolia],
-    supportedWallets,
-    ...appKitState,
+    currentChain: SUPPORTED_CHAINS.find(c => c.id === chainId),
+    supportedChains: SUPPORTED_CHAINS,
   };
 }
