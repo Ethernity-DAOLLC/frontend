@@ -155,7 +155,6 @@ ReactDOM.createRoot(rootElement).render(
               initialChainId: arbitrumSepolia.id,
               enforceSupportedChains: true,
             }}
-          >
             <AuthProvider>
               <RetirementProvider>
                 <App />
