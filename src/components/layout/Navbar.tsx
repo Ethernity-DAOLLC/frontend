@@ -9,7 +9,7 @@ import {
   getFaucetUrl 
 } from '@/config';
 
-import logo from '@/assets/images/logo.svg';
+import logo from '@/public/logo.ico';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
