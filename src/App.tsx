@@ -8,7 +8,6 @@ import { useAuth } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import LoadingScreen from './components/common/LoadingScreen';
-import CustomWalletModal from './components/wallet/CustomWalletModal';
 
 const HomePage = lazy(() => import('./pages/Public/HomePage'));
 const CalculatorPage = lazy(() => import('./pages/Public/CalculatorPage'));
@@ -37,23 +36,20 @@ function AppContent() {
   const { wallet } = useWallet();
   const { addresses } = useContractAddresses();
   const { planData, clearPlanData } = useRetirementPlan();
-  const { isModalOpen, closeModal } = useAuth(); 
 
   const contracts = {
     ...addresses,
-    daoFundAddress: addresses.factory, 
+    personalFundAddress: addresses.personalFund, 
     tokenAddress: addresses.token,
     treasuryAddress: addresses.treasury,
     governanceAddress: addresses.governance,
-    factoryAddress: addresses.factory,
+    personalFundFactoryAddress: addresses.personalFundFactory,
     isReady: addresses.isConfigured,
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      
-      <CustomWalletModal isOpen={isModalOpen} onClose={closeModal} />
       
       <main className="flex-grow">
         <Suspense fallback={<LoadingScreen />}>

@@ -1,14 +1,16 @@
 interface EnvVars {
   VITE_WALLETCONNECT_PROJECT_ID: string;
+  VITE_USDC_ADDRESS: string;
   VITE_TOKEN_ADDRESS: string;
   VITE_TREASURY_ADDRESS: string;
   VITE_GOVERNANCE_ADDRESS: string;
   VITE_PERSONALFUNDFACTORY_ADDRESS: string;
-  VITE_API_URL: string;
+  VITE_API_URL?: string;
 }
 
 const REQUIRED_ENV_VARS: (keyof EnvVars)[] = [
   'VITE_WALLETCONNECT_PROJECT_ID',
+  'VITE_USDC_ADDRESS',
   'VITE_TOKEN_ADDRESS',
   'VITE_TREASURY_ADDRESS',
   'VITE_GOVERNANCE_ADDRESS',
@@ -67,6 +69,7 @@ export function getEnv(key: keyof EnvVars, fallback?: string): string {
 }
 
 export const CONTRACT_ADDRESSES = {
+  usdc: import.meta.env.VITE_USDC_ADDRESS as `0x${string}`,
   token: import.meta.env.VITE_TOKEN_ADDRESS as `0x${string}`,
   treasury: import.meta.env.VITE_TREASURY_ADDRESS as `0x${string}`,
   governance: import.meta.env.VITE_GOVERNANCE_ADDRESS as `0x${string}`,
@@ -75,6 +78,7 @@ export const CONTRACT_ADDRESSES = {
 
 export const API_URL = getEnv('VITE_API_URL', 'http://localhost:4000');
 export const WALLETCONNECT_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
+export const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS as `0x${string}`;
 
 if (import.meta.env.PROD) {
   try {
