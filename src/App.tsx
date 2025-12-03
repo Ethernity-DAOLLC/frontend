@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAccount } from 'wagmi';
-import { useContractAddresses } from './contracts/addresses'; 
+// import { useContractAddresses } from './contracts/addresses'; 
 import { useWallet } from './hooks/web3/useWallet'; 
 import { useRetirementPlan } from './context/RetirementContext';
 
