@@ -1,10 +1,10 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAccount } from 'wagmi';
-import { useContractAddresses } from './hooks/useEthernityDAO';
-import { useWallet } from '@/hooks/web3';
+import { useContractAddresses } from './contracts/addresses'; 
+import { useWallet } from './hooks/web3/useWallet'; 
 import { useRetirementPlan } from './context/RetirementContext';
-import { useAuth } from './context/AuthContext';
+
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import LoadingScreen from './components/common/LoadingScreen';
@@ -33,18 +33,18 @@ function App() {
 
 function AppContent() {
   const { address } = useAccount();
-  const { wallet } = useWallet();
-  const { addresses } = useContractAddresses();
+  const { isConnected } = useWallet(); 
+  const addresses = useContractAddresses(); 
   const { planData, clearPlanData } = useRetirementPlan();
 
   const contracts = {
-    ...addresses,
-    personalFundAddress: addresses.personalFund, 
+    personalFundAddress: addresses.factory, 
     tokenAddress: addresses.token,
     treasuryAddress: addresses.treasury,
     governanceAddress: addresses.governance,
-    personalFundFactoryAddress: addresses.personalFundFactory,
-    isReady: addresses.isConfigured,
+    personalFundFactoryAddress: addresses.factory,
+    usdcAddress: addresses.usdc,
+    isReady: true,
   };
 
   return (
@@ -54,15 +54,16 @@ function AppContent() {
       <main className="flex-grow">
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
-
+            {/* Public routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/calculator" element={<CalculatorPage />} />
             <Route path="/contact" element={<ContactPage />} />
 
+            {/* User routes */}
             <Route 
               path="/dashboard" 
               element={
-                <ProtectedRoute isConnected={wallet.isConnected}>
+                <ProtectedRoute isConnected={isConnected}>
                   <DashboardPage />
                 </ProtectedRoute>
               } 
@@ -71,9 +72,8 @@ function AppContent() {
             <Route 
               path="/create-contract" 
               element={
-                <ProtectedRoute isConnected={wallet.isConnected}>
+                <ProtectedRoute isConnected={isConnected}>
                   <CreateContractPage
-                    wallet={wallet}
                     contracts={contracts}
                     calculatedPlan={planData}
                     onSuccess={() => {
@@ -85,10 +85,11 @@ function AppContent() {
               } 
             />
 
+            {/* Admin routes */}
             <Route 
               path="/admin" 
               element={
-                <ProtectedRoute isConnected={wallet.isConnected} requireAdmin>
+                <ProtectedRoute isConnected={isConnected} requireAdmin>
                   <AdminDashboard />
                 </ProtectedRoute>
               } 
@@ -97,7 +98,7 @@ function AppContent() {
             <Route 
               path="/admin/treasury" 
               element={
-                <ProtectedRoute isConnected={wallet.isConnected} requireAdmin>
+                <ProtectedRoute isConnected={isConnected} requireAdmin>
                   <TreasuryManagement />
                 </ProtectedRoute>
               } 
@@ -106,7 +107,7 @@ function AppContent() {
             <Route 
               path="/admin/contracts" 
               element={
-                <ProtectedRoute isConnected={wallet.isConnected} requireAdmin>
+                <ProtectedRoute isConnected={isConnected} requireAdmin>
                   <ContractsManagement />
                 </ProtectedRoute>
               } 
@@ -115,7 +116,7 @@ function AppContent() {
             <Route 
               path="/admin/governance" 
               element={
-                <ProtectedRoute isConnected={wallet.isConnected} requireAdmin>
+                <ProtectedRoute isConnected={isConnected} requireAdmin>
                   <GovernanceManagement />
                 </ProtectedRoute>
               } 
@@ -124,7 +125,7 @@ function AppContent() {
             <Route 
               path="/admin/tokens" 
               element={
-                <ProtectedRoute isConnected={wallet.isConnected} requireAdmin>
+                <ProtectedRoute isConnected={isConnected} requireAdmin>
                   <TokenManagement />
                 </ProtectedRoute>
               } 
@@ -133,7 +134,7 @@ function AppContent() {
             <Route 
               path="/admin/contact" 
               element={
-                <ProtectedRoute isConnected={wallet.isConnected} requireAdmin>
+                <ProtectedRoute isConnected={isConnected} requireAdmin>
                   <ContactMessages />
                 </ProtectedRoute>
               } 
