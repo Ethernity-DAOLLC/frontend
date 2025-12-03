@@ -14,7 +14,6 @@ Frontend de Ethernity DAO, una plataforma descentralizada para la gestión de fo
 ### Blockchain & Web3
 - **Wagmi 2.19.2** - React hooks para Ethereum
 - **Viem 2.38.6** - Cliente TypeScript para Ethereum
-- **Ethers.js 6.15.0** - Biblioteca Web3
 - **@wagmi/connectors 6.1.3** - Conectores de wallets
 - **@reown/appkit: 1.8.14**
   **@reown/appkit-adapter-wagmi": 1.8.14**
