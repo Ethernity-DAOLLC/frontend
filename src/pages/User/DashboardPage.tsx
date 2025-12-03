@@ -1,6 +1,5 @@
 import React from 'react';
 import { useEthernityDAO } from '@/hooks';
-import { useAuth } from '@/context/AuthContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { 
@@ -19,8 +18,6 @@ const DashboardPage: React.FC = () => {
     isLoading, 
     refetchAll 
   } = useEthernityDAO();
-
-  const { address } = useAuth();
 
   const hasFund = !!factory.userFund && factory.userFund !== '0x0000000000000000000000000000000000000000';
   const fundAddress = factory.userFund;

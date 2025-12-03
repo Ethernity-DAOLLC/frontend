@@ -1,15 +1,11 @@
 import React, { useEffect } from "react";
 import { Shield, GraduationCap, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from '../../context/AuthContext';
-import { useDisconnect } from 'wagmi';
-import { useAppKit } from '@reown/appkit/react';
+import { useWallet } from '@/hooks/web3/useWallet';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { isConnected } = useAuth();
-  const { disconnect } = useDisconnect();
-  const { open } = useAppKit();
+  const { isConnected, disconnect, openModal } = useWallet(); 
 
   useEffect(() => {
     const shouldAutoDisconnect = sessionStorage.getItem('autoDisconnectHome');
@@ -24,7 +20,7 @@ const HomePage: React.FC = () => {
     if (isConnected) {
       navigate('/calculator');
     } else {
-      open();
+      openModal();
     }
   };
 
@@ -60,8 +56,6 @@ const HomePage: React.FC = () => {
             Why Choose Us?
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
-
-
             <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
               <Shield className="text-green-600 mb-4" size={40} />
               <h3 className="text-xl font-semibold mb-3 text-gray-800">

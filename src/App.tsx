@@ -1,9 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAccount } from 'wagmi';
-// import { useContractAddresses } from './contracts/addresses'; 
-import { useWallet } from './hooks/web3/useWallet'; 
-import { useRetirementPlan } from './context/RetirementContext';
+import { useWallet } from './hooks/web3/useWallet';
 
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -32,20 +30,7 @@ function App() {
 }
 
 function AppContent() {
-  const { address } = useAccount();
-  const { isConnected } = useWallet(); 
-  const addresses = useContractAddresses(); 
-  const { planData, clearPlanData } = useRetirementPlan();
-
-  const contracts = {
-    personalFundAddress: addresses.factory, 
-    tokenAddress: addresses.token,
-    treasuryAddress: addresses.treasury,
-    governanceAddress: addresses.governance,
-    personalFundFactoryAddress: addresses.factory,
-    usdcAddress: addresses.usdc,
-    isReady: true,
-  };
+  const { isConnected } = useWallet();
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -59,7 +44,7 @@ function AppContent() {
             <Route path="/calculator" element={<CalculatorPage />} />
             <Route path="/contact" element={<ContactPage />} />
 
-            {/* User routes */}
+            {/* User routs */}
             <Route 
               path="/dashboard" 
               element={
@@ -68,24 +53,16 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
-
+            {/* Admin routes */}
             <Route 
               path="/create-contract" 
               element={
                 <ProtectedRoute isConnected={isConnected}>
-                  <CreateContractPage
-                    contracts={contracts}
-                    calculatedPlan={planData}
-                    onSuccess={() => {
-                      clearPlanData();
-                      window.location.href = '/dashboard';
-                    }}
-                  />
+                  <CreateContractPage />
                 </ProtectedRoute>
               } 
             />
 
-            {/* Admin routes */}
             <Route 
               path="/admin" 
               element={
@@ -140,7 +117,6 @@ function AppContent() {
               } 
             />
 
-            {/* Redirects */}
             <Route path="/governance" element={<Navigate to="/dashboard" replace />} />
             <Route path="/fund" element={<Navigate to="/create-contract" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -169,16 +145,16 @@ function ProtectedRoute({ children, isConnected, requireAdmin = false }: Protect
           <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-8">
             <div className="text-6xl mb-4">🔒</div>
             <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Wallet Connection Required
+              Conexión de Wallet Requerida
             </h2>
             <p className="text-gray-600 mb-6">
-              Please connect your wallet to access this page.
+              Por favor conecta tu wallet para acceder a esta página.
             </p>
             <button
               onClick={() => window.location.href = '/'}
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition"
             >
-              Go to Home
+              Ir al Inicio
             </button>
           </div>
         </div>
@@ -200,16 +176,16 @@ function ProtectedRoute({ children, isConnected, requireAdmin = false }: Protect
             <div className="bg-red-50 border-2 border-red-300 rounded-xl p-8">
               <div className="text-6xl mb-4">⛔</div>
               <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                Access Denied
+                Acceso Denegado
               </h2>
               <p className="text-gray-600 mb-6">
-                You don't have permission to access this page. Admin privileges required.
+                No tienes permisos para acceder a esta página. Se requieren privilegios de administrador.
               </p>
               <button
                 onClick={() => window.location.href = '/dashboard'}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition"
               >
-                Go to Dashboard
+                Ir al Dashboard
               </button>
             </div>
           </div>

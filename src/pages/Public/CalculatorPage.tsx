@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useRetirementPlan } from '@/context/RetirementContext';
-import { useAuth } from '@/context/AuthContext';
+import { useWallet } from '@/hooks/web3/useWallet';
 import { formatCurrency, formatYears } from '@/lib';
 import {
   Calculator,
@@ -118,7 +118,7 @@ const FEE_PERCENTAGE = 0.03;
 const CalculatorPage: React.FC = () => {
   const navigate = useNavigate();
   const { setPlanData } = useRetirementPlan();
-  const { isConnected, connect } = useAuth();
+  const { isConnected, openModal } = useWallet();
   const [chartReady, setChartReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string>('');
@@ -263,7 +263,8 @@ const CalculatorPage: React.FC = () => {
     if (!isConnected) {
       setIsConnecting(true);
       try {
-        await connect();
+        openModal();
+
         setTimeout(() => {
           setIsConnecting(false);
           if (isConnected) {
