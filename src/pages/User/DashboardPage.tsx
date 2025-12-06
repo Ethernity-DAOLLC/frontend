@@ -1,5 +1,7 @@
 import React from 'react';
 import { useEthernityDAO } from '@/hooks';
+import { formatUSDC as formatUSDCUtil } from '@/hooks/usdc';
+import { useAccount } from 'wagmi';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { 
@@ -9,12 +11,12 @@ import {
 import { BetaFaucet } from '@/components/web3/BetaFaucet';
 
 const DashboardPage: React.FC = () => {
+  const { address } = useAccount();
   const { 
     personalFund, 
     factory, 
     treasury, 
     token, 
-    usdc, 
     isLoading, 
     refetchAll 
   } = useEthernityDAO();
@@ -30,7 +32,7 @@ const DashboardPage: React.FC = () => {
 
   const formatUSDC = (amount: bigint | undefined) => {
     if (!amount) return '$0';
-    return usdc.formatUSDC(amount);
+    return `$${formatUSDCUtil(amount)}`;
   };
 
   if (isLoading) {
@@ -47,8 +49,6 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-6">
       <div className="max-w-7xl mx-auto">
-
-        {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-black text-gray-800 mb-4 flex items-center justify-center gap-4">
             <Sparkles className="text-purple-600" size={64} />
@@ -66,7 +66,6 @@ const DashboardPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Fondo Personal */}
         <div className="grid lg:grid-cols-3 gap-8 mb-12">
           <div className="lg:col-span-2">
             <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-purple-100 p-10">
@@ -154,7 +153,6 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Treasury Global + Stats */}
           <div className="space-y-8">
             <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-purple-100 p-8">
               <h3 className="text-3xl font-black text-gray-800 mb-6 flex items-center gap-3">
@@ -196,7 +194,6 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Beta Faucet */}
         <div className="max-w-4xl mx-auto">
           <BetaFaucet />
         </div>

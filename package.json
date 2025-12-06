@@ -12,18 +12,21 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.9.5",
+    "@hookform/resolvers": "^5.2.2",
     "@reown/appkit": "^1.8.14",
     "@reown/appkit-adapter-wagmi": "^1.8.14",
-    "wagmi": "^2.19.2",
-    "viem": "^2.38.6",
     "@tanstack/react-query": "^5.90.6",
-    "lucide-react": "^0.552.0",
     "chart.js": "^4.5.1",
+    "date-fns": "^2.30.0",
+    "lucide-react": "^0.552.0",
+    "react": "^19.0.0",
     "react-chartjs-2": "^5.3.1",
-    "date-fns": "^2.30.0"
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.68.0",
+    "react-router-dom": "^7.9.5",
+    "viem": "^2.38.6",
+    "wagmi": "^2.19.2",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

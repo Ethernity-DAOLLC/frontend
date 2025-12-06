@@ -23,7 +23,10 @@ export function useWallet(): WalletState {
   const { chain } = useAccount()
   const { disconnect } = useDisconnect()
 
-  const safeAddress = address ? (address as Address) : undefined
+  const safeAddress = address && address.startsWith('0x') && address.length === 42
+    ? (address as Address)
+    : undefined
+
   const chainId = rawChainId != null ? Number(rawChainId) : undefined
 
   return {
@@ -35,8 +38,8 @@ export function useWallet(): WalletState {
     openAccount: () => open({ view: 'Account' }),
     openNetworks: () => open({ view: 'Networks' }),
     disconnect,
-    shortAddress: address
-      ? `${address.slice(0, 6)}...${address.slice(-4)}`
+    shortAddress: safeAddress
+      ? `${safeAddress.slice(0, 6)}...${safeAddress.slice(-4)}`
       : undefined,
   }
 }

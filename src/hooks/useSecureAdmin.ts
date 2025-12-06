@@ -4,7 +4,7 @@ import { useAccount, useSignMessage } from 'wagmi';
 import { z } from 'zod';
 
 const AdminSessionSchema = z.object({
-  address: z.string().regex(/^0x[a-fA-F0-9]{40}$/), // Validar formato Ethereum
+  address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   signature: z.string().min(132).max(132),
   timestamp: z.number().positive(),
   expiresAt: z.number().positive(),
@@ -195,7 +195,7 @@ export const useSecureAdmin = (): UseSecureAdminResult => {
         isAdmin: hasValidSession,
       });
     }
-  }, [checkStoredSession, address]);
+  }, [address, isConnected]);
 
   useEffect(() => {
     if (!isLoading && !isAdmin) {
@@ -209,10 +209,13 @@ export const useSecureAdmin = (): UseSecureAdminResult => {
 
   useEffect(() => {
     if (!isConnected && isAuthenticated) {
-      console.log('Wallet disconnected, clearing admin session');
-      logout();
+      localStorage.removeItem(ADMIN_SESSION_KEY);
+      setIsAdmin(false);
+      setIsAuthenticated(false);
+      setError(null);
+      navigate('/admin/login');
     }
-  }, [isConnected, isAuthenticated, logout]);
+  }, [isConnected, isAuthenticated, navigate]);
 
   return {
     isAdmin,

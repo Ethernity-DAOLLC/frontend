@@ -10,13 +10,10 @@ import {
   ArrowLeft,
   Wallet,
   Sparkles,
-  Edit3,
 } from 'lucide-react';
 
-// Direcciones desde .env
-const FACTORY_ADDRESS = import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`;
-const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS as `0x${string}`;
-const EXPECTED_CHAIN_ID = 421614; // Arbitrum Sepolia
+const PERSONALFUNDFACTORY_ADDRESS = import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`;
+const EXPECTED_CHAIN_ID = 421614;                                  // Arbitrum Sepolia
 
 import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
 
@@ -39,7 +36,6 @@ const CreateContractPage: React.FC = () => {
 
   const [formData, setFormData] = useState<FormData | null>(null);
 
-  // Redirección si falta plan o wallet
   useEffect(() => {
     if (!planData || !isConnected) {
       navigate('/calculator', { replace: true });
@@ -48,7 +44,6 @@ const CreateContractPage: React.FC = () => {
     }
   }, [planData, isConnected, navigate]);
 
-  // Bloqueo si está en red incorrecta
   if (chainId !== EXPECTED_CHAIN_ID) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
@@ -71,7 +66,6 @@ const CreateContractPage: React.FC = () => {
 
   if (!formData) return null;
 
-  // Convierte dólares → USDC (6 decimales)
   const parseUSDC = (value: string | number): bigint => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     return BigInt(Math.round(num * 1_000_000));
@@ -84,13 +78,13 @@ const CreateContractPage: React.FC = () => {
     BigInt(formData.retirementAge),
     parseUSDC(formData.desiredMonthlyIncome),
     BigInt(formData.yearsPayments),
-    BigInt(Math.round(formData.interestRate * 100)), // 5.5 → 550
+    BigInt(Math.round(formData.interestRate * 100)),
     BigInt(formData.timelockYears),
   ];
 
   const { executeAll, isLoading, isApproving, isSuccess, error, txHash } =
     useContractWriteWithUSDC({
-      contractAddress: FACTORY_ADDRESS,
+      contractAddress: PERSONALFUNDFACTORY_ADDRESS,
       abi: PersonalFundFactoryABI,
       functionName: 'createPersonalFund',
       args,
@@ -98,7 +92,12 @@ const CreateContractPage: React.FC = () => {
       enabled: !!address,
       onTransactionSuccess: () => {
         clearPlanData();
-        setTimeout(() => navigate('/dashboard'), 4000);
+        navigate('/contract-created', { 
+          state: { 
+            txHash,
+            initialDeposit: formData.initialDeposit 
+          } 
+        });
       },
     });
 
@@ -111,7 +110,6 @@ const CreateContractPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 px-4">
       <div className="max-w-5xl mx-auto">
-        {/* Botón volver */}
         <button
           onClick={() => navigate('/calculator')}
           className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition"
@@ -132,7 +130,6 @@ const CreateContractPage: React.FC = () => {
           </div>
 
           <div className="p-10 space-y-10">
-            {/* Resumen de parámetros */}
             <div>
               <h2 className="text-3xl font-bold text-gray-800 mb-6">Parámetros del Plan</h2>
               <div className="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-2xl p-8">
@@ -154,7 +151,6 @@ const CreateContractPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Resumen financiero */}
             <div className="space-y-6">
               <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-3xl p-8 border-2 border-emerald-200">
                 <h3 className="text-2xl font-bold text-emerald-800 mb-6">
@@ -178,25 +174,6 @@ const CreateContractPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Estado de transacción */}
-              {isSuccess && (
-                <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl p-8 text-center">
-                  <CheckCircle size={64} className="mx-auto mb-4" />
-                  <h3 className="text-3xl font-black mb-2">¡Fondo Creado Exitosamente!</h3>
-                  <p className="text-lg opacity-90">Redirigiendo al Dashboard en 4 segundos...</p>
-                  {txHash && (
-                    <a
-                      href={`https://sepolia.arbiscan.io/tx/${txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline mt-4 inline-block"
-                    >
-                      Ver transacción
-                    </a>
-                  )}
-                </div>
-              )}
-
               {error && (
                 <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
                   <p className="text-red-700 font-bold">
@@ -206,7 +183,6 @@ const CreateContractPage: React.FC = () => {
               )}
             </div>
 
-            {/* Botón principal */}
             <div className="mt-12 text-center">
               <button
                 onClick={() => executeAll()}

@@ -10,7 +10,6 @@ export const SUPPORTED_CHAINS = {
   mainnet: mainnet,
 } as const;
 
-// Red por defecto según environment
 const DEFAULT_CHAIN_ID = import.meta.env.VITE_CHAIN_ID
   ? Number(import.meta.env.VITE_CHAIN_ID)
   : arbitrumSepolia.id;
@@ -41,25 +40,17 @@ export function useNetwork(): UseNetworkReturn {
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Obtener información de la red actual
   const getCurrentChain = useCallback((): Chain | undefined => {
     return Object.values(SUPPORTED_CHAINS).find((chain) => chain.id === chainId);
   }, [chainId]);
 
   const chain = getCurrentChain();
-
-  // Verificar si la red está soportada
   const isSupported = useCallback((): boolean => {
     return Object.values(SUPPORTED_CHAINS).some((c) => c.id === chainId);
   }, [chainId]);
 
-  // Verificar si está en la red correcta
   const isCorrectNetwork = chainId === DEFAULT_CHAIN_ID;
-
-  // Obtener nombre de la red
   const networkName = chain?.name || `Unknown Network (${chainId})`;
-
-  // Obtener explorer URL
   const explorerUrl = chain?.blockExplorers?.default.url;
 
   const network: NetworkState = {
@@ -92,7 +83,6 @@ export function useNetwork(): UseNetworkReturn {
       } catch (err: any) {
         console.error('Failed to switch network:', err);
 
-        // Error codes comunes de MetaMask
         if (err.code === 4902) {
           setError(new Error('Network not found in wallet. Please add it manually.'));
         } else if (err.code === 4001) {
@@ -111,27 +101,13 @@ export function useNetwork(): UseNetworkReturn {
     await switchToNetwork(DEFAULT_CHAIN_ID);
   }, [switchToNetwork]);
 
-  // Auto-switch si está en red incorrecta
-  // useEffect(() => {
-  //   if (isConnected && !isCorrectNetwork && isSupported()) {
-  //     console.warn(`⚠️ Wrong network. Switching to ${DEFAULT_CHAIN_ID}...`);
-  //     switchToDefaultNetwork();
-  //   }
-  // }, [isConnected, isCorrectNetwork, isSupported, switchToDefaultNetwork]);
-
-  // Limpiar errores al cambiar de red exitosamente
-  useEffect(() => {
-    if (chainId && !switchError) {
-      setError(null);
-    }
-  }, [chainId, switchError]);
-
-  // Sincronizar error de switchChain
   useEffect(() => {
     if (switchError) {
       setError(switchError);
+    } else if (chainId) {
+      setError(null);
     }
-  }, [switchError]);
+  }, [chainId, switchError]);
 
   return {
     network,

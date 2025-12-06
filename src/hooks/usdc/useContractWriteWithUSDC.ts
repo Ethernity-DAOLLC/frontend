@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useWriteContract, useAccount, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
 import { erc20Abi } from 'viem';
 import { USDC_ADDRESS, parseUSDC, needsApproval } from './usdcUtils';
@@ -70,27 +70,7 @@ export function useContractWriteWithUSDC({
     parseFloat(usdcAmount) > 0 && 
     needsApproval(currentAllowance, parseUSDC(usdcAmount));
 
-  const executeApproval = async () => {
-    if (!requiresApproval) {
-      console.warn('⚠️ Approval not required');
-      return;
-    }
-
-    console.log('🔐 Starting USDC approval...');
-    setStep('approving');
-    setError(null);
-
-    try {
-      await approval.approveAndWait();
-    } catch (err) {
-      console.error('❌ Approval failed:', err);
-      setError(err as Error);
-      setStep('idle');
-      throw err;
-    }
-  };
-
-  const executeTransaction = async () => {
+  const executeTransaction = useCallback(async () => {
     if (requiresApproval && step !== 'approved') {
       const errorMsg = 'Must approve USDC first';
       console.error('❌', errorMsg);
@@ -118,7 +98,6 @@ export function useContractWriteWithUSDC({
         {
           onSuccess: (hash) => {
             console.log('✅ Transaction submitted:', hash);
-
           },
           onError: (error) => {
             console.error('❌ Transaction error:', error);
@@ -133,14 +112,33 @@ export function useContractWriteWithUSDC({
       setStep('idle');
       throw err;
     }
-  };
+  }, [requiresApproval, step, contractAddress, abi, functionName, args, writeContract]);
 
-  const executeAll = async () => {
+  const executeApproval = useCallback(async () => {
+    if (!requiresApproval) {
+      console.warn('⚠️ Approval not required');
+      return;
+    }
+
+    console.log('🔐 Starting USDC approval...');
+    setStep('approving');
+    setError(null);
+
+    try {
+      await approval.approveAndWait();
+    } catch (err) {
+      console.error('❌ Approval failed:', err);
+      setError(err as Error);
+      setStep('idle');
+      throw err;
+    }
+  }, [requiresApproval, approval]);
+
+  const executeAll = useCallback(async () => {
     try {
       if (requiresApproval) {
         console.log('📋 Flow: Approval → Transaction');
         await executeApproval();
-
       } else {
         console.log('📋 Flow: Transaction only (no approval needed)');
         await executeTransaction();
@@ -149,14 +147,14 @@ export function useContractWriteWithUSDC({
       console.error('❌ executeAll failed:', err);
       setError(err as Error);
     }
-  };
+  }, [requiresApproval, executeApproval, executeTransaction]);
 
   useEffect(() => {
     if (step === 'approved' && approval.isSuccess) {
       console.log('✅ Approval confirmed, executing transaction...');
       executeTransaction();
     }
-  }, [step, approval.isSuccess]);
+  }, [step, approval.isSuccess, executeTransaction]);
 
   useEffect(() => {
     if (isTxSuccess && step === 'executing') {
@@ -164,7 +162,7 @@ export function useContractWriteWithUSDC({
       setStep('success');
       onTransactionSuccess?.();
     }
-  }, [isTxSuccess, step]);
+  }, [isTxSuccess, step, onTransactionSuccess]);
 
   useEffect(() => {
     if (writeError) {
@@ -182,14 +180,13 @@ export function useContractWriteWithUSDC({
     }
   }, [txError]);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setStep('idle');
     setError(null);
     resetWrite();
-  };
+  }, [resetWrite]);
 
   return {
-
     step,
     requiresApproval,
     currentAllowance,

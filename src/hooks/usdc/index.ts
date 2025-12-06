@@ -1,4 +1,4 @@
-export { useUSDC } from './useUSDC';
+export { useUSDC, useUSDCBalance, useUSDCAllowance } from './useUSDC';
 export { useUSDCApprovalAndTransaction } from './useUSDCApprovalAndTransaction';
 export { useContractWriteWithUSDC } from './useContractWriteWithUSDC';
 export {

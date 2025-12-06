@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -35,8 +35,7 @@ export function useUSDCApprovalAndTransaction({ amount, spender, onSuccess }: Pr
     hash,
   });
 
-  const approveAndWait = async (): Promise<void> => {
-
+  const approveAndWait = useCallback(async (): Promise<void> => {
     if (!address) {
       const error = new Error('Wallet not connected');
       setError(error);
@@ -66,7 +65,7 @@ export function useUSDCApprovalAndTransaction({ amount, spender, onSuccess }: Pr
 
     try {
       const amountWei = parseUnits(amount, USDC_DECIMALS);
-      console.log('📝 Amount in wei:', amountWei.toString());
+      console.log('💰 Amount in wei:', amountWei.toString());
 
       writeContract({
         address: USDC_ADDRESS,
@@ -75,19 +74,13 @@ export function useUSDCApprovalAndTransaction({ amount, spender, onSuccess }: Pr
         args: [spender, amountWei],
       } as any);
 
-      return new Promise<void>((resolve, reject) => {
-
-        (window as any).__approvalResolve = resolve;
-        (window as any).__approvalReject = reject;
-      });
-
     } catch (err) {
       console.error('❌ Approval error:', err);
       setError(err as Error);
       setIsApproving(false);
       throw err;
     }
-  };
+  }, [address, amount, spender, writeContract]);
 
   useEffect(() => {
     if (isSuccess && hash) {
@@ -100,12 +93,6 @@ export function useUSDCApprovalAndTransaction({ amount, spender, onSuccess }: Pr
       setIsApproving(false);
       setError(null);
       onSuccess?.();
-
-      if ((window as any).__approvalResolve) {
-        (window as any).__approvalResolve();
-        delete (window as any).__approvalResolve;
-        delete (window as any).__approvalReject;
-      }
     }
   }, [isSuccess, hash, onSuccess, amount, spender]);
 
@@ -114,12 +101,6 @@ export function useUSDCApprovalAndTransaction({ amount, spender, onSuccess }: Pr
       console.error('❌ Write error:', writeError);
       setError(writeError as Error);
       setIsApproving(false);
-
-      if ((window as any).__approvalReject) {
-        (window as any).__approvalReject(writeError);
-        delete (window as any).__approvalResolve;
-        delete (window as any).__approvalReject;
-      }
     }
   }, [writeError]);
 
@@ -128,26 +109,16 @@ export function useUSDCApprovalAndTransaction({ amount, spender, onSuccess }: Pr
       console.error('❌ Transaction error:', txError);
       setError(txError as Error);
       setIsApproving(false);
-
-      if ((window as any).__approvalReject) {
-        (window as any).__approvalReject(txError);
-        delete (window as any).__approvalResolve;
-        delete (window as any).__approvalReject;
-      }
     }
   }, [txError]);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setIsApproving(false);
     setError(null);
     resetWrite();
-
-    delete (window as any).__approvalResolve;
-    delete (window as any).__approvalReject;
-  };
+  }, [resetWrite]);
 
   return {
-
     approveAndWait,
 
     isApproving: isApproving || isWritePending,
@@ -160,3 +131,4 @@ export function useUSDCApprovalAndTransaction({ amount, spender, onSuccess }: Pr
     reset,
   };
 }
+

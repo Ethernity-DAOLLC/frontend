@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { Shield, Loader2, Lock, Wallet, ArrowLeft } from 'lucide-react';
+import { Shield, Loader2, Wallet, ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -16,6 +16,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const navigate = useNavigate();
   const { isConnected, isAdmin, isCheckingRole, connect } = useAuth();
+
   const goHome = () => navigate('/');
   const goDashboard = () => navigate('/dashboard');
   const goCalculator = () => navigate('/calculator');
@@ -102,6 +103,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       </div>
     );
   }
+
   return <>{children}</>;
 };
 

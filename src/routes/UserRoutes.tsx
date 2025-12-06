@@ -4,11 +4,13 @@ import { useRetirementPlan } from "../context/RetirementContext";
 
 const DashboardPage = lazy(() => import("../pages/User/DashboardPage"));
 const CreateContractPage = lazy(() => import("../pages/User/CreateContractPage"));
+const ContractCreatedPage = lazy(() => import("../pages/User/ContractCreatedPage"));
 const GovernancePage = lazy(() => import("../pages/User/GovernancePage"));
 
 export const USER_PATHS = {
   DASHBOARD: "/dashboard",
   CREATE_CONTRACT: "/create-contract",
+  CONTRACT_CREATED: "/contract-created",
   GOVERNANCE: "/governance",
 } as const;
 
@@ -36,10 +38,17 @@ export const userRoutes: UserRoute[] = [
     requiresAuth: true,
   },
   {
+    path: USER_PATHS.CONTRACT_CREATED,
+    component: ContractCreatedPage,
+    title: "Contract Created",
+    description: "Smart Contract created successfully",
+    requiresAuth: true,
+  },
+  {
     path: USER_PATHS.GOVERNANCE,
     component: GovernancePage,
     title: "Governance",
-    description: "Participate in DAO governance",
+    description: "Participate in DAO votings and proposals",
     requiresAuth: true,
   },
 ];
@@ -114,6 +123,23 @@ export const UserRouter: React.FC<UserRouterProps> = ({
   const pageProps = useMemo(() => {
     switch (currentPage) {
       case USER_PATHS.CREATE_CONTRACT:
+        return {
+          wallet: {
+            address: wallet.address as `0x${string}` | undefined,
+            isConnected: wallet.isConnected,
+            chainId: wallet.chainId,
+          },
+          contracts: {
+            factory: contracts.factory || null,
+            daoFundAddress: contracts.treasury || contracts.factory || null,
+          },
+          calculatedPlan: planData || null,
+          onSuccess: () => {
+            window.location.href = USER_PATHS.CONTRACT_CREATED;
+          },
+        };
+
+      case USER_PATHS.CONTRACT_CREATED:
         return {
           wallet: {
             address: wallet.address as `0x${string}` | undefined,

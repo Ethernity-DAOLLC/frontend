@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { Mail, User, MessageSquare, Send, CheckCircle, AlertCircle } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export default function ContactPage() {
   const { address } = useAccount();
@@ -37,6 +37,12 @@ export default function ContactPage() {
       errors.email = 'Invalid email address';
     }
 
+    if (!formData.subject.trim()) {
+      errors.subject = 'Subject is required';
+    } else if (formData.subject.trim().length < 5) {
+      errors.subject = 'Subject must be at least 5 characters';
+    }
+
     if (!formData.message.trim()) {
       errors.message = 'Message is required';
     } else if (formData.message.trim().length < 10) {
@@ -59,19 +65,24 @@ export default function ContactPage() {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/api/v1/contact`, {
+      const response = await fetch(`${API_URL}/api/v1/contacts/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          ...formData,
-          walletAddress: address || null,
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          wallet_address: address || null,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Something went wrong while sending the message');
+        throw new Error(data.detail || 'Something went wrong while sending the message');
       }
 
       setSuccess(true);
@@ -194,15 +205,27 @@ export default function ContactPage() {
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
               <MessageSquare className="w-5 h-5" />
-              Subject
+              Subject *
             </label>
             <input
               type="text"
+              required
               value={formData.subject}
               onChange={(e) => handleInputChange('subject', e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-purple-300 focus:border-purple-500 transition"
+              className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition ${
+                fieldErrors.subject
+                  ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
+                  : 'border-gray-300 focus:ring-purple-300 focus:border-purple-500'
+              }`}
               placeholder="What is your message about?"
+              aria-describedby={fieldErrors.subject ? "subject-error" : undefined}
             />
+            {fieldErrors.subject && (
+              <p id="subject-error" className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle size={14} />
+                {fieldErrors.subject}
+              </p>
+            )}
           </div>
 
           <div>
