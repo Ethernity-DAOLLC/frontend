@@ -65,7 +65,7 @@ export default function ContactPage() {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/api/v1/contacts/`, {
+      const response = await fetch(`${API_URL}/api/v1/contact/`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
