@@ -2,6 +2,7 @@ import { useAccount, useChainId } from 'wagmi';
 import { PUBLIC_PATHS } from './PublicRoutes';
 import { USER_PATHS } from './UserRoutes';
 import { ADMIN_PATHS } from './AdminRoutes';
+import { ACTIVE_CHAIN_IDS, getChainName, ACTIVE_CHAINS } from '@/config/chains';
 
 export type RouteType = 'public' | 'user' | 'admin';
 export type AppPath = string;
@@ -19,8 +20,6 @@ export interface ValidationResult {
   reason?: string;
   redirectTo?: string;
 }
-
-const EXPECTED_CHAIN_ID = 421614; 
 
 const guardsMap: Record<string, NavigationGuard> = {
 
@@ -111,19 +110,15 @@ export const getRouteType = (path: string): RouteType => {
   if (Object.values(ADMIN_PATHS).includes(path as any)) return 'admin';
   return 'public';
 };
-
 export const getGuard = (path: string): NavigationGuard => {
   return guardsMap[path] || guardsMap[PUBLIC_PATHS.HOME];
 };
-
 export const requiresWallet = (path: string): boolean => {
   return getGuard(path).requiresWallet;
 };
-
 export const requiresCorrectNetwork = (path: string): boolean => {
   return getGuard(path).requiresCorrectNetwork;
 };
-
 export const getNavigationGuards = (path: string) => {
   const guard = getGuard(path);
   const routeType = getRouteType(path);
@@ -139,8 +134,7 @@ export const getNavigationGuards = (path: string) => {
 export const useNavigationGuard = () => {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
-  const isCorrectNetwork = chainId === EXPECTED_CHAIN_ID;
-
+  const isCorrectNetwork = ACTIVE_CHAIN_IDS.includes(chainId);
   const validate = (
     targetPath: string,
     adminCheck?: { hasAccess: boolean | null; loading: boolean }
@@ -156,9 +150,12 @@ export const useNavigationGuard = () => {
     }
 
     if (guard.requiresCorrectNetwork && !isCorrectNetwork) {
+      const currentChainName = getChainName(chainId);
+      const supportedNames = ACTIVE_CHAINS.map(c => c.name).join(', ');
+      
       return {
         allowed: false,
-        reason: `Please switch to Arbitrum Sepolia network (Chain ID: ${EXPECTED_CHAIN_ID})`,
+        reason: `Wrong network. Current: ${currentChainName}. Please switch to: ${supportedNames}`,
         redirectTo: guard.redirectTo,
       };
     }
@@ -189,10 +186,10 @@ export const useNavigationGuard = () => {
     isCorrectNetwork,
     address,
     chainId,
-    expectedChainId: EXPECTED_CHAIN_ID,
+    supportedChainIds: ACTIVE_CHAIN_IDS,
+    supportedChains: ACTIVE_CHAINS,
   };
 };
-
 export const validateNavigation = (
   targetPath: string,
   wallet: { isConnected: boolean; isCorrectNetwork: boolean },
@@ -232,22 +229,24 @@ export const validateNavigation = (
 
   return { allowed: true };
 };
-
 export const getNavigationErrorMessage = (validation: ValidationResult): string => {
   if (validation.allowed) return '';
   
   const messages: Record<string, string> = {
     'Wallet connection required': '🔗 Please connect your wallet to continue',
     'Wallet required': '🔗 Connect your wallet to access this page',
-    'Wrong network': '🌐 Please switch to Arbitrum Sepolia network',
+    'Wrong network': '🌐 Please switch to a supported network',
     'Checking admin access...': '⏳ Verifying your permissions...',
     'Admin access denied': '🚫 You need admin privileges to access this page',
     'Loading...': '⏳ Loading...',
   };
+
+  if (validation.reason?.includes('Wrong network')) {
+    return `🌐 ${validation.reason}`;
+  }
   
   return messages[validation.reason || ''] || validation.reason || 'Access denied';
 };
-
 export const ALL_PATHS = {
   ...PUBLIC_PATHS,
   ...USER_PATHS,
@@ -256,11 +255,11 @@ export const ALL_PATHS = {
 
 export type AllPaths = typeof ALL_PATHS;
 export type PathKey = keyof AllPaths;
-
 export const getAllGuards = (): Record<string, NavigationGuard> => {
   return { ...guardsMap };
 };
-
 export const hasGuard = (path: string): boolean => {
   return path in guardsMap;
 };
+export const getActiveChains = () => ACTIVE_CHAINS;
+export const getActiveChainIds = () => ACTIVE_CHAIN_IDS;

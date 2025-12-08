@@ -1,28 +1,28 @@
-
 import { cookieStorage, createStorage } from 'wagmi'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-import { arbitrumSepolia, sepolia } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
 import { QueryClient } from '@tanstack/react-query'
+import { ACTIVE_CHAINS, DEFAULT_CHAIN } from './chains'
 
 export const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
 
 if (!projectId) {
-  throw new Error('❌ VITE_WALLETCONNECT_PROJECT_ID no está definido en .env')
+  throw new Error('❌ VITE_WALLETCONNECT_PROJECT_ID not defined in .env')
 }
-export const chains = [arbitrumSepolia, sepolia] as const
+export const chains = ACTIVE_CHAINS
 
 const metadata = {
   name: 'Ethernity DAO',
-  description: 'Plataforma descentralizada para gestión de fondos de retiro',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://ethernity-dao.com', // ✅ Fallback URL
+  description: 'Decentralized retirement fund platform on blockchain',
+  url: typeof window !== 'undefined' 
+    ? window.location.origin 
+    : 'https://ethernity-dao.com',
   icons: [
     typeof window !== 'undefined' 
       ? `${window.location.origin}/ethernity.ico`
       : 'https://ethernity-dao.com/ethernity.ico'
   ]
 }
-
 export const wagmiAdapter = new WagmiAdapter({
   projectId,
   networks: chains,
@@ -37,19 +37,19 @@ export const modal = createAppKit({
   adapters: [wagmiAdapter],
   projectId,
   networks: chains,
-  defaultNetwork: arbitrumSepolia,
+  defaultNetwork: DEFAULT_CHAIN,
   metadata,
   features: {
-    analytics: true, 
-    email: false, 
-    socials: [],   
-    emailShowWallets: true, 
-    allWallets: true, 
+    analytics: true,
+    email: false,
+    socials: [],
+    emailShowWallets: true,
+    allWallets: true,
   },
-  themeMode: 'dark', 
+  themeMode: 'dark',
   themeVariables: {
     '--w3m-accent': '#1B5E20',
-    '--w3m-border-radius-master': '8px', 
+    '--w3m-border-radius-master': '8px',
     '--w3m-font-family': 'Inter, system-ui, -apple-system, sans-serif',
   }
 })
@@ -64,3 +64,11 @@ export const queryClient = new QueryClient({
     }
   }
 })
+
+export const isActiveChain = (chainId: number): boolean => {
+  return chains.some(chain => chain.id === chainId)
+}
+
+export const getActiveChain = (chainId: number) => {
+  return chains.find(chain => chain.id === chainId)
+}

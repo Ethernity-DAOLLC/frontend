@@ -34,18 +34,16 @@ const ResultItem: React.FC<ResultItemProps> = ({
       switch (type) {
         case "address":
           const addr = val.toString();
-          if (addr.length < 10) return addr; // Validación de longitud
+          if (addr.length < 10) return addr;
           return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
         case "eth":
-          // Manejo seguro de bigint
           if (typeof val === 'bigint') {
             return `${(Number(val) / 1e18).toFixed(4)} ETH`;
           }
           return `${val} ETH`;
 
         case "currency":
-          // Conversión segura a número
           const numVal = typeof val === 'bigint' ? Number(val) : Number(val);
           if (isNaN(numVal)) return "$0.00";
           

@@ -21,7 +21,7 @@ const FormField: React.FC<FormFieldProps> = ({
   label,
   value,
   onChange,
-  type = "number", // Cambiado a number por defecto para el caso de uso
+  type = "number", 
   step = 1,
   min,
   max,
@@ -34,17 +34,14 @@ const FormField: React.FC<FormFieldProps> = ({
   className = "",
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Validación mejorada
     if (type === "number") {
       const numValue = parseFloat(e.target.value);
-      // Solo actualiza si es un número válido o string vacío (permite borrar)
       if (!isNaN(numValue)) {
         onChange(numValue);
       } else if (e.target.value === '') {
         onChange(0);
       }
     } else {
-      // Para otros tipos, intenta convertir a número
       const converted = Number(e.target.value);
       onChange(isNaN(converted) ? 0 : converted);
     }
