@@ -12,7 +12,7 @@ interface WriteWithUSDCParams {
   usdcAmount: string;
   enabled?: boolean;
   onApprovalSuccess?: () => void;
-  onTransactionSuccess?: () => void;
+  onTransactionSuccess?: (txHash: `0x${string}`) => void;
 }
 
 export function useContractWriteWithUSDC({
@@ -157,12 +157,12 @@ export function useContractWriteWithUSDC({
   }, [step, approval.isSuccess, executeTransaction]);
 
   useEffect(() => {
-    if (isTxSuccess && step === 'executing') {
-      console.log('✅ Transaction confirmed!');
+    if (isTxSuccess && step === 'executing' && txHash) {
+      console.log('✅ Transaction confirmed!', txHash);
       setStep('success');
-      onTransactionSuccess?.();
+      onTransactionSuccess?.(txHash);
     }
-  }, [isTxSuccess, step, onTransactionSuccess]);
+  }, [isTxSuccess, step, txHash, onTransactionSuccess]);
 
   useEffect(() => {
     if (writeError) {

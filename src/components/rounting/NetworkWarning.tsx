@@ -2,7 +2,7 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useChainId } from 'wagmi';
 
-const EXPECTED_CHAIN_ID = 421614; // Arbitrum Sepolia
+const EXPECTED_CHAIN_ID = 421614;
 
 interface NetworkWarningProps {
   onSwitchNetwork?: () => void;
