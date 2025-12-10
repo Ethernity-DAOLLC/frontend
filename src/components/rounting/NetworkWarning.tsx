@@ -20,9 +20,9 @@ const NetworkWarning: React.FC<NetworkWarningProps> = ({ onSwitchNetwork }) => {
         <div className="flex items-center gap-4">
           <AlertTriangle className="w-8 h-8 animate-pulse" />
           <div>
-            <p className="font-bold text-lg">Red Incorrecta Detectada</p>
+            <p className="font-bold text-lg">Wrong Network Detected</p>
             <p className="text-sm opacity-90">
-              Por favor cambia a <strong>Arbitrum Sepolia</strong> para usar la aplicación
+              Please switch to <strong>Arbitrum Sepolia</strong> to use the application
             </p>
           </div>
         </div>
@@ -32,7 +32,7 @@ const NetworkWarning: React.FC<NetworkWarningProps> = ({ onSwitchNetwork }) => {
             onClick={onSwitchNetwork}
             className="bg-white text-red-600 font-bold py-3 px-6 rounded-xl hover:bg-gray-100 transition"
           >
-            Cambiar Red
+            Switch Network
           </button>
         )}
       </div>

@@ -14,8 +14,8 @@ const AdminSessionSchema = z.object({
 type AdminSession = z.infer<typeof AdminSessionSchema>;
 
 const ADMIN_SESSION_KEY = 'admin_session';
-const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 horas en ms
-const ADMIN_ROLE = '0x0000000000000000000000000000000000000000000000000000000000000000'; // ADMIN_ROLE del contrato
+const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in ms
+const ADMIN_ROLE = '0x0000000000000000000000000000000000000000000000000000000000000000'; // ADMIN_ROLE from contract
 
 const ADMIN_ADDRESSES = new Set([
   '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1'.toLowerCase(),
@@ -69,7 +69,6 @@ Domain: ${window.location.hostname}
 
 By signing this message, you confirm you understand the above and are authenticating as an admin.`;
 }
-
 
 function isAdminAddress(address: string): boolean {
   return ADMIN_ADDRESSES.has(address.toLowerCase());
@@ -195,7 +194,7 @@ export const useSecureAdmin = (): UseSecureAdminResult => {
         isAdmin: hasValidSession,
       });
     }
-  }, [address, isConnected]);
+  }, [address, isConnected, checkStoredSession]);
 
   useEffect(() => {
     if (!isLoading && !isAdmin) {
@@ -227,24 +226,3 @@ export const useSecureAdmin = (): UseSecureAdminResult => {
     clearError,
   };
 };
-
-// ============================================================================
-// HOOK PARA VERIFICACIÓN ON-CHAIN (FUTURO)
-// ============================================================================
-
-/**
- * TODO: Implementar verificación de roles on-chain
- * 
- * import { useReadContract } from 'wagmi';
- * 
- * export const useAdminRoleOnChain = (address?: `0x${string}`) => {
- *   const { data: hasRole, isLoading } = useReadContract({
- *     address: GOVERNANCE_ADDRESS,
- *     abi: GovernanceABI,
- *     functionName: 'hasRole',
- *     args: [ADMIN_ROLE, address],
- *     enabled: !!address,
- *   });
- *   return { isAdmin: hasRole ?? false, isLoading };
- * };
- */

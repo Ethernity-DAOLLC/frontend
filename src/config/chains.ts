@@ -2,7 +2,7 @@ import {
   arbitrum, 
   arbitrumSepolia, 
   polygon,
-  polygonMumbai,
+  polygonAmoy,
   base,
   baseSepolia,
   optimism,
@@ -20,6 +20,7 @@ export interface ChainMetadata {
   bridge?: string
   isTestnet: boolean
 }
+
 export const CHAIN_METADATA: Record<number, ChainMetadata> = {
   421614: {
     deployed: true,
@@ -33,17 +34,20 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     bridge: 'https://bridge.arbitrum.io/?destinationChain=arbitrum-sepolia',
   },
 
-  80001: {
+  // Polygon Amoy - READY TO DEPLOY
+  80002: {
     deployed: false,
     hasContracts: false,
     priority: 2,
     isTestnet: true,
     faucets: [
+      'https://faucets.chain.link/polygon-amoy',
       'https://faucet.polygon.technology/',
-      'https://mumbaifaucet.com/'
+      'https://www.alchemy.com/faucets/polygon-amoy'
     ],
+    bridge: 'https://portal.polygon.technology/bridge',
   },
-  
+
   84532: {
     deployed: false,
     hasContracts: false,
@@ -54,7 +58,7 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
       'https://docs.base.org/tools/network-faucets'
     ],
   },
-  
+
   11155420: {
     deployed: false,
     hasContracts: false,
@@ -65,7 +69,7 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
       'https://www.alchemy.com/faucets/optimism-sepolia'
     ],
   },
-  
+
   11155111: {
     deployed: false,
     hasContracts: false,
@@ -83,28 +87,28 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     priority: 10,
     isTestnet: false,
   },
-  
+
   137: {
     deployed: false,
     hasContracts: false,
     priority: 11,
     isTestnet: false,
   },
-  
+
   8453: {
     deployed: false,
     hasContracts: false,
     priority: 12,
     isTestnet: false,
   },
-  
+
   10: {
     deployed: false,
     hasContracts: false,
     priority: 13,
     isTestnet: false,
   },
-  
+
   1: {
     deployed: false,
     hasContracts: false,
@@ -112,9 +116,10 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     isTestnet: false,
   },
 }
+
 export const SUPPORTED_CHAINS = [
   arbitrumSepolia,
-  polygonMumbai,
+  polygonAmoy,
   baseSepolia,
   optimismSepolia,
   sepolia,
@@ -128,7 +133,7 @@ export const SUPPORTED_CHAINS = [
 
 export const TESTNET_CHAINS = [
   arbitrumSepolia,
-  polygonMumbai,
+  polygonAmoy,
   baseSepolia,
   optimismSepolia,
   sepolia,
@@ -141,6 +146,7 @@ export const MAINNET_CHAINS = [
   optimism,
   mainnet,
 ] as const
+
 export const ACTIVE_CHAINS = SUPPORTED_CHAINS.filter(
   chain => CHAIN_METADATA[chain.id]?.deployed
 )
@@ -178,15 +184,18 @@ export const getExplorerUrl = (chainId: number, hash?: string): string => {
   
   return `${baseUrl}/tx/${hash}`
 }
+
 export const getExplorerAddressUrl = (chainId: number, address: string): string => {
   const chain = getChainById(chainId)
   const baseUrl = chain?.blockExplorers?.default?.url || ''
   
   return `${baseUrl}/address/${address}`
 }
+
 export const getChainName = (chainId: number): string => {
   return getChainById(chainId)?.name || 'Unknown Chain'
 }
+
 export const getChainsByPriority = (): Chain[] => {
   return [...SUPPORTED_CHAINS].sort((a, b) => {
     const priorityA = CHAIN_METADATA[a.id]?.priority ?? 999
@@ -194,11 +203,13 @@ export const getChainsByPriority = (): Chain[] => {
     return priorityA - priorityB
   })
 }
+
 export const getActiveChains = (): Chain[] => {
   return SUPPORTED_CHAINS.filter(chain => 
     CHAIN_METADATA[chain.id]?.deployed
   )
 }
+
 export const getChainErrorMessage = (currentChainId?: number): string => {
   if (!currentChainId) {
     return `Please connect to one of: ${ACTIVE_CHAINS.map(c => c.name).join(', ')}`
@@ -208,6 +219,7 @@ export const getChainErrorMessage = (currentChainId?: number): string => {
   const activeNames = ACTIVE_CHAINS.map(c => c.name).join(', ')
   return `Wrong network. Current: ${current?.name || 'Unknown'}. Please switch to: ${activeNames}`
 }
+
 export type SupportedChainId = typeof SUPPORTED_CHAINS[number]['id']
 export type ActiveChainId = typeof ACTIVE_CHAINS[number]['id']
 export type TestnetChainId = typeof TESTNET_CHAINS[number]['id']

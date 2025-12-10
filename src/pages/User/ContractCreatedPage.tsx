@@ -21,36 +21,35 @@ const ContractCreatedPage: React.FC = () => {
   };
 
   const formatNumber = (num: string | number) =>
-    new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
+    new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(num));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 flex items-center justify-center px-4 py-16">
       <div className="max-w-3xl w-full">
         <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border-4 border-emerald-300 overflow-hidden">
-          {/* Header de Éxito */}
+          {/* Success Header */}
           <div className="bg-gradient-to-r from-emerald-600 to-green-700 p-12 text-center text-white">
             <CheckCircle className="w-32 h-32 mx-auto mb-6 animate-bounce" />
             <h1 className="text-5xl font-black mb-4">
-              ¡Contrato Creado Exitosamente! 🎉
+              Contract Created Successfully! 🎉
             </h1>
             <p className="text-xl opacity-90">
-              Tu fondo de retiro está ahora en la blockchain
+              Your retirement fund is now on the blockchain
             </p>
           </div>
 
-          {/* Detalles */}
+          {/* Details */}
           <div className="p-12 space-y-8">
-            {/* Depósito Inicial */}
+            {/* Initial Deposit */}
             <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-8 border-2 border-emerald-200">
-              <p className="text-gray-600 text-lg mb-2">Depósito Inicial</p>
+              <p className="text-gray-600 text-lg mb-2">Initial Deposit</p>
               <p className="text-5xl font-black text-emerald-700">
                 ${formatNumber(initialDeposit || 0)}
               </p>
             </div>
 
-            {/* Hash de Transacción */}
             <div className="space-y-4">
-              <p className="text-gray-700 font-bold text-lg">Hash de Transacción</p>
+              <p className="text-gray-700 font-bold text-lg">Transaction Hash</p>
               <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200">
                 <code className="flex-1 text-sm font-mono text-gray-800 break-all">
                   {txHash}
@@ -58,7 +57,7 @@ const ContractCreatedPage: React.FC = () => {
                 <button
                   onClick={() => copyToClipboard(txHash)}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg transition"
-                  title="Copiar"
+                  title="Copy"
                 >
                   <Copy size={20} />
                 </button>
@@ -67,46 +66,44 @@ const ContractCreatedPage: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-lg transition"
-                  title="Ver en Arbiscan"
+                  title="View on Arbiscan"
                 >
                   <ExternalLink size={20} />
                 </a>
               </div>
               {copied && (
                 <p className="text-green-600 font-semibold text-center">
-                  ✅ Copiado al portapapeles
+                  ✅ Copied to clipboard
                 </p>
               )}
             </div>
 
-            {/* Próximos Pasos */}
             <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 border-2 border-indigo-200">
               <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
                 <Sparkles className="text-purple-600" />
-                Próximos Pasos
+                Next Steps
               </h3>
               <ul className="space-y-3 text-gray-700 text-lg">
                 <li className="flex items-start gap-3">
                   <span className="text-emerald-600 font-bold">✓</span>
-                  <span>Ve al Dashboard para ver tu fondo</span>
+                  <span>Go to Dashboard to view your fund</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-emerald-600 font-bold">✓</span>
-                  <span>Realiza depósitos mensuales para cumplir tu plan</span>
+                  <span>Make monthly deposits to fulfill your plan</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-emerald-600 font-bold">✓</span>
-                  <span>Monitorea el crecimiento de tu ahorro</span>
+                  <span>Monitor your savings growth</span>
                 </li>
               </ul>
             </div>
 
-            {/* Botón al Dashboard */}
             <button
               onClick={() => navigate('/dashboard')}
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-black text-2xl py-8 rounded-2xl shadow-2xl transition-all transform hover:scale-105 flex items-center justify-center gap-4"
             >
-              Ir al Dashboard
+              Go to Dashboard
               <ArrowRight size={32} />
             </button>
           </div>

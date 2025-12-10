@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 const PERSONALFUNDFACTORY_ADDRESS = import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`;
-const EXPECTED_CHAIN_ID = 421614;                                  // Arbitrum Sepolia
+const EXPECTED_CHAIN_ID = 421614;
 
 import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
 
@@ -35,6 +35,7 @@ const CreateContractPage: React.FC = () => {
   const { planData, clearPlanData } = useRetirementPlan();
 
   const [formData, setFormData] = useState<FormData | null>(null);
+  const [transactionHash, setTransactionHash] = useState<string>('');
 
   useEffect(() => {
     if (!planData || !isConnected) {
@@ -49,15 +50,15 @@ const CreateContractPage: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-3xl shadow-2xl p-12 text-center max-w-lg border border-red-200">
           <AlertCircle className="w-24 h-24 text-red-600 mx-auto mb-6 animate-pulse" />
-          <h1 className="text-4xl font-black text-red-700 mb-4">Red Incorrecta</h1>
+          <h1 className="text-4xl font-black text-red-700 mb-4">Wrong Network</h1>
           <p className="text-xl text-gray-700 mb-8">
-            Por favor cambia a <strong>Arbitrum Sepolia</strong> para crear tu fondo.
+            Please switch to <strong>Arbitrum Sepolia</strong> to create your fund.
           </p>
           <button
             onClick={() => navigate('/calculator')}
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-5 px-10 rounded-2xl text-xl transition"
           >
-            Volver a la Calculadora
+            Back to Calculator
           </button>
         </div>
       </div>
@@ -82,6 +83,17 @@ const CreateContractPage: React.FC = () => {
     BigInt(formData.timelockYears),
   ];
 
+  const handleSuccess = (hash: string) => {
+    setTransactionHash(hash);
+    clearPlanData();
+    navigate('/contract-created', {
+      state: {
+        txHash: hash,
+        initialDeposit: formData.initialDeposit
+      }
+    });
+  };
+
   const { executeAll, isLoading, isApproving, isSuccess, error, txHash } =
     useContractWriteWithUSDC({
       contractAddress: PERSONALFUNDFACTORY_ADDRESS,
@@ -90,19 +102,11 @@ const CreateContractPage: React.FC = () => {
       args,
       usdcAmount: formData.initialDeposit,
       enabled: !!address,
-      onTransactionSuccess: () => {
-        clearPlanData();
-        navigate('/contract-created', { 
-          state: { 
-            txHash,
-            initialDeposit: formData.initialDeposit 
-          } 
-        });
-      },
+      onTransactionSuccess: handleSuccess,
     });
 
   const formatNumber = (num: string | number) =>
-    new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
+    new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(num));
 
   const totalFee = Number(formData.initialDeposit) * 0.03;
   const netToFund = Number(formData.initialDeposit) * 0.97;
@@ -115,33 +119,33 @@ const CreateContractPage: React.FC = () => {
           className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition"
         >
           <ArrowLeft size={22} />
-          Volver a la Calculadora
+          Back to Calculator
         </button>
 
         <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-purple-100 overflow-hidden">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-10 text-white">
             <h1 className="text-4xl md:text-5xl font-black flex items-center gap-4">
               <Sparkles size={56} />
-              Confirmar Creación de tu Fondo
+              Confirm Your Fund Creation
             </h1>
             <p className="mt-4 text-xl opacity-90">
-              Revisa los datos y crea tu contrato inteligente de retiro en blockchain
+              Review the details and create your smart contract for retirement on blockchain
             </p>
           </div>
 
           <div className="p-10 space-y-10">
             <div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">Parámetros del Plan</h2>
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">Plan Parameters</h2>
               <div className="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-2xl p-8">
                 {[
-                  { label: 'Edad actual', value: `${formData.currentAge} años` },
-                  { label: 'Edad de retiro', value: `${formData.retirementAge} años` },
-                  { label: 'Ahorro inicial', value: `$${formatNumber(formData.initialDeposit)}` },
-                  { label: 'Ahorro mensual', value: `$${formatNumber(formData.monthlyDeposit)}` },
-                  { label: 'Ingreso mensual deseado', value: `$${formatNumber(formData.desiredMonthlyIncome)}` },
-                  { label: 'Años de pago', value: `${formData.yearsPayments} años` },
-                  { label: 'Tasa de interés anual', value: `${formData.interestRate}%` },
-                  { label: 'Timelock (bloqueo)', value: `${formData.timelockYears} años` },
+                  { label: 'Current age', value: `${formData.currentAge} years` },
+                  { label: 'Retirement age', value: `${formData.retirementAge} years` },
+                  { label: 'Initial savings', value: `$${formatNumber(formData.initialDeposit)}` },
+                  { label: 'Monthly savings', value: `$${formatNumber(formData.monthlyDeposit)}` },
+                  { label: 'Desired monthly income', value: `$${formatNumber(formData.desiredMonthlyIncome)}` },
+                  { label: 'Payment years', value: `${formData.yearsPayments} years` },
+                  { label: 'Annual interest rate', value: `${formData.interestRate}%` },
+                  { label: 'Timelock (lock period)', value: `${formData.timelockYears} years` },
                 ].map((item) => (
                   <div key={item.label} className="flex justify-between py-3 border-b border-gray-200 last:border-0">
                     <span className="text-gray-600 font-medium">{item.label}:</span>
@@ -154,21 +158,21 @@ const CreateContractPage: React.FC = () => {
             <div className="space-y-6">
               <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-3xl p-8 border-2 border-emerald-200">
                 <h3 className="text-2xl font-bold text-emerald-800 mb-6">
-                  Resumen del Depósito Inicial
+                  Initial Deposit Summary
                 </h3>
                 <div className="space-y-5 text-lg">
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Total a depositar hoy:</span>
+                    <span className="text-gray-700">Total to deposit today:</span>
                     <strong className="text-3xl font-black text-emerald-700">
                       ${formatNumber(formData.initialDeposit)}
                     </strong>
                   </div>
                   <div className="flex justify-between text-orange-600">
-                    <span>Fee Ethernity DAO (3%):</span>
+                    <span>Ethernity DAO Fee (3%):</span>
                     <strong>${formatNumber(totalFee)}</strong>
                   </div>
                   <div className="flex justify-between text-emerald-700 text-2xl font-bold pt-4 border-t-2 border-emerald-200">
-                    <span>Neto a tu fondo (97%):</span>
+                    <span>Net to your fund (97%):</span>
                     <strong>${formatNumber(netToFund)}</strong>
                   </div>
                 </div>
@@ -177,7 +181,7 @@ const CreateContractPage: React.FC = () => {
               {error && (
                 <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
                   <p className="text-red-700 font-bold">
-                    Error: {(error as any)?.shortMessage || error?.message || 'Transacción fallida'}
+                    Error: {(error as any)?.shortMessage || error?.message || 'Transaction failed'}
                   </p>
                 </div>
               )}
@@ -192,17 +196,17 @@ const CreateContractPage: React.FC = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="animate-spin" size={56} />
-                    {isApproving ? 'Aprobando USDC...' : 'Creando tu fondo...'}
+                    {isApproving ? 'Approving USDC...' : 'Creating your fund...'}
                   </>
                 ) : isSuccess ? (
                   <>
                     <CheckCircle size={56} />
-                    ¡Fondo Creado!
+                    Fund Created!
                   </>
                 ) : (
                   <>
                     <Wallet size={56} />
-                    Crear Mi Contrato en Blockchain
+                    Create My Contract on Blockchain
                   </>
                 )}
               </button>

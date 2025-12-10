@@ -12,11 +12,11 @@ const WalletRequired: React.FC = () => {
           <Wallet className="w-32 h-32 text-yellow-600 mx-auto mb-6 animate-pulse" />
           
           <h2 className="text-4xl font-black text-gray-800 mb-4">
-            🔐 Conexión de Wallet Requerida
+            🔐 Wallet Connection Required
           </h2>
           
           <p className="text-xl text-gray-600 mb-8">
-            Por favor conecta tu wallet para acceder a esta página.
+            Please connect your wallet to access this page.
           </p>
 
           <div className="space-y-4">
@@ -24,14 +24,14 @@ const WalletRequired: React.FC = () => {
               onClick={() => navigate('/')}
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-bold py-5 px-8 rounded-2xl text-xl transition shadow-lg"
             >
-              Ir al Inicio y Conectar
+              Go to Home and Connect
             </button>
             
             <button
               onClick={() => navigate(-1)}
               className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-4 px-8 rounded-2xl transition"
             >
-              Volver Atrás
+              Go Back
             </button>
           </div>
         </div>

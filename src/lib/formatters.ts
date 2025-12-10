@@ -125,7 +125,7 @@ export const formatTimestamp = (
 ): string => {
   try {
     const { 
-      locale = 'es', 
+      locale = 'en-US', 
       includeTime = true,
       format = 'long'
     } = options || {};
@@ -140,13 +140,13 @@ export const formatTimestamp = (
     }
 
     if (isNaN(ts) || ts === 0) {
-      return 'Nunca';
+      return 'Never';
     }
 
     const date = new Date(ts < 10000000000 ? ts * 1000 : ts);
 
     if (isNaN(date.getTime())) {
-      return 'Fecha inválida';
+      return 'Invalid date';
     }
 
     const dateOptions: Intl.DateTimeFormatOptions = format === 'short' 
@@ -213,6 +213,6 @@ export const isValidAddress = (address: string): boolean => {
 };
 
 export const formatYears = (years: number): string => {
-  if (years === 1) return '1 año';
-  return `${years} años`;
+  if (years === 1) return '1 year';
+  return `${years} years`;
 };

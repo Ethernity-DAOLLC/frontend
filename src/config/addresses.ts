@@ -9,48 +9,45 @@ export interface ContractAddresses {
   dateTime?: `0x${string}`
 }
 const OFFICIAL_USDC: Record<number, `0x${string}`> = {
-
+  // TESTNETS
   421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
-
-  80001: '0x0FA8781a83E46826621b3BC094Ea2A0212e71B23',
-
+  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
   84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-
   11155420: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',
-
   11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
   
+  // MAINNETS
   42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-
   137: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-
   8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-
-  10: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
-  
-  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  10: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85', 
+  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', 
 }
 
 const ZERO_ADDRESS: `0x${string}` = '0x0000000000000000000000000000000000000000'
 
 export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   421614: {
-    personalFundFactory: '0x45DdC7b0B7b9D6A0e6039f2f5Ad32c89D1C33808',
+    personalFundFactory: '0xCC29838D66b4aFFB1A4127Cd7DBc60648BcC93d6',
     usdc: OFFICIAL_USDC[421614],
-    treasury: '0x872000afEC5dAa2fe6Df07F7e72F42C39F9Bd60e',
-    governance: '0xC843f5743643fb9322d75030aFFD58C7C9b899D6',
-    token: '0xd9a61CE672841EBaCbdCB4e56F7bF0E17B48E29D',
-    protocolRegistry: '0x06241a4A5B81f99f63beFC08AEF85e6586B27781',
-    userPreferences: '0xACaF297e8187E538A8cB6B7a3b3376828fA2423f',
-    dateTime: '0x885F4a9DCaac74CaEf0dc72249Dc3D7a1bf3479F',
+    treasury: '0x2F1948D9FA3BB1942f51ebBdA265B1185c3c52dC',
+    governance: '0x6206f8B2729EF9c7dBC651DeE4dF08A44A720A3E',
+    token: '0x3D7cfDB2a190B0F8bDf753Af19f3f3D13eca0020',
+    protocolRegistry: '0xBc6004CA4A0c6CdD1046CBB2598F7C0B20CA6bd8',
+    userPreferences: '0x860AB33F149A3dD89cDa6DE77Fd6d40f2AA7a633',
+    dateTime: '0x493b4ba152970a04981EC9ccB4794F747b64Af57',
   },
 
-  80001: {
+  // 🟡 POLYGON AMOY - READY TO DEPLOY
+  80002: {
     personalFundFactory: ZERO_ADDRESS,
-    usdc: OFFICIAL_USDC[80001],
-    treasury: ZERO_ADDRESS,
-    governance: ZERO_ADDRESS,
-    token: ZERO_ADDRESS,
+    usdc: OFFICIAL_USDC[80002],
+    treasury: ZERO_ADDRESS, 
+    governance: ZERO_ADDRESS, 
+    token: ZERO_ADDRESS,     
+    protocolRegistry: ZERO_ADDRESS, 
+    userPreferences: ZERO_ADDRESS,  
+    dateTime: ZERO_ADDRESS, 
   },
 
   84532: {
@@ -77,6 +74,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     token: ZERO_ADDRESS,
   },
 
+  // MAINNETS - NOT DEPLOYED
   42161: {
     personalFundFactory: ZERO_ADDRESS,
     usdc: OFFICIAL_USDC[42161],
@@ -117,6 +115,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     token: ZERO_ADDRESS,
   },
 }
+
 export const getContractAddresses = (chainId: number): ContractAddresses | undefined => {
   return CONTRACT_ADDRESSES[chainId]
 }
@@ -186,14 +185,29 @@ export const getOfficialUSDC = (chainId: number): `0x${string}` | undefined => {
 export const hasUSDC = (chainId: number): boolean => {
   return chainId in OFFICIAL_USDC
 }
+
 export const getDeploymentSummary = () => {
   const summary: Record<number, {
     chainId: number
+    name: string
     deployed: number
     pending: number
     progress: number
     isComplete: boolean
   }> = {}
+  
+  const chainNames: Record<number, string> = {
+    421614: 'Arbitrum Sepolia',
+    80002: 'Polygon Amoy',
+    84532: 'Base Sepolia',
+    11155420: 'Optimism Sepolia',
+    11155111: 'Ethereum Sepolia',
+    42161: 'Arbitrum One',
+    137: 'Polygon',
+    8453: 'Base',
+    10: 'Optimism',
+    1: 'Ethereum',
+  }
   
   Object.keys(CONTRACT_ADDRESSES).forEach(chainIdStr => {
     const chainId = parseInt(chainIdStr)
@@ -203,6 +217,7 @@ export const getDeploymentSummary = () => {
     
     summary[chainId] = {
       chainId,
+      name: chainNames[chainId] || 'Unknown',
       deployed: deployed.length,
       pending: pending.length,
       progress,
@@ -213,5 +228,65 @@ export const getDeploymentSummary = () => {
   return summary
 }
 
+export const updateChainAddresses = (
+  chainId: number,
+  addresses: Partial<ContractAddresses>
+): void => {
+  if (import.meta.env.PROD) {
+    console.error('❌ Cannot update addresses in production')
+    return
+  }
+  
+  const current = CONTRACT_ADDRESSES[chainId]
+  if (!current) {
+    console.error(`❌ Chain ${chainId} not configured`)
+    return
+  }
+  
+  Object.assign(current, addresses)
+  console.log(`✅ Updated addresses for chain ${chainId}:`, addresses)
+}
 export type ContractName = keyof ContractAddresses
 export type ChainId = keyof typeof CONTRACT_ADDRESSES
+
+export const DEPLOYMENT_STATUS = {
+  421614: {
+    status: 'deployed' as const,
+    date: '2024-12-09',
+    deployer: '0x2c81Af5Ca0663Ef8aa73b498c0E5BeC54EB24C15',
+    verified: true,
+  },
+  80002: {
+    status: 'pending' as const,
+    date: null,
+    deployer: null,
+    verified: false,
+  },
+  84532: {
+    status: 'pending' as const,
+    date: null,
+    deployer: null,
+    verified: false,
+  },
+  11155420: {
+    status: 'pending' as const,
+    date: null,
+    deployer: null,
+    verified: false,
+  },
+  11155111: {
+    status: 'pending' as const,
+    date: null,
+    deployer: null,
+    verified: false,
+  },
+} as const
+
+export const getDeploymentStatus = (chainId: number) => {
+  return DEPLOYMENT_STATUS[chainId as keyof typeof DEPLOYMENT_STATUS] || {
+    status: 'unknown' as const,
+    date: null,
+    deployer: null,
+    verified: false,
+  }
+}

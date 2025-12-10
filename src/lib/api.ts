@@ -5,7 +5,7 @@ export const getApiUrl = (): string => {
   const apiUrl = import.meta.env.VITE_API_URL;
   
   if (!apiUrl) {
-    console.error('VITE_API_URL no está definida en producción');
+    console.error('VITE_API_URL is not defined in production');
     return 'http://localhost:4000';
   }
   

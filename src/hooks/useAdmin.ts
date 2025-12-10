@@ -17,7 +17,7 @@ export const useAdmin = (): UseAdminResult => {
 
   const checkAdmin = useCallback((): boolean => {
     if (!VALID_ADMIN_TOKEN) {
-      console.error('VITE_ADMIN_TOKEN no está definido en .env');
+      console.error('VITE_ADMIN_TOKEN is not defined in .env');
       return false;
     }
 
@@ -32,9 +32,9 @@ export const useAdmin = (): UseAdminResult => {
     if (token === VALID_ADMIN_TOKEN) {
       localStorage.setItem('admin_token', token);
       setIsAdmin(true);
-      console.log('Admin login exitoso');
+      console.log('Admin login successful');
     } else {
-      console.warn('Intento de login con token inválido');
+      console.warn('Login attempt with invalid token');
     }
   }, [VALID_ADMIN_TOKEN]);
 
@@ -54,7 +54,7 @@ export const useAdmin = (): UseAdminResult => {
     if (!isLoading && !isAdmin) {
       const currentPath = window.location.pathname;
       if (currentPath.startsWith('/admin') && currentPath !== '/admin/login') {
-        console.warn('Acceso denegado a ruta admin');
+        console.warn('Access denied to admin route');
         navigate('/admin/login', { replace: true });
       }
     }

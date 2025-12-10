@@ -8,13 +8,13 @@ import { parseUnits } from 'viem';
 import { erc20Abi } from 'viem';
 import { USDC_ADDRESS, USDC_DECIMALS } from './usdcUtils';
 
-interface Props {
+interface ApprovalProps {
   amount: string;       
   spender: `0x${string}`;  
   onSuccess?: () => void;
 }
 
-export function useUSDCApprovalAndTransaction({ amount, spender, onSuccess }: Props) {
+export function useUSDCApprovalAndTransaction({ amount, spender, onSuccess }: ApprovalProps) {
   const { address } = useAccount();
   const [isApproving, setIsApproving] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -131,4 +131,3 @@ export function useUSDCApprovalAndTransaction({ amount, spender, onSuccess }: Pr
     reset,
   };
 }
-

@@ -88,24 +88,12 @@ export function useContractWriteWithUSDC({
     setError(null);
 
     try {
-      writeContract(
-        {
-          address: contractAddress,
-          abi,
-          functionName,
-          args,
-        } as any,
-        {
-          onSuccess: (hash) => {
-            console.log('✅ Transaction submitted:', hash);
-          },
-          onError: (error) => {
-            console.error('❌ Transaction error:', error);
-            setError(error as Error);
-            setStep('idle');
-          },
-        }
-      );
+      writeContract({
+        address: contractAddress,
+        abi,
+        functionName,
+        args,
+      } as any);
     } catch (err) {
       console.error('❌ Transaction execution failed:', err);
       setError(err as Error);
