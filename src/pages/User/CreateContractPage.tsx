@@ -33,7 +33,6 @@ const CreateContractPage: React.FC = () => {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { planData, clearPlanData } = useRetirementPlan();
-
   const [formData, setFormData] = useState<FormData | null>(null);
   const [transactionHash, setTransactionHash] = useState<string>('');
 
@@ -44,6 +43,64 @@ const CreateContractPage: React.FC = () => {
       setFormData(planData);
     }
   }, [planData, isConnected, navigate]);
+
+  const parseUSDC = (value: string | number): bigint => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(num) || num < 0) {
+      console.error('Invalid USDC value:', value);
+      return BigInt(0);
+    }
+    return BigInt(Math.round(num * 1_000_000));
+  };
+
+  const formatNumber = (num: string | number) =>
+    new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(num));
+
+  const args = formData ? [
+    parseUSDC(formData.initialDeposit), 
+    parseUSDC(formData.monthlyDeposit),
+    BigInt(formData.currentAge),        
+    BigInt(formData.retirementAge),       
+    parseUSDC(formData.desiredMonthlyIncome.toString()),
+    BigInt(formData.yearsPayments),          
+    BigInt(Math.round(formData.interestRate * 100)),
+    BigInt(formData.timelockYears),                  
+  ] : [];
+
+  if (formData && import.meta.env.DEV) {
+    console.log('📋 Contract Arguments:', {
+      initialDeposit: `${formData.initialDeposit} → ${args[0]?.toString()}`,
+      monthlyDeposit: `${formData.monthlyDeposit} → ${args[1]?.toString()}`,
+      currentAge: `${formData.currentAge} → ${args[2]?.toString()}`,
+      retirementAge: `${formData.retirementAge} → ${args[3]?.toString()}`,
+      desiredMonthly: `${formData.desiredMonthlyIncome} → ${args[4]?.toString()}`,
+      yearsPayments: `${formData.yearsPayments} → ${args[5]?.toString()}`,
+      interestRate: `${formData.interestRate}% → ${args[6]?.toString()}`,
+      timelockYears: `${formData.timelockYears} → ${args[7]?.toString()}`,
+    });
+  }
+
+  const handleSuccess = (hash: `0x${string}`) => {
+    setTransactionHash(hash);
+    clearPlanData();
+    navigate('/contract-created', {
+      state: {
+        txHash: hash,
+        initialDeposit: formData?.initialDeposit || '0'
+      }
+    });
+  };
+
+  const { executeAll, isLoading, isApproving, isSuccess, error, txHash } =
+    useContractWriteWithUSDC({
+      contractAddress: PERSONALFUNDFACTORY_ADDRESS,
+      abi: PersonalFundFactoryABI,
+      functionName: 'createPersonalFund',
+      args,
+      usdcAmount: formData?.initialDeposit || '0',
+      enabled: !!address && !!formData,
+      onTransactionSuccess: handleSuccess,
+    });
 
   if (chainId !== EXPECTED_CHAIN_ID) {
     return (
@@ -65,48 +122,16 @@ const CreateContractPage: React.FC = () => {
     );
   }
 
-  if (!formData) return null;
-
-  const parseUSDC = (value: string | number): bigint => {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    return BigInt(Math.round(num * 1_000_000));
-  };
-
-  const args = [
-    parseUSDC(formData.initialDeposit),
-    parseUSDC(formData.monthlyDeposit),
-    BigInt(formData.currentAge),
-    BigInt(formData.retirementAge),
-    parseUSDC(formData.desiredMonthlyIncome),
-    BigInt(formData.yearsPayments),
-    BigInt(Math.round(formData.interestRate * 100)),
-    BigInt(formData.timelockYears),
-  ];
-
-  const handleSuccess = (hash: string) => {
-    setTransactionHash(hash);
-    clearPlanData();
-    navigate('/contract-created', {
-      state: {
-        txHash: hash,
-        initialDeposit: formData.initialDeposit
-      }
-    });
-  };
-
-  const { executeAll, isLoading, isApproving, isSuccess, error, txHash } =
-    useContractWriteWithUSDC({
-      contractAddress: PERSONALFUNDFACTORY_ADDRESS,
-      abi: PersonalFundFactoryABI,
-      functionName: 'createPersonalFund',
-      args,
-      usdcAmount: formData.initialDeposit,
-      enabled: !!address,
-      onTransactionSuccess: handleSuccess,
-    });
-
-  const formatNumber = (num: string | number) =>
-    new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(num));
+  if (!formData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading plan data...</p>
+        </div>
+      </div>
+    );
+  }
 
   const totalFee = Number(formData.initialDeposit) * 0.03;
   const netToFund = Number(formData.initialDeposit) * 0.97;
