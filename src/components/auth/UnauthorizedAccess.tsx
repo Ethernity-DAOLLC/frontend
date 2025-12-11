@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert } from 'lucide-react';
 
-const UnauthorizedAccess: React.FC = () => {
+export function UnauthorizedAccess() {
   const navigate = useNavigate();
 
   return (
@@ -42,6 +42,4 @@ const UnauthorizedAccess: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default UnauthorizedAccess;
+}

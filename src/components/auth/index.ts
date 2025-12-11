@@ -1,2 +1,4 @@
+export { WalletRequired } from './WalletRequired';
+export { UnauthorizedAccess } from './UnautorizedAccess',
 export { ProtectedRoute } from './ProtectedRoute';
-export { default as ProtectedRouteDefault } from './ProtectedRoute';
+

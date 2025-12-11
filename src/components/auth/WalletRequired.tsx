@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppKit } from '@reown/appkit/react';
 import { Wallet } from 'lucide-react';
 
-const WalletRequired: React.FC = () => {
+export function WalletRequired() {
   const navigate = useNavigate();
+  const { open } = useAppKit();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center px-4">
@@ -21,23 +23,21 @@ const WalletRequired: React.FC = () => {
 
           <div className="space-y-4">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => open()}
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-bold py-5 px-8 rounded-2xl text-xl transition shadow-lg"
             >
-              Go to Home and Connect
+              Connect Wallet
             </button>
             
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-4 px-8 rounded-2xl transition"
             >
-              Go Back
+              Go to Home
             </button>
           </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default WalletRequired;
+}

@@ -3,37 +3,13 @@ import {
   useReadContracts,
   useWriteContract,
   useWaitForTransactionReceipt,
-  type UseReadContractReturnType,
 } from 'wagmi';
 import PersonalFundABI from '@/abis/PersonalFund.json';
-
-export interface PersonalFundData {
-  initialized?: boolean;
-  owner?: `0x${string}`;
-  treasury?: `0x${string}`;
-  admin?: `0x${string}`;
-  balance?: bigint;
-  fundInfo?: {
-    owner: `0x${string}`;
-    principal: bigint;
-    monthlyDeposit: bigint;
-    retirementAge: bigint;
-    totalDeposited: bigint;
-    totalWithdrawn: bigint;
-    retirementStarted: boolean;
-  };
-  timelockInfo?: {
-    timelockEnd: bigint;
-    remainingTime: bigint;
-    isUnlocked: boolean;
-  };
-  canStartRetirement?: boolean;
-  isEarlyRetirementApproved?: boolean;
-}
 
 export function usePersonalFund(fundAddress?: `0x${string}`) {
   const { address: userAddress } = useAccount();
   const { writeContract, data: hash, isPending } = useWriteContract();
+  
   const { data, isLoading, isError, error, refetch } = useReadContracts({
     contracts: [
       {
@@ -59,12 +35,17 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
       {
         address: fundAddress,
         abi: PersonalFundABI,
-        functionName: 'getBalance',
+        functionName: 'usdc',
       },
       {
         address: fundAddress,
         abi: PersonalFundABI,
         functionName: 'getFundInfo',
+      },
+      {
+        address: fundAddress,
+        abi: PersonalFundABI,
+        functionName: 'getDepositStats',
       },
       {
         address: fundAddress,
@@ -92,8 +73,9 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
     owner,
     treasury,
     admin,
-    balance,
+    usdc,
     fundInfo,
+    depositStats,
     timelockInfo,
     canStartRetirement,
     isEarlyRetirementApproved,
@@ -105,9 +87,19 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
         principal: fundInfo.result[1] as bigint,
         monthlyDeposit: fundInfo.result[2] as bigint,
         retirementAge: fundInfo.result[3] as bigint,
-        totalDeposited: fundInfo.result[4] as bigint,
-        totalWithdrawn: fundInfo.result[5] as bigint,
-        retirementStarted: fundInfo.result[6] as boolean,
+        totalGrossDeposited: fundInfo.result[4] as bigint,
+        totalFeesPaid: fundInfo.result[5] as bigint,
+        totalNetToOwner: fundInfo.result[6] as bigint,
+        retirementStarted: fundInfo.result[7] as boolean,
+      }
+    : undefined;
+
+  const parsedDepositStats = depositStats?.result
+    ? {
+        totalGrossDeposited: depositStats.result[0] as bigint,
+        totalFeesPaid: depositStats.result[1] as bigint,
+        totalNetToOwner: depositStats.result[2] as bigint,
+        monthlyDepositCount: depositStats.result[3] as bigint,
       }
     : undefined;
 
@@ -119,62 +111,14 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
       }
     : undefined;
 
-  const initialize = (
-    treasuryAddress: `0x${string}`,
-    adminAddress: `0x${string}`,
-    ownerAddress: `0x${string}`,
-    _principal: bigint,
-    _monthlyDeposit: bigint,
-    _currentAge: bigint,
-    _retirementAge: bigint,
-    _desiredMonthly: bigint,
-    _yearsPayments: bigint,
-    _interestRate: bigint,
-    _timelockYears: bigint,
-    value: bigint
-  ) => {
-    if (!fundAddress) throw new Error('Fund address not provided');
-
-    writeContract({
-      address: fundAddress,
-      abi: PersonalFundABI,
-      functionName: 'initialize',
-      args: [
-        treasuryAddress,
-        adminAddress,
-        ownerAddress,
-        _principal,
-        _monthlyDeposit,
-        _currentAge,
-        _retirementAge,
-        _desiredMonthly,
-        _yearsPayments,
-        _interestRate,
-        _timelockYears,
-      ],
-      value,
-    });
-  };
-
-  const deposit = (amount: bigint) => {
-    if (!fundAddress) throw new Error('Fund address not provided');
-
-    writeContract({
-      address: fundAddress,
-      abi: PersonalFundABI,
-      functionName: 'deposit',
-      value: amount,
-    });
-  };
-
-  const depositMonthly = (amount: bigint) => {
+  const depositMonthly = () => {
     if (!fundAddress) throw new Error('Fund address not provided');
 
     writeContract({
       address: fundAddress,
       abi: PersonalFundABI,
       functionName: 'depositMonthly',
-      value: amount,
+      args: [], // No recibe argumentos
     });
   };
 
@@ -185,26 +129,7 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
       address: fundAddress,
       abi: PersonalFundABI,
       functionName: 'startRetirement',
-    });
-  };
-
-  const withdrawMonthly = () => {
-    if (!fundAddress) throw new Error('Fund address not provided');
-
-    writeContract({
-      address: fundAddress,
-      abi: PersonalFundABI,
-      functionName: 'withdrawMonthly',
-    });
-  };
-
-  const emergencyWithdraw = () => {
-    if (!fundAddress) throw new Error('Fund address not provided');
-
-    writeContract({
-      address: fundAddress,
-      abi: PersonalFundABI,
-      functionName: 'emergencyWithdraw',
+      args: [],
     });
   };
 
@@ -215,6 +140,7 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
       address: fundAddress,
       abi: PersonalFundABI,
       functionName: 'approveEarlyRetirement',
+      args: [],
     });
   };
 
@@ -225,8 +151,9 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
     owner: owner?.result as `0x${string}` | undefined,
     treasury: treasury?.result as `0x${string}` | undefined,
     admin: admin?.result as `0x${string}` | undefined,
-    balance: balance?.result as bigint | undefined,
+    usdc: usdc?.result as `0x${string}` | undefined,
     fundInfo: parsedFundInfo,
+    depositStats: parsedDepositStats,
     timelockInfo: parsedTimelockInfo,
     canStartRetirement: canStartRetirement?.result as boolean | undefined,
     isEarlyRetirementApproved: isEarlyRetirementApproved?.result as boolean | undefined,
@@ -238,106 +165,9 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
     isConfirming,
     isSuccess,
     hash,
-
-    initialize,
-    deposit,
     depositMonthly,
     startRetirement,
-    withdrawMonthly,
-    emergencyWithdraw,
     approveEarlyRetirement,
     refetch,
   };
 }
-
-export const personalFundQueries = {
-  principal: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'principal' as const,
-  }),
-  
-  monthlyDeposit: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'monthlyDeposit' as const,
-  }),
-  
-  currentAge: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'currentAge' as const,
-  }),
-  
-  retirementAge: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'retirementAge' as const,
-  }),
-  
-  desiredMonthly: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'desiredMonthly' as const,
-  }),
-  
-  yearsPayments: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'yearsPayments' as const,
-  }),
-  
-  interestRate: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'interestRate' as const,
-  }),
-  
-  totalDeposited: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'totalDeposited' as const,
-  }),
-  
-  totalWithdrawn: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'totalWithdrawn' as const,
-  }),
-  
-  createdAt: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'createdAt' as const,
-  }),
-  
-  retirementStarted: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'retirementStarted' as const,
-  }),
-  
-  retirementStartTime: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'retirementStartTime' as const,
-  }),
-  
-  timelockPeriod: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'timelockPeriod' as const,
-  }),
-  
-  timelockEnd: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'timelockEnd' as const,
-  }),
-  
-  earlyRetirementApproved: (fundAddress: `0x${string}`) => ({
-    address: fundAddress,
-    abi: PersonalFundABI,
-    functionName: 'earlyRetirementApproved' as const,
-  }),
-};

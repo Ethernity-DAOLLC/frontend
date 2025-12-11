@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import {
   useAccount,
   useReadContract,
@@ -5,12 +6,16 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from 'wagmi';
+import { erc20Abi } from 'viem';
 import FactoryABI from '@/abis/PersonalFundFactory.json';
-import { parseEther } from 'viem';
+
+const USDC_ADDRESS = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' as const;
 
 export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
   const { address: userAddress } = useAccount();
   const { writeContract, data: hash, isPending } = useWriteContract();
+  
+  const [creationStep, setCreationStep] = useState<'idle' | 'approving' | 'creating'>('idle');
 
   const { data, isLoading, refetch } = useReadContracts({
     contracts: [
@@ -32,6 +37,11 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
       {
         address: factoryAddress,
         abi: FactoryABI,
+        functionName: 'usdc',
+      },
+      {
+        address: factoryAddress,
+        abi: FactoryABI,
         functionName: 'personalFundImplementation',
       },
       {
@@ -42,37 +52,7 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
       {
         address: factoryAddress,
         abi: FactoryABI,
-        functionName: 'minPrincipal',
-      },
-      {
-        address: factoryAddress,
-        abi: FactoryABI,
-        functionName: 'maxPrincipal',
-      },
-      {
-        address: factoryAddress,
-        abi: FactoryABI,
-        functionName: 'minAge',
-      },
-      {
-        address: factoryAddress,
-        abi: FactoryABI,
-        functionName: 'maxAge',
-      },
-      {
-        address: factoryAddress,
-        abi: FactoryABI,
-        functionName: 'minRetirementAge',
-      },
-      {
-        address: factoryAddress,
-        abi: FactoryABI,
-        functionName: 'minTimelockYears',
-      },
-      {
-        address: factoryAddress,
-        abi: FactoryABI,
-        functionName: 'maxTimelockYears',
+        functionName: 'getConfiguration',
       },
       {
         address: factoryAddress,
@@ -99,93 +79,96 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
     admin,
     treasury,
     token,
+    usdc,
     personalFundImplementation,
     totalFundsCreated,
-    minPrincipal,
-    maxPrincipal,
-    minAge,
-    maxAge,
-    minRetirementAge,
-    minTimelockYears,
-    maxTimelockYears,
+    configuration,
     userFund,
     canUserCreateFund,
     userFundCount,
   ] = data || [];
 
-  const useGetFundOwner = (fundAddress: `0x${string}`) => {
-    return useReadContract({
-      address: factoryAddress,
-      abi: FactoryABI,
-      functionName: 'getFundOwner',
-      args: [fundAddress],
-    });
-  };
-
-  const useGetAllFunds = () => {
-    return useReadContract({
-      address: factoryAddress,
-      abi: FactoryABI,
-      functionName: 'getAllFunds',
-    });
-  };
-
-  const useGetFundCount = () => {
-    return useReadContract({
-      address: factoryAddress,
-      abi: FactoryABI,
-      functionName: 'getFundCount',
-    });
-  };
-
-const createPersonalFund = (params: {
-  principal: bigint;
-  monthlyDeposit: bigint;
-  currentAge: number;
-  retirementAge: number;
-  desiredMonthly: bigint;
-  yearsPayments: number;
-  interestRate: number;
-  timelockYears: number;
-}) => {
-  console.log('Creating fund with params:', {
-    principal: params.principal.toString(),
-    monthlyDeposit: params.monthlyDeposit.toString(),
-    currentAge: params.currentAge,
-    retirementAge: params.retirementAge,
-    desiredMonthly: params.desiredMonthly.toString(),
-    yearsPayments: params.yearsPayments,
-    interestRate: params.interestRate,
-    timelockYears: params.timelockYears,
-    value: params.principal.toString(),
+  const { data: usdcBalance } = useReadContract({
+    address: USDC_ADDRESS,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: userAddress ? [userAddress] : undefined,
+    query: { enabled: !!userAddress },
   });
 
-  writeContract({
-    address: factoryAddress,
-    abi: FactoryABI,
-    functionName: 'createPersonalFund',
-    args: [
-      params.principal,
-      params.monthlyDeposit,
-      BigInt(params.currentAge),
-      BigInt(params.retirementAge),  
-      params.desiredMonthly,        
-      BigInt(params.yearsPayments),  
-      BigInt(params.interestRate),   
-      BigInt(params.timelockYears),  
-    ],
-    value: params.principal, 
+  const { data: usdcAllowance, refetch: refetchAllowance } = useReadContract({
+    address: USDC_ADDRESS,
+    abi: erc20Abi,
+    functionName: 'allowance',
+    args: userAddress ? [userAddress, factoryAddress] : undefined,
+    query: { enabled: !!userAddress },
   });
-};
 
-  const configure = (treasuryAddress: `0x${string}`, tokenAddress: `0x${string}`) => {
-    writeContract({
-      address: factoryAddress,
-      abi: FactoryABI,
-      functionName: 'configure',
-      args: [treasuryAddress, tokenAddress],
-    });
-  };
+  const parsedConfig = configuration?.result
+    ? {
+        minPrincipal: configuration.result[0] as bigint,
+        maxPrincipal: configuration.result[1] as bigint,
+        minMonthlyDeposit: configuration.result[2] as bigint,
+        minAge: configuration.result[3] as bigint,
+        maxAge: configuration.result[4] as bigint,
+        minRetirementAge: configuration.result[5] as bigint,
+        minTimelockYears: configuration.result[6] as bigint,
+        maxTimelockYears: configuration.result[7] as bigint,
+      }
+    : undefined;
+
+  const createPersonalFund = useCallback(
+    async (params: {
+      principal: bigint;
+      monthlyDeposit: bigint;
+      currentAge: number;
+      retirementAge: number;
+      desiredMonthly: bigint;
+      yearsPayments: number;
+      interestRate: number;
+      timelockYears: number;
+    }) => {
+      if (!userAddress) throw new Error('Wallet not connected');
+      const initialDeposit = params.principal + params.monthlyDeposit;
+
+      if (!usdcBalance || BigInt(usdcBalance) < initialDeposit) {
+        throw new Error(`Insufficient USDC balance. Need ${initialDeposit} USDC`);
+      }
+
+      if (!usdcAllowance || BigInt(usdcAllowance) < initialDeposit) {
+        setCreationStep('approving');
+        
+        writeContract({
+          address: USDC_ADDRESS,
+          abi: erc20Abi,
+          functionName: 'approve',
+          args: [factoryAddress, initialDeposit],
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await refetchAllowance();
+      }
+      setCreationStep('creating');
+
+      writeContract({
+        address: factoryAddress,
+        abi: FactoryABI,
+        functionName: 'createPersonalFund',
+        args: [
+          params.principal,
+          params.monthlyDeposit,
+          BigInt(params.currentAge),
+          BigInt(params.retirementAge),
+          params.desiredMonthly,
+          BigInt(params.yearsPayments),
+          BigInt(params.interestRate),
+          BigInt(params.timelockYears),
+        ],
+
+      });
+    },
+    [userAddress, usdcBalance, usdcAllowance, factoryAddress, writeContract, refetchAllowance]
+  );
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -193,30 +176,26 @@ const createPersonalFund = (params: {
     admin: admin?.result as `0x${string}` | undefined,
     treasury: treasury?.result as `0x${string}` | undefined,
     token: token?.result as `0x${string}` | undefined,
+    usdc: usdc?.result as `0x${string}` | undefined,
     personalFundImplementation: personalFundImplementation?.result as `0x${string}` | undefined,
     totalFundsCreated: totalFundsCreated?.result as bigint | undefined,
-    minPrincipal: minPrincipal?.result as bigint | undefined,
-    maxPrincipal: maxPrincipal?.result as bigint | undefined,
-    minAge: minAge?.result as bigint | undefined,
-    maxAge: maxAge?.result as bigint | undefined,
-    minRetirementAge: minRetirementAge?.result as bigint | undefined,
-    minTimelockYears: minTimelockYears?.result as bigint | undefined,
-    maxTimelockYears: maxTimelockYears?.result as bigint | undefined,
+    configuration: parsedConfig,
+
     userFund: userFund?.result as `0x${string}` | undefined,
     canUserCreateFund: canUserCreateFund?.result as boolean | undefined,
     userFundCount: userFundCount?.result as bigint | undefined,
+
+    usdcBalance: usdcBalance as bigint | undefined,
+    usdcAllowance: usdcAllowance as bigint | undefined,
 
     isLoading,
     isPending,
     isConfirming,
     isSuccess,
-
-    useGetFundOwner,
-    useGetAllFunds,
-    useGetFundCount,
+    creationStep,
 
     createPersonalFund,
-    configure,
     refetch,
+    refetchAllowance,
   };
 }

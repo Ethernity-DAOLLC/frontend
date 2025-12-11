@@ -1,6 +1,5 @@
 import {
   useAccount,
-  useReadContract,
   useReadContracts,
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -10,6 +9,7 @@ import TreasuryABI from '@/abis/Treasury.json';
 export function useTreasury(treasuryAddress: `0x${string}`) {
   const { address: userAddress } = useAccount();
   const { writeContract, data: hash, isPending } = useWriteContract();
+  
   const { data, isLoading, refetch } = useReadContracts({
     contracts: [
       {
@@ -30,6 +30,11 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
       {
         address: treasuryAddress,
         abi: TreasuryABI,
+        functionName: 'usdc',
+      },
+      {
+        address: treasuryAddress,
+        abi: TreasuryABI,
         functionName: 'fundCount',
       },
       {
@@ -40,7 +45,7 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
       {
         address: treasuryAddress,
         abi: TreasuryABI,
-        functionName: 'totalFeesCollected',
+        functionName: 'getTotalFeesCollected',
       },
       {
         address: treasuryAddress,
@@ -55,11 +60,6 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
       {
         address: treasuryAddress,
         abi: TreasuryABI,
-        functionName: 'getTotalDeposited',
-      },
-      {
-        address: treasuryAddress,
-        abi: TreasuryABI,
         functionName: 'isTreasuryManager',
         args: [userAddress],
       },
@@ -70,50 +70,17 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
     admin,
     governance,
     token,
+    usdc,
     fundCount,
     pendingCount,
     totalFeesCollected,
     feePercentage,
     treasuryBalance,
-    totalDeposited,
     isTreasuryManager,
   ] = data || [];
 
-  const useGetBalance = (fundAddress: `0x${string}`) => {
-    return useReadContract({
-      address: treasuryAddress,
-      abi: TreasuryABI,
-      functionName: 'getBalance',
-      args: [fundAddress],
-    });
-  };
-
-  const useGetEarlyRetirementRequest = (fundAddress: `0x${string}`) => {
-    return useReadContract({
-      address: treasuryAddress,
-      abi: TreasuryABI,
-      functionName: 'getEarlyRetirementRequest',
-      args: [fundAddress],
-    });
-  };
-
-  const useGetPendingRequests = () => {
-    return useReadContract({
-      address: treasuryAddress,
-      abi: TreasuryABI,
-      functionName: 'getPendingRequests',
-    });
-  };
-
-  const useCalculateFee = (amount: bigint) => {
-    return useReadContract({
-      address: treasuryAddress,
-      abi: TreasuryABI,
-      functionName: 'calculateFee',
-      args: [amount],
-    });
-  };
-
+  // ✅ Funciones que SÍ existen en Treasury.vy
+  
   const setGovernance = (governanceAddress: `0x${string}`) => {
     writeContract({
       address: treasuryAddress,
@@ -136,7 +103,7 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
     writeContract({
       address: treasuryAddress,
       abi: TreasuryABI,
-      functionName: 'addTreasureManager',
+      functionName: 'addTreasuryManager', // ✅ Corregido: era "addTreasureManager"
       args: [manager],
     });
   };
@@ -147,25 +114,6 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
       abi: TreasuryABI,
       functionName: 'removeTreasuryManager',
       args: [manager],
-    });
-  };
-
-  const deposit = (fundAddress: `0x${string}`, value: bigint) => {
-    writeContract({
-      address: treasuryAddress,
-      abi: TreasuryABI,
-      functionName: 'deposit',
-      args: [fundAddress],
-      value,
-    });
-  };
-
-  const withdraw = (fundAddress: `0x${string}`, amount: bigint) => {
-    writeContract({
-      address: treasuryAddress,
-      abi: TreasuryABI,
-      functionName: 'withdraw',
-      args: [fundAddress, amount],
     });
   };
 
@@ -196,16 +144,6 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
     });
   };
 
-  const collectFee = (fundAddress: `0x${string}`, feeAmount: bigint) => {
-    writeContract({
-      address: treasuryAddress,
-      abi: TreasuryABI,
-      functionName: 'collectFee',
-      args: [fundAddress],
-      value: feeAmount,
-    });
-  };
-
   const withdrawFees = (recipient: `0x${string}`, amount: bigint) => {
     writeContract({
       address: treasuryAddress,
@@ -224,7 +162,6 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
     });
   };
 
-
   const changeAdmin = (newAdmin: `0x${string}`) => {
     writeContract({
       address: treasuryAddress,
@@ -240,12 +177,12 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
     admin: admin?.result as `0x${string}` | undefined,
     governance: governance?.result as `0x${string}` | undefined,
     token: token?.result as `0x${string}` | undefined,
+    usdc: usdc?.result as `0x${string}` | undefined,
     fundCount: fundCount?.result as bigint | undefined,
     pendingCount: pendingCount?.result as bigint | undefined,
     totalFeesCollected: totalFeesCollected?.result as bigint | undefined,
     feePercentage: feePercentage?.result as bigint | undefined,
     treasuryBalance: treasuryBalance?.result as bigint | undefined,
-    totalDeposited: totalDeposited?.result as bigint | undefined,
     isTreasuryManager: isTreasuryManager?.result as boolean | undefined,
 
     isLoading,
@@ -253,21 +190,13 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
     isConfirming,
     isSuccess,
 
-    useGetBalance,
-    useGetEarlyRetirementRequest,
-    useGetPendingRequests,
-    useCalculateFee,
-
     setGovernance,
     setToken,
     addTreasuryManager,
     removeTreasuryManager,
-    deposit,
-    withdraw,
     requestEarlyRetirement,
     linkProposalToRequest,
     processEarlyRetirementVote,
-    collectFee,
     withdrawFees,
     updateFeePercentage,
     changeAdmin,
