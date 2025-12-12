@@ -1,4 +1,4 @@
 export { WalletRequired } from './WalletRequired';
-export { UnauthorizedAccess } from './UnautorizedAccess',
+export { UnauthorizedAccess } from './UnauthorizedAccess';
 export { ProtectedRoute } from './ProtectedRoute';
 

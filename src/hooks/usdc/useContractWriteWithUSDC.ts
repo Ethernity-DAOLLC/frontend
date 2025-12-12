@@ -82,6 +82,7 @@ export function useContractWriteWithUSDC({
       contractAddress,
       functionName,
       args,
+      value: '0 ETH (USDC only)',
     });
 
     setStep('executing');
@@ -93,6 +94,7 @@ export function useContractWriteWithUSDC({
         abi,
         functionName,
         args,
+        value: 0n,
       } as any);
     } catch (err) {
       console.error('❌ Transaction execution failed:', err);
@@ -125,7 +127,7 @@ export function useContractWriteWithUSDC({
   const executeAll = useCallback(async () => {
     try {
       if (requiresApproval) {
-        console.log('📋 Flow: Approval → Transaction');
+        console.log('📋 Flow: Approval → Transaction (USDC only, no ETH)');
         await executeApproval();
       } else {
         console.log('📋 Flow: Transaction only (no approval needed)');
