@@ -1,240 +1,400 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRetirementPlan } from '@/context/RetirementContext';
-import { useContractWriteWithUSDC } from '@/hooks/usdc';
-import { useAccount, useChainId } from 'wagmi';
+import { useWallet } from '@/hooks/web3/useWallet';
+import { usePersonalFundFactory } from '@/hooks/web3/usePersonalFundFactory';
+import { parseUSDC } from '@/hooks/usdc/usdcUtils';
+import { formatCurrency, formatYears } from '@/lib';
 import {
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-  ArrowLeft,
   Wallet,
+  Shield,
+  DollarSign,
+  Calendar,
+  TrendingUp,
+  Percent,
+  Lock,
+  AlertCircle,
+  CheckCircle,
+  ArrowRight,
+  ArrowLeft,
   Sparkles,
+  Clock,
+  Info,
 } from 'lucide-react';
 
-const PERSONALFUNDFACTORY_ADDRESS = import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`;
-const EXPECTED_CHAIN_ID = 421614;
-
-import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
-
-interface FormData {
-  initialDeposit: string;
-  monthlyDeposit: string;
-  currentAge: number;
-  retirementAge: number;
-  desiredMonthlyIncome: number;
-  yearsPayments: number;
-  interestRate: number;
-  timelockYears: number;
-}
+const FACTORY_ADDRESS = import.meta.env.VITE_FACTORY_ADDRESS as `0x${string}`;
 
 const CreateContractPage: React.FC = () => {
   const navigate = useNavigate();
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
   const { planData, clearPlanData } = useRetirementPlan();
-  const [formData, setFormData] = useState<FormData | null>(null);
-  const [transactionHash, setTransactionHash] = useState<string>('');
+  const { isConnected, openModal } = useWallet();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string>('');
 
+  const {
+    createPersonalFund,
+    isPending,
+    isConfirming,
+    isSuccess,
+    hash,
+    creationStep,
+    usdcBalance,
+    usdcAllowance,
+    configuration,
+    refetch,
+  } = usePersonalFundFactory(FACTORY_ADDRESS);
+
+  // Redirect si no hay plan data
   useEffect(() => {
-    if (!planData || !isConnected) {
+    if (!planData) {
       navigate('/calculator', { replace: true });
-    } else {
-      setFormData(planData);
     }
-  }, [planData, isConnected, navigate]);
+  }, [planData, navigate]);
 
-  const parseUSDC = (value: string | number): bigint => {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(num) || num < 0) {
-      console.error('Invalid USDC value:', value);
-      return BigInt(0);
+  // Redirect a success page cuando la transacción es exitosa
+  useEffect(() => {
+    if (isSuccess && hash) {
+      setTimeout(() => {
+        navigate('/contract-created', {
+          state: {
+            txHash: hash,
+            initialDeposit: planData?.initialDeposit || '0',
+          },
+        });
+        clearPlanData();
+      }, 2000);
     }
-    return BigInt(Math.round(num * 1_000_000));
+  }, [isSuccess, hash, navigate, planData, clearPlanData]);
+
+  if (!planData) {
+    return null;
+  }
+
+  const initialDepositAmount = parseUSDC(planData.initialDeposit);
+  const monthlyDepositAmount = parseUSDC(planData.monthlyDeposit);
+  const principal = initialDepositAmount - monthlyDepositAmount;
+
+  const handleConnectWallet = () => {
+    openModal();
   };
 
-  const formatNumber = (num: string | number) =>
-    new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(num));
+  const handleCreateContract = async () => {
+    if (!isConnected) {
+      setError('Please connect your wallet first');
+      return;
+    }
 
-  const args = formData ? [
-    parseUSDC(formData.initialDeposit), 
-    parseUSDC(formData.monthlyDeposit),
-    BigInt(formData.currentAge),        
-    BigInt(formData.retirementAge),       
-    parseUSDC(formData.desiredMonthlyIncome.toString()),
-    BigInt(formData.yearsPayments),          
-    BigInt(Math.round(formData.interestRate * 100)),
-    BigInt(formData.timelockYears),                  
-  ] : [];
+    setError('');
+    setIsProcessing(true);
 
-  if (formData && import.meta.env.DEV) {
-    console.log('📋 Contract Arguments:', {
-      initialDeposit: `${formData.initialDeposit} → ${args[0]?.toString()}`,
-      monthlyDeposit: `${formData.monthlyDeposit} → ${args[1]?.toString()}`,
-      currentAge: `${formData.currentAge} → ${args[2]?.toString()}`,
-      retirementAge: `${formData.retirementAge} → ${args[3]?.toString()}`,
-      desiredMonthly: `${formData.desiredMonthlyIncome} → ${args[4]?.toString()}`,
-      yearsPayments: `${formData.yearsPayments} → ${args[5]?.toString()}`,
-      interestRate: `${formData.interestRate}% → ${args[6]?.toString()}`,
-      timelockYears: `${formData.timelockYears} → ${args[7]?.toString()}`,
-    });
-  }
-
-  const handleSuccess = (hash: `0x${string}`) => {
-    setTransactionHash(hash);
-    clearPlanData();
-    navigate('/contract-created', {
-      state: {
-        txHash: hash,
-        initialDeposit: formData?.initialDeposit || '0'
-      }
-    });
+    try {
+      await createPersonalFund({
+        principal,
+        monthlyDeposit: monthlyDepositAmount,
+        currentAge: planData.currentAge,
+        retirementAge: planData.retirementAge,
+        desiredMonthly: parseUSDC(planData.desiredMonthlyIncome.toString()),
+        yearsPayments: planData.yearsPayments,
+        interestRate: Math.round(planData.interestRate * 100),
+        timelockYears: planData.timelockYears,
+      });
+    } catch (err: any) {
+      console.error('Error creating fund:', err);
+      setError(err.message || 'Failed to create retirement fund');
+      setIsProcessing(false);
+    }
   };
 
-  const { executeAll, isLoading, isApproving, isSuccess, error, txHash } =
-    useContractWriteWithUSDC({
-      contractAddress: PERSONALFUNDFACTORY_ADDRESS,
-      abi: PersonalFundFactoryABI,
-      functionName: 'createPersonalFund',
-      args,
-      usdcAmount: formData?.initialDeposit || '0',
-      enabled: !!address && !!formData,
-      onTransactionSuccess: handleSuccess,
-    });
+  const feeAmount = (parseFloat(planData.initialDeposit) * 0.03).toFixed(2);
+  const netToOwner = (parseFloat(planData.initialDeposit) * 0.97).toFixed(2);
 
-  if (chainId !== EXPECTED_CHAIN_ID) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-12 text-center max-w-lg border border-red-200">
-          <AlertCircle className="w-24 h-24 text-red-600 mx-auto mb-6 animate-pulse" />
-          <h1 className="text-4xl font-black text-red-700 mb-4">Wrong Network</h1>
-          <p className="text-xl text-gray-700 mb-8">
-            Please switch to <strong>Arbitrum Sepolia</strong> to create your fund.
-          </p>
-          <button
-            onClick={() => navigate('/calculator')}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-5 px-10 rounded-2xl text-xl transition"
-          >
-            Back to Calculator
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const hasEnoughBalance = usdcBalance && usdcBalance >= initialDepositAmount;
+  const hasEnoughAllowance = usdcAllowance && usdcAllowance >= initialDepositAmount;
 
-  if (!formData) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading plan data...</p>
-        </div>
-      </div>
-    );
-  }
+  const getStepMessage = () => {
+    if (creationStep === 'approving') return 'Approving USDC...';
+    if (creationStep === 'creating') return 'Creating your retirement fund...';
+    if (isConfirming) return 'Confirming transaction...';
+    if (isSuccess) return 'Success! Redirecting...';
+    return '';
+  };
 
-  const totalFee = Number(formData.initialDeposit) * 0.03;
-  const netToFund = Number(formData.initialDeposit) * 0.97;
+  const canCreate = isConnected && hasEnoughBalance && !isProcessing && !isPending;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8 sm:py-12 px-4">
       <div className="max-w-5xl mx-auto">
-        <button
-          onClick={() => navigate('/calculator')}
-          className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition"
-        >
-          <ArrowLeft size={22} />
-          Back to Calculator
-        </button>
+        {/* Header */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-800 mb-4 flex items-center justify-center gap-3 sm:gap-4">
+            <Shield className="text-indigo-600" size={40} />
+            <span className="hidden sm:inline">Create Your Retirement Fund</span>
+            <span className="sm:hidden">Create Fund</span>
+          </h1>
+          <p className="text-base sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
+            Review your plan details and create your smart contract on Arbitrum Sepolia
+          </p>
+        </div>
 
-        <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-purple-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-10 text-white">
-            <h1 className="text-4xl md:text-5xl font-black flex items-center gap-4">
-              <Sparkles size={56} />
-              Confirm Your Fund Creation
-            </h1>
-            <p className="mt-4 text-xl opacity-90">
-              Review the details and create your smart contract for retirement on blockchain
-            </p>
-          </div>
-
-          <div className="p-10 space-y-10">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">Plan Parameters</h2>
-              <div className="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-2xl p-8">
-                {[
-                  { label: 'Current age', value: `${formData.currentAge} years` },
-                  { label: 'Retirement age', value: `${formData.retirementAge} years` },
-                  { label: 'Initial savings', value: `$${formatNumber(formData.initialDeposit)}` },
-                  { label: 'Monthly savings', value: `$${formatNumber(formData.monthlyDeposit)}` },
-                  { label: 'Desired monthly income', value: `$${formatNumber(formData.desiredMonthlyIncome)}` },
-                  { label: 'Payment years', value: `${formData.yearsPayments} years` },
-                  { label: 'Annual interest rate', value: `${formData.interestRate}%` },
-                  { label: 'Timelock (lock period)', value: `${formData.timelockYears} years` },
-                ].map((item) => (
-                  <div key={item.label} className="flex justify-between py-3 border-b border-gray-200 last:border-0">
-                    <span className="text-gray-600 font-medium">{item.label}:</span>
-                    <strong className="text-gray-800">{item.value}</strong>
-                  </div>
-                ))}
+        {/* Error Message */}
+        {error && (
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-start gap-3">
+              <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+              <div>
+                <h3 className="font-semibold text-red-800 mb-1">Error</h3>
+                <p className="text-red-700 text-sm">{error}</p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Processing Status */}
+        {(isPending || isConfirming || isSuccess) && (
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 flex items-start gap-3">
+              {isSuccess ? (
+                <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
+              ) : (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 flex-shrink-0 mt-0.5"></div>
+              )}
+              <div>
+                <h3 className="font-semibold text-blue-800 mb-1">
+                  {isSuccess ? 'Success!' : 'Processing...'}
+                </h3>
+                <p className="text-blue-700 text-sm">{getStepMessage()}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
+          {/* Plan Details */}
+          <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 sm:p-8 border border-purple-100">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <Sparkles className="text-purple-600" />
+              Your Plan Details
+            </h2>
 
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-3xl p-8 border-2 border-emerald-200">
-                <h3 className="text-2xl font-bold text-emerald-800 mb-6">
-                  Initial Deposit Summary
-                </h3>
-                <div className="space-y-5 text-lg">
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Total to deposit today:</span>
-                    <strong className="text-3xl font-black text-emerald-700">
-                      ${formatNumber(formData.initialDeposit)}
-                    </strong>
+              <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-6 border-2 border-emerald-200">
+                <p className="text-gray-600 text-sm mb-1 flex items-center gap-2">
+                  <DollarSign size={16} />
+                  Initial Deposit (Principal + First Monthly)
+                </p>
+                <p className="text-4xl font-black text-emerald-700">
+                  {formatCurrency(parseFloat(planData.initialDeposit))}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
+                    <DollarSign size={14} />
+                    Monthly Deposit
+                  </p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {formatCurrency(parseFloat(planData.monthlyDeposit))}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
+                    <Calendar size={14} />
+                    Current Age
+                  </p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {planData.currentAge} years
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
+                    <Calendar size={14} />
+                    Retirement Age
+                  </p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {planData.retirementAge} years
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
+                    <TrendingUp size={14} />
+                    Years to Retire
+                  </p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {planData.retirementAge - planData.currentAge} years
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
+                    <DollarSign size={14} />
+                    Desired Monthly
+                  </p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {formatCurrency(planData.desiredMonthlyIncome)}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
+                    <Clock size={14} />
+                    Payment Years
+                  </p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {formatYears(planData.yearsPayments)}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
+                    <Percent size={14} />
+                    Interest Rate
+                  </p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {planData.interestRate}%
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
+                    <Lock size={14} />
+                    Timelock
+                  </p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {formatYears(planData.timelockYears)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Fee Breakdown & Actions */}
+          <div className="space-y-6">
+            {/* Fee Breakdown */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-bold text-blue-800 mb-4 flex items-center gap-3">
+                <Info className="w-6 h-6" />
+                Fee Breakdown
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-white rounded-2xl p-4 shadow">
+                  <p className="text-gray-600 text-sm">Total Deposit</p>
+                  <p className="text-3xl font-black text-gray-800">
+                    {formatCurrency(parseFloat(planData.initialDeposit))}
+                  </p>
+                </div>
+                <div className="bg-white rounded-2xl p-4 shadow">
+                  <p className="text-gray-600 text-sm">Ethernity DAO Fee (3%)</p>
+                  <p className="text-3xl font-black text-orange-600">
+                    {formatCurrency(parseFloat(feeAmount))}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Goes to Treasury</p>
+                </div>
+                <div className="bg-white rounded-2xl p-4 shadow">
+                  <p className="text-gray-600 text-sm">Net to Your Fund (97%)</p>
+                  <p className="text-3xl font-black text-green-600">
+                    {formatCurrency(parseFloat(netToOwner))}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">For DeFi Investment</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Balance Check */}
+            {isConnected && (
+              <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 border border-purple-100">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Your Balance</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">USDC Balance:</span>
+                    <span className="font-bold text-gray-800">
+                      {usdcBalance ? formatCurrency(parseFloat((Number(usdcBalance) / 1e6).toFixed(2))) : 'Loading...'}
+                    </span>
                   </div>
-                  <div className="flex justify-between text-orange-600">
-                    <span>Ethernity DAO Fee (3%):</span>
-                    <strong>${formatNumber(totalFee)}</strong>
-                  </div>
-                  <div className="flex justify-between text-emerald-700 text-2xl font-bold pt-4 border-t-2 border-emerald-200">
-                    <span>Net to your fund (97%):</span>
-                    <strong>${formatNumber(netToFund)}</strong>
+                  <div className="flex items-center gap-2">
+                    {hasEnoughBalance ? (
+                      <CheckCircle className="text-green-600" size={20} />
+                    ) : (
+                      <AlertCircle className="text-red-600" size={20} />
+                    )}
+                    <span className={hasEnoughBalance ? 'text-green-700' : 'text-red-700'}>
+                      {hasEnoughBalance ? 'Sufficient balance' : 'Insufficient balance'}
+                    </span>
                   </div>
                 </div>
               </div>
+            )}
 
-              {error && (
-                <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
-                  <p className="text-red-700 font-bold">
-                    Error: {(error as any)?.shortMessage || error?.message || 'Transaction failed'}
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* Action Buttons */}
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-3xl shadow-2xl p-6 sm:p-8 text-white">
+              <h2 className="text-2xl sm:text-3xl font-black mb-4">
+                {isConnected ? 'Ready to Create' : 'Connect Your Wallet'}
+              </h2>
+              <p className="text-sm sm:text-base mb-6 opacity-90">
+                {isConnected
+                  ? 'Your smart contract will be created on Arbitrum Sepolia'
+                  : 'Connect your wallet to create your retirement fund'}
+              </p>
 
-            <div className="mt-12 text-center">
-              <button
-                onClick={() => executeAll()}
-                disabled={isLoading || isSuccess}
-                className="bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-black text-3xl px-20 py-8 rounded-3xl shadow-2xl transition-all transform hover:scale-105 disabled:scale-100 flex items-center justify-center gap-6 mx-auto"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin" size={56} />
-                    {isApproving ? 'Approving USDC...' : 'Creating your fund...'}
-                  </>
-                ) : isSuccess ? (
-                  <>
-                    <CheckCircle size={56} />
-                    Fund Created!
-                  </>
+              <div className="space-y-4">
+                {!isConnected ? (
+                  <button
+                    onClick={handleConnectWallet}
+                    className="w-full bg-white text-indigo-700 hover:bg-gray-100 px-6 py-4 rounded-2xl font-black text-lg transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-3"
+                  >
+                    <Wallet size={24} />
+                    Connect Wallet
+                  </button>
                 ) : (
-                  <>
-                    <Wallet size={56} />
-                    Create My Contract on Blockchain
-                  </>
+                  <button
+                    onClick={handleCreateContract}
+                    disabled={!canCreate}
+                    className="w-full bg-white text-indigo-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-black text-lg transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-3"
+                  >
+                    {isPending || isConfirming ? (
+                      <>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-700"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Shield size={24} />
+                        Create My Fund
+                        <ArrowRight size={24} />
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
+
+                <button
+                  onClick={() => navigate('/calculator')}
+                  disabled={isPending || isConfirming}
+                  className="w-full bg-white/20 hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
+                >
+                  <ArrowLeft size={20} />
+                  Back to Calculator
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Info Box */}
+        <div className="mt-8 max-w-4xl mx-auto bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
+          <div className="flex items-start gap-4">
+            <Info className="text-blue-600 flex-shrink-0 mt-1" size={24} />
+            <div>
+              <h4 className="font-bold text-blue-900 mb-2">Important Information</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Your fund will be created as a smart contract on Arbitrum Sepolia</li>
+                <li>• 3% fee goes to Ethernity DAO Treasury for protocol maintenance</li>
+                <li>• 97% of your deposit is returned to you for DeFi investment</li>
+                <li>• You retain full control of your funds through the smart contract</li>
+                <li>• The timelock ensures funds are secured until retirement age</li>
+              </ul>
             </div>
           </div>
         </div>
