@@ -11,12 +11,57 @@ import FactoryABI from '@/abis/PersonalFundFactory.json';
 
 const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS as `0x${string}`;
 
-export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
+interface CreateParams {
+  principal: bigint;
+  monthlyDeposit: bigint;
+  currentAge: number;
+  retirementAge: number;
+  desiredMonthly: bigint;
+  yearsPayments: number;
+  interestRate: number;
+  timelockYears: number;
+}
+
+interface FactoryConfiguration {
+  minPrincipal: bigint;
+  maxPrincipal: bigint;
+  minMonthlyDeposit: bigint;
+  maxMonthlyDeposit: bigint;
+  minInterestRate: bigint;
+  maxInterestRate: bigint;
+  minTimelockYears: bigint;
+  maxTimelockYears: bigint;
+}
+
+interface UsePersonalFundFactoryReturn {
+  admin: `0x${string}` | undefined;
+  treasury: `0x${string}` | undefined;
+  token: `0x${string}` | undefined;
+  usdc: `0x${string}` | undefined;
+  personalFundImplementation: `0x${string}` | undefined;
+  totalFundsCreated: bigint | undefined;
+  configuration: FactoryConfiguration | undefined;
+  userFund: `0x${string}` | undefined;
+  canUserCreateFund: boolean | undefined;
+  userFundCount: bigint | undefined;
+  usdcBalance: bigint | undefined;
+  usdcAllowance: bigint | undefined;
+  isLoading: boolean;
+  isPending: boolean;
+  isConfirming: boolean;
+  isSuccess: boolean;
+  creationStep: 'idle' | 'approving' | 'creating';
+  hash: `0x${string}` | undefined;
+
+  createPersonalFund: (params: CreateParams) => void;
+  refetch: () => void;
+  refetchAllowance: () => void;
+}
+
+export function usePersonalFundFactory(factoryAddress: `0x${string}`): UsePersonalFundFactoryReturn {
   const { address: userAddress } = useAccount();
   const { writeContract, data: hash, isPending } = useWriteContract();
-  
   const [creationStep, setCreationStep] = useState<'idle' | 'approving' | 'creating'>('idle');
-
   const { data, isLoading, refetch } = useReadContracts({
     contracts: [
       {
@@ -52,7 +97,7 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
       {
         address: factoryAddress,
         abi: FactoryABI,
-        functionName: 'getConfiguration',
+        functionName: 'configuration',
       },
       {
         address: factoryAddress,
@@ -69,8 +114,20 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
       {
         address: factoryAddress,
         abi: FactoryABI,
-        functionName: 'getUserFundCount',
+        functionName: 'userFundCount',
         args: [userAddress],
+      },
+      {
+        address: USDC_ADDRESS,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [userAddress],
+      },
+      {
+        address: USDC_ADDRESS,
+        abi: erc20Abi,
+        functionName: 'allowance',
+        args: [userAddress, factoryAddress],
       },
     ],
   });
@@ -82,94 +139,57 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
     usdc,
     personalFundImplementation,
     totalFundsCreated,
-    configuration,
+    config,
     userFund,
     canUserCreateFund,
     userFundCount,
+    usdcBalanceData,
+    usdcAllowanceData,
   ] = data || [];
 
-  const { data: usdcBalance } = useReadContract({
-    address: USDC_ADDRESS,
-    abi: erc20Abi,
-    functionName: 'balanceOf',
-    args: userAddress ? [userAddress] : undefined,
-    query: { enabled: !!userAddress },
-  });
-
-  const { data: usdcAllowance, refetch: refetchAllowance } = useReadContract({
-    address: USDC_ADDRESS,
-    abi: erc20Abi,
-    functionName: 'allowance',
-    args: userAddress ? [userAddress, factoryAddress] : undefined,
-    query: { enabled: !!userAddress },
-  });
-
-  const parsedConfig = configuration?.result
+  const parsedConfig = config?.result
     ? {
-        minPrincipal: configuration.result[0] as bigint,
-        maxPrincipal: configuration.result[1] as bigint,
-        minMonthlyDeposit: configuration.result[2] as bigint,
-        minAge: configuration.result[3] as bigint,
-        maxAge: configuration.result[4] as bigint,
-        minRetirementAge: configuration.result[5] as bigint,
-        minTimelockYears: configuration.result[6] as bigint,
-        maxTimelockYears: configuration.result[7] as bigint,
+        minPrincipal: config.result[0] as bigint,
+        maxPrincipal: config.result[1] as bigint,
+        minMonthlyDeposit: config.result[2] as bigint,
+        maxMonthlyDeposit: config.result[3] as bigint,
+        minInterestRate: config.result[4] as bigint,
+        maxInterestRate: config.result[5] as bigint,
+        minTimelockYears: config.result[6] as bigint,
+        maxTimelockYears: config.result[7] as bigint,
       }
     : undefined;
 
-  const createPersonalFund = useCallback(
-    async (params: {
-      principal: bigint;
-      monthlyDeposit: bigint;
-      currentAge: number;
-      retirementAge: number;
-      desiredMonthly: bigint;
-      yearsPayments: number;
-      interestRate: number;
-      timelockYears: number;
-    }) => {
-      if (!userAddress) throw new Error('Wallet not connected');
-      const initialDeposit = params.principal + params.monthlyDeposit;
+  const usdcBalance = usdcBalanceData?.result as bigint | undefined;
+  const usdcAllowance = usdcAllowanceData?.result as bigint | undefined;
 
-      if (!usdcBalance || BigInt(usdcBalance) < initialDeposit) {
-        throw new Error(`Insufficient USDC balance. Need ${initialDeposit} USDC`);
-      }
+  const refetchAllowance = async () => {
+    await refetch();
+  };
 
-      if (!usdcAllowance || BigInt(usdcAllowance) < initialDeposit) {
-        setCreationStep('approving');
-        
-        writeContract({
-          address: USDC_ADDRESS,
-          abi: erc20Abi,
-          functionName: 'approve',
-          args: [factoryAddress, initialDeposit],
-          value: 0n,
-        });
+  const createPersonalFund = useCallback(async (params: CreateParams) => {
+    if (!userAddress) return;
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        await refetchAllowance();
-      }
-      setCreationStep('creating');
+    setCreationStep('approving');
 
-      writeContract({
-        address: factoryAddress,
-        abi: FactoryABI,
-        functionName: 'createPersonalFund',
-        args: [
-          params.principal,
-          params.monthlyDeposit,
-          BigInt(params.currentAge),
-          BigInt(params.retirementAge),
-          params.desiredMonthly,
-          BigInt(params.yearsPayments),
-          BigInt(params.interestRate),
-          BigInt(params.timelockYears),
-        ],
-        value: 0n,
-      });
-    },
-    [userAddress, usdcBalance, usdcAllowance, factoryAddress, writeContract, refetchAllowance]
-  );
+    setCreationStep('creating');
+    writeContract({
+      address: factoryAddress,
+      abi: FactoryABI,
+      functionName: 'createPersonalFund',
+      args: [
+        params.principal,
+        params.monthlyDeposit,
+        BigInt(params.currentAge),
+        BigInt(params.retirementAge),
+        params.desiredMonthly,
+        BigInt(params.yearsPayments),
+        BigInt(params.interestRate),
+        BigInt(params.timelockYears),
+      ],
+      value: 0n,
+    });
+  }, [userAddress, usdcBalance, usdcAllowance, factoryAddress, writeContract, refetchAllowance]);
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -184,9 +204,8 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
     userFund: userFund?.result as `0x${string}` | undefined,
     canUserCreateFund: canUserCreateFund?.result as boolean | undefined,
     userFundCount: userFundCount?.result as bigint | undefined,
-    usdcBalance: usdcBalance as bigint | undefined,
-    usdcAllowance: usdcAllowance as bigint | undefined,
-
+    usdcBalance,
+    usdcAllowance,
     isLoading,
     isPending,
     isConfirming,
@@ -195,5 +214,6 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
     createPersonalFund,
     refetch,
     refetchAllowance,
+    hash,
   };
 }

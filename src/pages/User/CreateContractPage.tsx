@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useWallet } from '@/hooks/web3/useWallet';
-import { usePersonalFundFactory } from '@/hooks/web3/usePersonalFundFactory';
+import { usePersonalFundFactory } from '@/hooks/funds/usePersonalFundFactory';
 import { parseUSDC } from '@/hooks/usdc/usdcUtils';
 import { formatCurrency, formatYears } from '@/lib';
 import {
@@ -44,14 +44,12 @@ const CreateContractPage: React.FC = () => {
     refetch,
   } = usePersonalFundFactory(FACTORY_ADDRESS);
 
-  // Redirect si no hay plan data
   useEffect(() => {
     if (!planData) {
       navigate('/calculator', { replace: true });
     }
   }, [planData, navigate]);
 
-  // Redirect a success page cuando la transacción es exitosa
   useEffect(() => {
     if (isSuccess && hash) {
       setTimeout(() => {
@@ -69,11 +67,9 @@ const CreateContractPage: React.FC = () => {
   if (!planData) {
     return null;
   }
-
   const initialDepositAmount = parseUSDC(planData.initialDeposit);
   const monthlyDepositAmount = parseUSDC(planData.monthlyDeposit);
   const principal = initialDepositAmount - monthlyDepositAmount;
-
   const handleConnectWallet = () => {
     openModal();
   };
@@ -83,7 +79,6 @@ const CreateContractPage: React.FC = () => {
       setError('Please connect your wallet first');
       return;
     }
-
     setError('');
     setIsProcessing(true);
 
@@ -104,10 +99,8 @@ const CreateContractPage: React.FC = () => {
       setIsProcessing(false);
     }
   };
-
   const feeAmount = (parseFloat(planData.initialDeposit) * 0.03).toFixed(2);
   const netToOwner = (parseFloat(planData.initialDeposit) * 0.97).toFixed(2);
-
   const hasEnoughBalance = usdcBalance && usdcBalance >= initialDepositAmount;
   const hasEnoughAllowance = usdcAllowance && usdcAllowance >= initialDepositAmount;
 
