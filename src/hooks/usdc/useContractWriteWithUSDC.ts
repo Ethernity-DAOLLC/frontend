@@ -94,7 +94,7 @@ export function useContractWriteWithUSDC({
         abi,
         functionName,
         args,
-        value: 0n,
+        value: 0n, // CRÍTICO: No enviar ETH, solo USDC mediante approve/transferFrom
       } as any);
     } catch (err) {
       console.error('❌ Transaction execution failed:', err);

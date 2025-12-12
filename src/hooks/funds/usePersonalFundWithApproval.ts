@@ -99,7 +99,6 @@ export function usePersonalFundWithApproval({
       : depositType === 'extra' 
         ? 'depositExtra' 
         : 'deposit';
-
     const args = depositType === 'monthly' ? [] : [pendingAmount];
 
     writeDeposit({
@@ -107,6 +106,7 @@ export function usePersonalFundWithApproval({
       abi: PersonalFundABI,
       functionName,
       args,
+      value: 0n,
     });
   }, [fundAddress, pendingAmount, depositType, writeDeposit]);
 
@@ -128,6 +128,7 @@ export function usePersonalFundWithApproval({
         abi: erc20Abi,
         functionName: 'approve',
         args: [fundAddress, amountWei],
+        value: 0n,
       });
     } else {
       setStep('depositing');
@@ -136,6 +137,7 @@ export function usePersonalFundWithApproval({
         abi: PersonalFundABI,
         functionName: 'deposit',
         args: [amountWei],
+        value: 0n,
       });
     }
   }, [fundAddress, userAddress, currentAllowance, writeApprove, writeDeposit]);
@@ -157,6 +159,7 @@ export function usePersonalFundWithApproval({
         abi: erc20Abi,
         functionName: 'approve',
         args: [fundAddress, monthlyAmount],
+        value: 0n,
       });
     } else {
       setStep('depositing');
@@ -164,6 +167,7 @@ export function usePersonalFundWithApproval({
         address: fundAddress,
         abi: PersonalFundABI,
         functionName: 'depositMonthly',
+        value: 0n,
       });
     }
   }, [fundAddress, userAddress, currentAllowance, writeApprove, writeDeposit]);
@@ -186,6 +190,7 @@ export function usePersonalFundWithApproval({
         abi: erc20Abi,
         functionName: 'approve',
         args: [fundAddress, amountWei],
+        value: 0n,
       });
     } else {
       setStep('depositing');
@@ -194,6 +199,7 @@ export function usePersonalFundWithApproval({
         abi: PersonalFundABI,
         functionName: 'depositExtra',
         args: [amountWei],
+        value: 0n,
       });
     }
   }, [fundAddress, userAddress, currentAllowance, writeApprove, writeDeposit]);
@@ -209,6 +215,7 @@ export function usePersonalFundWithApproval({
       abi: erc20Abi,
       functionName: 'approve',
       args: [fundAddress, maxUint256],
+      value: 0n,
     });
   }, [fundAddress, writeApprove]);
 
@@ -224,7 +231,6 @@ export function usePersonalFundWithApproval({
   const isProcessing = step === 'approving' || step === 'depositing';
   const isPending = isApprovePending || isDepositPending;
   const isConfirming = isApproveConfirming || isDepositConfirming;
-
   const stepMessage: Record<TransactionStep, string> = {
     idle: '',
     approving: 'Approving USDC...',

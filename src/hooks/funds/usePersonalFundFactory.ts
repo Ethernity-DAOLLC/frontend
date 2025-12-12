@@ -9,7 +9,7 @@ import {
 import { erc20Abi } from 'viem';
 import FactoryABI from '@/abis/PersonalFundFactory.json';
 
-const USDC_ADDRESS = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' as const;
+const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS as `0x${string}`;
 
 export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
   const { address: userAddress } = useAccount();
@@ -143,6 +143,7 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
           abi: erc20Abi,
           functionName: 'approve',
           args: [factoryAddress, initialDeposit],
+          value: 0n,
         });
 
         await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -164,7 +165,7 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
           BigInt(params.interestRate),
           BigInt(params.timelockYears),
         ],
-
+        value: 0n,
       });
     },
     [userAddress, usdcBalance, usdcAllowance, factoryAddress, writeContract, refetchAllowance]
@@ -180,11 +181,9 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
     personalFundImplementation: personalFundImplementation?.result as `0x${string}` | undefined,
     totalFundsCreated: totalFundsCreated?.result as bigint | undefined,
     configuration: parsedConfig,
-
     userFund: userFund?.result as `0x${string}` | undefined,
     canUserCreateFund: canUserCreateFund?.result as boolean | undefined,
     userFundCount: userFundCount?.result as bigint | undefined,
-
     usdcBalance: usdcBalance as bigint | undefined,
     usdcAllowance: usdcAllowance as bigint | undefined,
 
@@ -193,7 +192,6 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`) {
     isConfirming,
     isSuccess,
     creationStep,
-
     createPersonalFund,
     refetch,
     refetchAllowance,
