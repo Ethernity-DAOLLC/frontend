@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useWallet } from '@/hooks/web3/useWallet';
 import { formatCurrency, formatYears } from '@/lib';
-import { BetaFaucet } from '@/components/web3/BetaFaucet';
+import { BetaFaucet } from '@/components/beta/BetaFaucet.sol';
 import {
   Calculator,
   TrendingUp,
