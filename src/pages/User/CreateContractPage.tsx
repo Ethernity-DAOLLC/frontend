@@ -67,9 +67,11 @@ const CreateContractPage: React.FC = () => {
   if (!planData) {
     return null;
   }
+  
   const initialDepositAmount = parseUSDC(planData.initialDeposit);
   const monthlyDepositAmount = parseUSDC(planData.monthlyDeposit);
   const principal = initialDepositAmount - monthlyDepositAmount;
+  
   const handleConnectWallet = () => {
     openModal();
   };
@@ -99,6 +101,7 @@ const CreateContractPage: React.FC = () => {
       setIsProcessing(false);
     }
   };
+  
   const feeAmount = (parseFloat(planData.initialDeposit) * 0.03).toFixed(2);
   const netToOwner = (parseFloat(planData.initialDeposit) * 0.97).toFixed(2);
   const hasEnoughBalance = usdcBalance && usdcBalance >= initialDepositAmount;
@@ -297,29 +300,74 @@ const CreateContractPage: React.FC = () => {
             </div>
 
             {/* Balance Check */}
-            {isConnected && (
-              <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 border border-purple-100">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Your Balance</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">USDC Balance:</span>
-                    <span className="font-bold text-gray-800">
-                      {usdcBalance ? formatCurrency(parseFloat((Number(usdcBalance) / 1e6).toFixed(2))) : 'Loading...'}
-                    </span>
+            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 border border-purple-100">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <Wallet className="text-indigo-600" size={24} />
+                Wallet Balance
+              </h3>
+              
+              {!isConnected ? (
+                <div className="space-y-4">
+                  <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                    <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+                    <div>
+                      <p className="font-semibold text-amber-900 mb-1">Wallet Not Connected</p>
+                      <p className="text-sm text-amber-800">Please connect your wallet to check your USDC balance</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {hasEnoughBalance ? (
-                      <CheckCircle className="text-green-600" size={20} />
-                    ) : (
-                      <AlertCircle className="text-red-600" size={20} />
-                    )}
-                    <span className={hasEnoughBalance ? 'text-green-700' : 'text-red-700'}>
-                      {hasEnoughBalance ? 'Sufficient balance' : 'Insufficient balance'}
-                    </span>
-                  </div>
+                  <button
+                    onClick={handleConnectWallet}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
+                  >
+                    <Wallet size={20} />
+                    Connect Wallet
+                  </button>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-gray-600 text-sm">Your USDC Balance:</span>
+                      <span className="font-bold text-gray-800 text-lg">
+                        {usdcBalance !== undefined 
+                          ? formatCurrency(parseFloat((Number(usdcBalance) / 1e6).toFixed(2))) 
+                          : 'Loading...'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 text-sm">Required Amount:</span>
+                      <span className="font-bold text-indigo-700 text-lg">
+                        {formatCurrency(parseFloat(planData.initialDeposit))}
+                      </span>
+                    </div>
+                  </div>
+
+                  {hasEnoughBalance ? (
+                    <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start gap-3">
+                      <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
+                      <div>
+                        <p className="font-semibold text-green-900 mb-1">Balance OK</p>
+                        <p className="text-sm text-green-800">You have sufficient USDC to create your retirement fund</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start gap-3">
+                      <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+                      <div>
+                        <p className="font-semibold text-red-900 mb-1">Insufficient Balance</p>
+                        <p className="text-sm text-red-800">
+                          Please deposit more USDC to complete the request. You need{' '}
+                          <strong>
+                            {formatCurrency(parseFloat((Number(initialDepositAmount - (usdcBalance || BigInt(0))) / 1e6).toFixed(2)))}
+                          </strong>{' '}
+                          more USDC.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Action Buttons */}
             <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-3xl shadow-2xl p-6 sm:p-8 text-white">
