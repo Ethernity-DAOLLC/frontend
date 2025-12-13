@@ -8,7 +8,6 @@ import {
   Wallet, Shield, TrendingUp, DollarSign, Calendar, Clock, 
   CheckCircle, AlertCircle, ArrowRight, RefreshCw, Sparkles 
 } from 'lucide-react';
-import { BetaFaucet } from '@/components/web3/BetaFaucet';
 
 const DashboardPage: React.FC = () => {
   const { address } = useAccount();
