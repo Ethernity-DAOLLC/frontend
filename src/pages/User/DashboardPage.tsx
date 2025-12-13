@@ -192,10 +192,6 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        <div className="max-w-4xl mx-auto">
-          <BetaFaucet />
-        </div>
       </div>
     </div>
   );

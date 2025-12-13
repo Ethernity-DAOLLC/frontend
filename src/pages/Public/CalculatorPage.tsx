@@ -497,12 +497,6 @@ const CalculatorPage: React.FC = () => {
                 </div>
               </div>
 
-              {isConnected && (
-                <div className="max-w-4xl mx-auto">
-                  <BetaFaucet />
-                </div>
-              )}
-
               <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-3xl shadow-2xl p-6 sm:p-10 text-white text-center">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 sm:mb-6">
                   {isConnected ? "Your fund is ready!" : "Last step"}
@@ -542,7 +536,7 @@ const CalculatorPage: React.FC = () => {
 
                 <p className="mt-4 sm:mt-6 text-indigo-100 text-sm sm:text-base">
                   {isConnected
-                    ? "Get test tokens first, then create your personal fund on Arbitrum Sepolia"
+                    ? "Create your personal fund on Arbitrum Sepolia"
                     : "Your wallet will open to connect"}
                 </p>
               </div>
