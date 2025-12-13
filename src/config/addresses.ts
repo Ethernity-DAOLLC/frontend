@@ -7,7 +7,9 @@ export interface ContractAddresses {
   protocolRegistry?: `0x${string}`
   userPreferences?: `0x${string}`
   dateTime?: `0x${string}`
+  mockUsdc?: `0x${string}`
 }
+
 const OFFICIAL_USDC: Record<number, `0x${string}`> = {
   // TESTNETS
   421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
@@ -36,6 +38,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     protocolRegistry: '0xBc6004CA4A0c6CdD1046CBB2598F7C0B20CA6bd8',
     userPreferences: '0x860AB33F149A3dD89cDa6DE77Fd6d40f2AA7a633',
     dateTime: '0x493b4ba152970a04981EC9ccB4794F747b64Af57',
+    mockUsdc: '0x...', 
   },
 
   // 🟡 POLYGON AMOY - READY TO DEPLOY
@@ -47,7 +50,8 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     token: ZERO_ADDRESS,     
     protocolRegistry: ZERO_ADDRESS, 
     userPreferences: ZERO_ADDRESS,  
-    dateTime: ZERO_ADDRESS, 
+    dateTime: ZERO_ADDRESS,
+    mockUsdc: ZERO_ADDRESS, 
   },
 
   84532: {
@@ -56,6 +60,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
+    mockUsdc: ZERO_ADDRESS,
   },
 
   11155420: {
@@ -64,6 +69,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
+    mockUsdc: ZERO_ADDRESS,
   },
 
   11155111: {
@@ -72,9 +78,9 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
+    mockUsdc: ZERO_ADDRESS,
   },
 
-  // MAINNETS - NOT DEPLOYED
   42161: {
     personalFundFactory: ZERO_ADDRESS,
     usdc: OFFICIAL_USDC[42161],
@@ -119,15 +125,18 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
 export const getContractAddresses = (chainId: number): ContractAddresses | undefined => {
   return CONTRACT_ADDRESSES[chainId]
 }
+
 export const getContractAddress = (
   chainId: number,
   contract: keyof ContractAddresses
 ): `0x${string}` | undefined => {
   return CONTRACT_ADDRESSES[chainId]?.[contract]
 }
+
 export const hasChainConfig = (chainId: number): boolean => {
   return chainId in CONTRACT_ADDRESSES
 }
+
 export const isContractDeployed = (
   chainId: number,
   contract: keyof ContractAddresses
@@ -135,6 +144,7 @@ export const isContractDeployed = (
   const address = CONTRACT_ADDRESSES[chainId]?.[contract]
   return !!address && address !== ZERO_ADDRESS
 }
+
 export const areMainContractsDeployed = (chainId: number): boolean => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return false
@@ -151,6 +161,7 @@ export const areMainContractsDeployed = (chainId: number): boolean => {
     isContractDeployed(chainId, contract)
   )
 }
+
 export const getDeployedContracts = (chainId: number): (keyof ContractAddresses)[] => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return []
@@ -159,6 +170,7 @@ export const getDeployedContracts = (chainId: number): (keyof ContractAddresses)
     .filter(([_, address]) => address && address !== ZERO_ADDRESS)
     .map(([name]) => name as keyof ContractAddresses)
 }
+
 export const getPendingContracts = (chainId: number): (keyof ContractAddresses)[] => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return []
@@ -167,6 +179,7 @@ export const getPendingContracts = (chainId: number): (keyof ContractAddresses)[
     .filter(([_, address]) => !address || address === ZERO_ADDRESS)
     .map(([name]) => name as keyof ContractAddresses)
 }
+
 export const getDeploymentProgress = (chainId: number): number => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return 0
@@ -176,14 +189,76 @@ export const getDeploymentProgress = (chainId: number): number => {
   
   return Math.round((deployed / total) * 100)
 }
+
 export const isValidAddress = (address: string | undefined): address is `0x${string}` => {
   return !!address && address !== ZERO_ADDRESS && /^0x[a-fA-F0-9]{40}$/.test(address)
 }
+
 export const getOfficialUSDC = (chainId: number): `0x${string}` | undefined => {
   return OFFICIAL_USDC[chainId]
 }
+
 export const hasUSDC = (chainId: number): boolean => {
   return chainId in OFFICIAL_USDC
+}
+
+export const getMockUSDC = (chainId: number): `0x${string}` | undefined => {
+  const addresses = CONTRACT_ADDRESSES[chainId]
+  return addresses?.mockUsdc
+}
+
+export const hasMockUSDC = (chainId: number): boolean => {
+  const mockUsdc = getMockUSDC(chainId)
+  return isValidAddress(mockUsdc)
+}
+
+export const isTestnetChain = (chainId: number): boolean => {
+  const addresses = CONTRACT_ADDRESSES[chainId]
+  return 'mockUsdc' in (addresses || {})
+}
+
+export const getUSDCForChain = (
+  chainId: number,
+  preferMock: boolean = true
+): `0x${string}` | undefined => {
+  const addresses = CONTRACT_ADDRESSES[chainId]
+  if (!addresses) return undefined
+
+  if (isTestnetChain(chainId) && preferMock) {
+    const mockUsdc = getMockUSDC(chainId)
+    if (isValidAddress(mockUsdc)) {
+      return mockUsdc
+    }
+  }
+
+  return addresses.usdc
+}
+
+export const getUSDCMetadata = (chainId: number, address: `0x${string}`) => {
+  const mockUsdc = getMockUSDC(chainId)
+  const officialUsdc = getOfficialUSDC(chainId)
+  
+  if (address === mockUsdc) {
+    return {
+      type: 'mock' as const,
+      name: 'Mock USDC Test',
+      symbol: 'mUSDC',
+      decimals: 6,
+      canMint: true,
+    }
+  }
+  
+  if (address === officialUsdc) {
+    return {
+      type: 'official' as const,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      canMint: false,
+    }
+  }
+  
+  return null
 }
 
 export const getDeploymentSummary = () => {
@@ -246,6 +321,7 @@ export const updateChainAddresses = (
   Object.assign(current, addresses)
   console.log(`✅ Updated addresses for chain ${chainId}:`, addresses)
 }
+
 export type ContractName = keyof ContractAddresses
 export type ChainId = keyof typeof CONTRACT_ADDRESSES
 

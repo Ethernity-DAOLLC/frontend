@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useWallet } from '@/hooks/web3/useWallet';
+import { useWalletClient } from 'wagmi';
 import { formatCurrency, formatYears } from '@/lib';
+import { getMockUSDC, hasMockUSDC, getUSDCMetadata } from '@/config/addresses';
+import { MOCK_USDC_ABI, toUSDCUnits, MINT_AMOUNT } from '@/config/contracts.config';
 import {
   Calculator,
   TrendingUp,
@@ -15,6 +18,7 @@ import {
   Info,
   Sparkles,
   AlertCircle,
+  Coins,
 } from "lucide-react";
 
 let Chart: any = null;
@@ -118,9 +122,14 @@ const FEE_PERCENTAGE = 0.03;
 const CalculatorPage: React.FC = () => {
   const navigate = useNavigate();
   const { setPlanData } = useRetirementPlan();
-  const { isConnected, openModal } = useWallet();
+  const { isConnected, openModal, address, chainId } = useWallet();
+  const { data: walletClient } = useWalletClient();
+  
   const [chartReady, setChartReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+  const [mintSuccess, setMintSuccess] = useState(false);
+  const [mintError, setMintError] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [inputs, setInputs] = useState<Inputs>({
     initialCapital: 10000,
@@ -134,6 +143,9 @@ const CalculatorPage: React.FC = () => {
 
   const [result, setResult] = useState<Result | null>(null);
   const [chartData, setChartData] = useState<{ year: number; balance: number }[]>([]);
+  const mockUsdcAddress = chainId ? getMockUSDC(chainId) : undefined;
+  const hasMockUsdcAvailable = chainId ? hasMockUSDC(chainId) : false;
+  const usdcMetadata = mockUsdcAddress && chainId ? getUSDCMetadata(chainId, mockUsdcAddress) : null;
 
   useEffect(() => {
     loadChartJS().then(setChartReady);
@@ -257,6 +269,58 @@ const CalculatorPage: React.FC = () => {
     }
   };
 
+  // 🎯 FUNCIÓN PARA MINTEAR TEST USDC
+  const handleMintTestUSDC = async () => {
+    if (!isConnected || !walletClient || !address) {
+      openModal();
+      return;
+    }
+
+    if (!mockUsdcAddress || !hasMockUsdcAvailable) {
+      setMintError('MockUSDC not available on this network');
+      return;
+    }
+
+    setIsMinting(true);
+    setMintError('');
+    setMintSuccess(false);
+
+    try {
+      const amount = toUSDCUnits(MINT_AMOUNT);
+
+      console.log(`Minting ${MINT_AMOUNT} ${usdcMetadata?.symbol || 'mUSDC'} to:`, address);
+      
+      const hash = await walletClient.writeContract({
+        address: mockUsdcAddress,
+        abi: MOCK_USDC_ABI,
+        functionName: 'mint',
+        args: [amount],
+      });
+
+      console.log('Transaction sent:', hash);
+      
+      setMintSuccess(true);
+      setTimeout(() => setMintSuccess(false), 5000);
+      
+    } catch (err: any) {
+      console.error('Error minting test USDC:', err);
+      
+      let errorMessage = 'Failed to mint test USDC. Please try again.';
+      
+      if (err.message?.includes('User rejected')) {
+        errorMessage = 'Transaction rejected by user.';
+      } else if (err.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient ETH for gas. Get Sepolia ETH from a faucet.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setMintError(errorMessage);
+    } finally {
+      setIsMinting(false);
+    }
+  };
+
   const handleCreateContract = async () => {
     if (!result) return;
 
@@ -346,6 +410,52 @@ const CalculatorPage: React.FC = () => {
           <p className="text-base sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
             Discover how much you need to save today to live comfortably tomorrow. Your financial future, on blockchain.
           </p>
+
+          {isConnected && hasMockUsdcAvailable && (
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={handleMintTestUSDC}
+                disabled={isMinting}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold text-base transition-all transform hover:scale-105 shadow-lg flex items-center gap-3"
+              >
+                {isMinting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Minting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Coins size={20} />
+                    <span>Get {MINT_AMOUNT.toLocaleString()} Test {usdcMetadata?.symbol || 'USDC'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Mensajes de éxito/error del mint */}
+          {mintSuccess && (
+            <div className="mt-4 max-w-md mx-auto">
+              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-center gap-3">
+                <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
+                <p className="text-green-800 text-sm font-semibold">
+                  Successfully minted {MINT_AMOUNT.toLocaleString()} {usdcMetadata?.symbol}! Check your wallet.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {mintError && (
+            <div className="mt-4 max-w-md mx-auto">
+              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start gap-3">
+                <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+                <div className="text-left">
+                  <h3 className="font-semibold text-red-800 mb-1 text-sm">Mint Failed</h3>
+                  <p className="text-red-700 text-xs">{mintError}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {error && (
