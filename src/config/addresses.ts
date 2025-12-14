@@ -12,7 +12,7 @@ export interface ContractAddresses {
 
 const OFFICIAL_USDC: Record<number, `0x${string}`> = {
   // TESTNETS
-  421614: '0x0170360599983f89f612539121D63a456382Da9B',
+  421614: '0x7C27E3d618621Dec3340921AAC5FD7e24aaf3413',
   80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
   84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
   11155420: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',
@@ -38,7 +38,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     protocolRegistry: '0xBc6004CA4A0c6CdD1046CBB2598F7C0B20CA6bd8',
     userPreferences: '0x860AB33F149A3dD89cDa6DE77Fd6d40f2AA7a633',
     dateTime: '0x493b4ba152970a04981EC9ccB4794F747b64Af57',
-    mockUsdc: '0x...', 
+    mockUsdc: '0x7C27E3d618621Dec3340921AAC5FD7e24aaf3413',
   },
 
   // 🟡 POLYGON AMOY - READY TO DEPLOY
@@ -213,8 +213,8 @@ export const hasMockUSDC = (chainId: number): boolean => {
 }
 
 export const isTestnetChain = (chainId: number): boolean => {
-  const addresses = CONTRACT_ADDRESSES[chainId]
-  return 'mockUsdc' in (addresses || {})
+  const testnets = [421614, 80002, 84532, 11155420, 11155111]
+  return testnets.includes(chainId)
 }
 
 export const getUSDCForChain = (
@@ -230,7 +230,6 @@ export const getUSDCForChain = (
       return mockUsdc
     }
   }
-
   return addresses.usdc
 }
 
@@ -328,7 +327,7 @@ export type ChainId = keyof typeof CONTRACT_ADDRESSES
 export const DEPLOYMENT_STATUS = {
   421614: {
     status: 'deployed' as const,
-    date: '2024-12-09',
+    date: '2024-12-14',
     deployer: '0x2c81Af5Ca0663Ef8aa73b498c0E5BeC54EB24C15',
     verified: true,
   },
