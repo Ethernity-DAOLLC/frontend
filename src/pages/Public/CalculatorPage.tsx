@@ -269,7 +269,6 @@ const CalculatorPage: React.FC = () => {
     }
   };
 
-  // 🎯 FUNCIÓN PARA MINTEAR TEST USDC
   const handleMintTestUSDC = async () => {
     if (!isConnected || !walletClient || !address) {
       openModal();
