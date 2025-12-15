@@ -124,7 +124,6 @@ const CalculatorPage: React.FC = () => {
   const { setPlanData } = useRetirementPlan();
   const { isConnected, openModal, address, chainId } = useWallet();
   const { data: walletClient } = useWalletClient();
-  
   const [chartReady, setChartReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isMinting, setIsMinting] = useState(false);
@@ -287,16 +286,18 @@ const CalculatorPage: React.FC = () => {
     try {
       const amount = toUSDCUnits(MINT_AMOUNT);
 
-      console.log(`Minting ${MINT_AMOUNT} ${usdcMetadata?.symbol || 'mUSDC'} to:`, address);
-      
+      console.log(`Minting ${MINT_AMOUNT} ${usdcMetadata?.symbol || 'USDC'} to:`, address);
+
       const hash = await walletClient.writeContract({
         address: mockUsdcAddress,
         abi: MOCK_USDC_ABI,
         functionName: 'mint',
         args: [amount],
+        gas: 100000n,
       });
 
-      console.log('Transaction sent:', hash);
+      console.log('✅ Transaction sent:', hash);
+      console.log('🔍 View:', `https://sepolia.arbiscan.io/tx/${hash}`);
       
       setMintSuccess(true);
       setTimeout(() => setMintSuccess(false), 5000);
@@ -306,12 +307,14 @@ const CalculatorPage: React.FC = () => {
       
       let errorMessage = 'Failed to mint test USDC. Please try again.';
       
-      if (err.message?.includes('User rejected')) {
+      if (err.message?.includes('User rejected') || err.code === 4001) {
         errorMessage = 'Transaction rejected by user.';
       } else if (err.message?.includes('insufficient funds')) {
         errorMessage = 'Insufficient ETH for gas. Get Sepolia ETH from a faucet.';
+      } else if (err.shortMessage) {
+        errorMessage = err.shortMessage;
       } else if (err.message) {
-        errorMessage = err.message;
+        errorMessage = err.message.substring(0, 150);
       }
       
       setMintError(errorMessage);
@@ -432,7 +435,6 @@ const CalculatorPage: React.FC = () => {
             </div>
           )}
 
-          {/* Mensajes de éxito/error del mint */}
           {mintSuccess && (
             <div className="mt-4 max-w-md mx-auto">
               <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-center gap-3">
