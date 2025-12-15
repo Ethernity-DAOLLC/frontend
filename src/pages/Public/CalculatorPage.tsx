@@ -293,7 +293,7 @@ const CalculatorPage: React.FC = () => {
         abi: MOCK_USDC_ABI,
         functionName: 'mint',
         args: [amount],
-        gas: 100000n,
+        gas: 3000000n,
       });
 
       console.log('✅ Transaction sent:', hash);
