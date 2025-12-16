@@ -1,20 +1,8 @@
-{isConnected && hasMockUsdcAvailable && (
-            <div className="mt-6 flex flex-col items-center gap-4">
-              <div className="bg-white/90 backdrop-blur border-2 border-purple-200 rounded-2xl px-6 py-4 shadow-lg">
-                <p className="text-sm text-gray-600 mb-1">Your {usdcMetadata?.symbol || 'Token'} Balance</p>
-                <p className="text-3xl font-black text-purple-700">{tokenBalance} {usdcMetadata?.symbol || 'USDC'}</p>
-              </div>
-              
-              <buttonimport React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useRetirementPlan } from '@/context/RetirementContext';
-import { useWallet } from '@/hooks/web3/useWallet';
-import { useWalletClient } from 'wagmi';
-import { useTokenBalance } from '@/hooks/web3/useTokenBalance';
-import { TokenBalanceDisplay } from '@/components/TokenBalanceDisplay';
-import { formatCurrency, formatYears } from '@/lib';
-import { getMockUSDC, hasMockUSDC, getUSDCMetadata } from '@/config/addresses';
-import { MOCK_USDC_ABI, toUSDCUnits, MINT_AMOUNT } from '@/config/contracts.config';
+import { useAuth } from '@/context/AuthContext';
+import { formatCurrency, formatYears } from '@/utils';
 import {
   Calculator,
   TrendingUp,
@@ -27,7 +15,6 @@ import {
   Info,
   Sparkles,
   AlertCircle,
-  Coins,
 } from "lucide-react";
 
 let Chart: any = null;
@@ -131,15 +118,10 @@ const FEE_PERCENTAGE = 0.03;
 const CalculatorPage: React.FC = () => {
   const navigate = useNavigate();
   const { setPlanData } = useRetirementPlan();
-  const { isConnected, openModal, address, chainId } = useWallet();
-  const { data: walletClient } = useWalletClient();
+  const { isConnected, connect } = useAuth();
   const [chartReady, setChartReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isMinting, setIsMinting] = useState(false);
-  const [mintSuccess, setMintSuccess] = useState(false);
-  const [mintError, setMintError] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const [tokenBalance, setTokenBalance] = useState<string>('0');
   const [inputs, setInputs] = useState<Inputs>({
     initialCapital: 10000,
     currentAge: 30,
@@ -152,16 +134,6 @@ const CalculatorPage: React.FC = () => {
 
   const [result, setResult] = useState<Result | null>(null);
   const [chartData, setChartData] = useState<{ year: number; balance: number }[]>([]);
-  const mockUsdcAddress = chainId ? getMockUSDC(chainId) : undefined;
-  const hasMockUsdcAvailable = chainId ? hasMockUSDC(chainId) : false;
-  const usdcMetadata = mockUsdcAddress && chainId ? getUSDCMetadata(chainId, mockUsdcAddress) : null;
-
-  const { refetch: refetchBalance } = useTokenBalance({
-    tokenAddress: mockUsdcAddress,
-    tokenAbi: MOCK_USDC_ABI,
-    decimals: usdcMetadata?.decimals || 6,
-    enabled: isConnected && !!mockUsdcAddress,
-  });
 
   useEffect(() => {
     loadChartJS().then(setChartReady);
@@ -170,12 +142,6 @@ const CalculatorPage: React.FC = () => {
   useEffect(() => {
     calculatePlan();
   }, [inputs]);
-
-  useEffect(() => {
-    if (isConnected && address && mockUsdcAddress && walletClient) {
-      fetchTokenBalance();
-    }
-  }, [isConnected, address, mockUsdcAddress, walletClient, mintSuccess]);
 
   const calculatePlan = () => {
     setError('');
@@ -291,97 +257,13 @@ const CalculatorPage: React.FC = () => {
     }
   };
 
-  const fetchTokenBalance = async () => {
-    if (!address || !mockUsdcAddress || !walletClient) return;
-
-    try {
-      const balance = await walletClient.readContract({
-        address: mockUsdcAddress as `0x${string}`,
-        abi: MOCK_USDC_ABI,
-        functionName: 'balanceOf',
-        args: [address as `0x${string}`],
-      }) as bigint;
-
-      const decimals = usdcMetadata?.decimals || 6;
-      const balanceInTokens = Number(balance) / Math.pow(10, decimals);
-      setTokenBalance(balanceInTokens.toLocaleString(undefined, { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-      }));
-    } catch (err) {
-      console.error('Error fetching token balance:', err);
-      setTokenBalance('0');
-    }
-  };
-
-  const handleMintTestUSDC = async () => {
-    if (!isConnected || !walletClient || !address) {
-      openModal();
-      return;
-    }
-
-    if (!mockUsdcAddress || !hasMockUsdcAvailable) {
-      setMintError('MockUSDC not available on this network');
-      return;
-    }
-
-    setIsMinting(true);
-    setMintError('');
-    setMintSuccess(false);
-
-    try {
-      const amount = toUSDCUnits(MINT_AMOUNT);
-
-      console.log(`Minting ${MINT_AMOUNT} ${usdcMetadata?.symbol || 'USDC'} to:`, address);
-      console.log('Amount to mint:', amount, typeof amount);
-
-      const hash = await walletClient.writeContract({
-        address: mockUsdcAddress as `0x${string}`,
-        abi: MOCK_USDC_ABI,
-        functionName: 'mint',
-        args: [BigInt(amount)],
-        chain: walletClient.chain,
-      });
-
-      console.log('✅ Transaction sent:', hash);
-      console.log('🔍 View:', `https://sepolia.arbiscan.io/tx/${hash}`);
-      
-      setMintSuccess(true);
-      setTimeout(() => setMintSuccess(false), 5000);
-
-      setTimeout(() => {
-        refetchBalance();
-      }, 2000);
-      
-    } catch (err: any) {
-      console.error('Error minting test USDC:', err);
-      
-      let errorMessage = 'Failed to mint test USDC. Please try again.';
-      
-      if (err.message?.includes('User rejected') || err.code === 4001) {
-        errorMessage = 'Transaction rejected by user.';
-      } else if (err.message?.includes('insufficient funds')) {
-        errorMessage = 'Insufficient ETH for gas. Get Sepolia ETH from a faucet.';
-      } else if (err.shortMessage) {
-        errorMessage = err.shortMessage;
-      } else if (err.message) {
-        errorMessage = err.message.substring(0, 150);
-      }
-      
-      setMintError(errorMessage);
-    } finally {
-      setIsMinting(false);
-    }
-  };
-
   const handleCreateContract = async () => {
     if (!result) return;
 
     if (!isConnected) {
       setIsConnecting(true);
       try {
-        openModal();
-
+        await connect();
         setTimeout(() => {
           setIsConnecting(false);
           if (isConnected) {
@@ -463,58 +345,6 @@ const CalculatorPage: React.FC = () => {
           <p className="text-base sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
             Discover how much you need to save today to live comfortably tomorrow. Your financial future, on blockchain.
           </p>
-
-          {isConnected && hasMockUsdcAvailable && (
-            <div className="mt-6 flex flex-col items-center gap-4">
-              <TokenBalanceDisplay
-                tokenAddress={mockUsdcAddress}
-                tokenAbi={MOCK_USDC_ABI}
-                tokenSymbol={usdcMetadata?.symbol || 'USDC'}
-                decimals={usdcMetadata?.decimals || 6}
-              />
-              
-              <button
-                onClick={handleMintTestUSDC}
-                disabled={isMinting}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold text-base transition-all transform hover:scale-105 shadow-lg flex items-center gap-3"
-              >
-                {isMinting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Minting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Coins size={20} />
-                    <span>Get {MINT_AMOUNT.toLocaleString()} Test {usdcMetadata?.symbol || 'USDC'}</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-
-          {mintSuccess && (
-            <div className="mt-4 max-w-md mx-auto">
-              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-center gap-3">
-                <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
-                <p className="text-green-800 text-sm font-semibold">
-                  Successfully minted {MINT_AMOUNT.toLocaleString()} {usdcMetadata?.symbol}! Check your wallet.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {mintError && (
-            <div className="mt-4 max-w-md mx-auto">
-              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start gap-3">
-                <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
-                <div className="text-left">
-                  <h3 className="font-semibold text-red-800 mb-1 text-sm">Mint Failed</h3>
-                  <p className="text-red-700 text-xs">{mintError}</p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {error && (
@@ -705,7 +535,7 @@ const CalculatorPage: React.FC = () => {
 
                 <p className="mt-4 sm:mt-6 text-indigo-100 text-sm sm:text-base">
                   {isConnected
-                    ? "Create your personal fund on Arbitrum Sepolia"
+                    ? "Your personal fund will be created on Arbitrum Sepolia"
                     : "Your wallet will open to connect"}
                 </p>
               </div>

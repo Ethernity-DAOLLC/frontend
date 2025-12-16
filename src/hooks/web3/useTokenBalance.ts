@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useWalletClient } from 'wagmi';
+import { usePublicClient } from 'wagmi';
 import { useWallet } from './useWallet';
 
 interface UseTokenBalanceParams {
@@ -24,14 +24,15 @@ export const useTokenBalance = ({
   enabled = true,
 }: UseTokenBalanceParams): UseTokenBalanceReturn => {
   const { address, isConnected } = useWallet();
-  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
+  
   const [balance, setBalance] = useState<string>('0');
   const [balanceRaw, setBalanceRaw] = useState<bigint>(0n);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchBalance = async () => {
-    if (!enabled || !isConnected || !address || !tokenAddress || !walletClient) {
+    if (!enabled || !isConnected || !address || !tokenAddress || !publicClient) {
       setBalance('0');
       setBalanceRaw(0n);
       return;
@@ -41,7 +42,7 @@ export const useTokenBalance = ({
     setError(null);
 
     try {
-      const result = await walletClient.readContract({
+      const result = await publicClient.readContract({
         address: tokenAddress,
         abi: tokenAbi,
         functionName: 'balanceOf',
@@ -67,7 +68,7 @@ export const useTokenBalance = ({
 
   useEffect(() => {
     fetchBalance();
-  }, [enabled, isConnected, address, tokenAddress, walletClient]);
+  }, [enabled, isConnected, address, tokenAddress, publicClient]);
 
   return {
     balance,
