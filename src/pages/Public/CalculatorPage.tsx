@@ -287,13 +287,14 @@ const CalculatorPage: React.FC = () => {
       const amount = toUSDCUnits(MINT_AMOUNT);
 
       console.log(`Minting ${MINT_AMOUNT} ${usdcMetadata?.symbol || 'USDC'} to:`, address);
+      console.log('Amount to mint:', amount, typeof amount);
 
       const hash = await walletClient.writeContract({
-        address: mockUsdcAddress,
+        address: mockUsdcAddress as `0x${string}`,
         abi: MOCK_USDC_ABI,
         functionName: 'mint',
-        args: [address, amount],  // Pass both recipient address and amount
-        gas: 3000000n,
+        args: [BigInt(amount)],
+        chain: walletClient.chain,
       });
 
       console.log('✅ Transaction sent:', hash);
