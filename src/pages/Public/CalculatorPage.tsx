@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from "react";
+{isConnected && hasMockUsdcAvailable && (
+            <div className="mt-6 flex flex-col items-center gap-4">
+              <div className="bg-white/90 backdrop-blur border-2 border-purple-200 rounded-2xl px-6 py-4 shadow-lg">
+                <p className="text-sm text-gray-600 mb-1">Your {usdcMetadata?.symbol || 'Token'} Balance</p>
+                <p className="text-3xl font-black text-purple-700">{tokenBalance} {usdcMetadata?.symbol || 'USDC'}</p>
+              </div>
+              
+              <buttonimport React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useWallet } from '@/hooks/web3/useWallet';
 import { useWalletClient } from 'wagmi';
+import { useTokenBalance } from '@/hooks/web3/useTokenBalance';
+import { TokenBalanceDisplay } from '@/components/TokenBalanceDisplay';
 import { formatCurrency, formatYears } from '@/lib';
 import { getMockUSDC, hasMockUSDC, getUSDCMetadata } from '@/config/addresses';
 import { MOCK_USDC_ABI, toUSDCUnits, MINT_AMOUNT } from '@/config/contracts.config';
@@ -130,6 +139,7 @@ const CalculatorPage: React.FC = () => {
   const [mintSuccess, setMintSuccess] = useState(false);
   const [mintError, setMintError] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [tokenBalance, setTokenBalance] = useState<string>('0');
   const [inputs, setInputs] = useState<Inputs>({
     initialCapital: 10000,
     currentAge: 30,
@@ -146,6 +156,13 @@ const CalculatorPage: React.FC = () => {
   const hasMockUsdcAvailable = chainId ? hasMockUSDC(chainId) : false;
   const usdcMetadata = mockUsdcAddress && chainId ? getUSDCMetadata(chainId, mockUsdcAddress) : null;
 
+  const { refetch: refetchBalance } = useTokenBalance({
+    tokenAddress: mockUsdcAddress,
+    tokenAbi: MOCK_USDC_ABI,
+    decimals: usdcMetadata?.decimals || 6,
+    enabled: isConnected && !!mockUsdcAddress,
+  });
+
   useEffect(() => {
     loadChartJS().then(setChartReady);
   }, []);
@@ -153,6 +170,12 @@ const CalculatorPage: React.FC = () => {
   useEffect(() => {
     calculatePlan();
   }, [inputs]);
+
+  useEffect(() => {
+    if (isConnected && address && mockUsdcAddress && walletClient) {
+      fetchTokenBalance();
+    }
+  }, [isConnected, address, mockUsdcAddress, walletClient, mintSuccess]);
 
   const calculatePlan = () => {
     setError('');
@@ -268,6 +291,29 @@ const CalculatorPage: React.FC = () => {
     }
   };
 
+  const fetchTokenBalance = async () => {
+    if (!address || !mockUsdcAddress || !walletClient) return;
+
+    try {
+      const balance = await walletClient.readContract({
+        address: mockUsdcAddress as `0x${string}`,
+        abi: MOCK_USDC_ABI,
+        functionName: 'balanceOf',
+        args: [address as `0x${string}`],
+      }) as bigint;
+
+      const decimals = usdcMetadata?.decimals || 6;
+      const balanceInTokens = Number(balance) / Math.pow(10, decimals);
+      setTokenBalance(balanceInTokens.toLocaleString(undefined, { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      }));
+    } catch (err) {
+      console.error('Error fetching token balance:', err);
+      setTokenBalance('0');
+    }
+  };
+
   const handleMintTestUSDC = async () => {
     if (!isConnected || !walletClient || !address) {
       openModal();
@@ -302,6 +348,10 @@ const CalculatorPage: React.FC = () => {
       
       setMintSuccess(true);
       setTimeout(() => setMintSuccess(false), 5000);
+
+      setTimeout(() => {
+        refetchBalance();
+      }, 2000);
       
     } catch (err: any) {
       console.error('Error minting test USDC:', err);
@@ -415,7 +465,14 @@ const CalculatorPage: React.FC = () => {
           </p>
 
           {isConnected && hasMockUsdcAvailable && (
-            <div className="mt-6 flex justify-center">
+            <div className="mt-6 flex flex-col items-center gap-4">
+              <TokenBalanceDisplay
+                tokenAddress={mockUsdcAddress}
+                tokenAbi={MOCK_USDC_ABI}
+                tokenSymbol={usdcMetadata?.symbol || 'USDC'}
+                decimals={usdcMetadata?.decimals || 6}
+              />
+              
               <button
                 onClick={handleMintTestUSDC}
                 disabled={isMinting}
