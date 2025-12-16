@@ -292,7 +292,7 @@ const CalculatorPage: React.FC = () => {
         address: mockUsdcAddress,
         abi: MOCK_USDC_ABI,
         functionName: 'mint',
-        args: [amount],
+        args: [address, amount],  // Pass both recipient address and amount
         gas: 3000000n,
       });
 
