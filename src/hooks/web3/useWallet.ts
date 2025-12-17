@@ -14,6 +14,7 @@ export interface WalletState {
   openNetworks: () => void
   disconnect: () => void
   shortAddress: string | undefined
+  connect: () => void
 }
 
 export function useWallet(): WalletState {
@@ -28,18 +29,20 @@ export function useWallet(): WalletState {
     : undefined
 
   const chainId = rawChainId != null ? Number(rawChainId) : undefined
+  const openModalFn = () => open()
 
   return {
     address: safeAddress,
     isConnected,
     chainId,
     chain,
-    openModal: () => open(),
+    openModal: openModalFn,
     openAccount: () => open({ view: 'Account' }),
     openNetworks: () => open({ view: 'Networks' }),
     disconnect,
     shortAddress: safeAddress
       ? `${safeAddress.slice(0, 6)}...${safeAddress.slice(-4)}`
       : undefined,
+    connect: openModalFn,
   }
 }

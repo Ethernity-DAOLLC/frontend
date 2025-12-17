@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useRetirementPlan } from '@/context/RetirementContext';
-import { useAuth } from '@/context/AuthContext';
-import { formatCurrency, formatYears } from '@/utils';
+import { useWallet } from '@/hooks/web3';
+import { formatCurrency, formatYears } from '@/lib/formatters';
 import {
   Calculator,
   TrendingUp,
@@ -118,7 +118,7 @@ const FEE_PERCENTAGE = 0.03;
 const CalculatorPage: React.FC = () => {
   const navigate = useNavigate();
   const { setPlanData } = useRetirementPlan();
-  const { isConnected, connect } = useAuth();
+  const { isConnected, openModal } = useWallet(); // ✅ Usa tu hook existente
   const [chartReady, setChartReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string>('');
@@ -263,15 +263,12 @@ const CalculatorPage: React.FC = () => {
     if (!isConnected) {
       setIsConnecting(true);
       try {
-        await connect();
+        openModal(); // ✅ Abre el modal de Reown/AppKit
         setTimeout(() => {
           setIsConnecting(false);
-          if (isConnected) {
-            proceedToCreateContract();
-          }
         }, 1000);
       } catch (error) {
-        console.error('Error connecting wallet:', error);
+        console.error('Error opening wallet modal:', error);
         setIsConnecting(false);
       }
       return;

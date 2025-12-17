@@ -16,7 +16,7 @@ import {
   Info
 } from 'lucide-react';
 import { formatEther, parseEther } from 'viem';
-import { CONTRACTS, CHAIN_CONFIG, hasTestnet } from '../../config/contracts';
+import { CONTRACTS, CHAIN_CONFIG, hasTestnet } from '../../config/contracts.config';
 
 export default function Faucet() {
   const { address, isConnected, chain } = useAccount();
