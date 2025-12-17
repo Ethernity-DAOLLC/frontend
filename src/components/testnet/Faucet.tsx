@@ -1,4 +1,3 @@
-// frontend/src/components/testnet/Faucet.tsx
 import { useState, useEffect } from 'react';
 import { 
   useAccount, 
@@ -24,7 +23,6 @@ export default function Faucet() {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [showInfo, setShowInfo] = useState(false);
 
-  // Si no hay faucet en esta red, no mostrar nada
   if (!hasTestnet) {
     return null;
   }
@@ -33,7 +31,6 @@ export default function Faucet() {
   const FAUCET_ABI = CONTRACTS.faucet!.abi;
   const TOKEN_ADDRESS = CONTRACTS.testToken!.address;
 
-  // Leer si el usuario puede solicitar
   const { 
     data: canRequest, 
     refetch: refetchCanRequest,
@@ -48,7 +45,6 @@ export default function Faucet() {
     }
   });
 
-  // Leer tiempo hasta próxima solicitud
   const { 
     data: timeUntilNext, 
     refetch: refetchTime 
@@ -59,45 +55,39 @@ export default function Faucet() {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
-      refetchInterval: 5000, // Actualizar cada 5 segundos
+      refetchInterval: 5000, 
     }
   });
 
-  // Leer balance del faucet
   const { data: faucetBalance, refetch: refetchFaucetBalance } = useReadContract({
     address: FAUCET_ADDRESS,
     abi: FAUCET_ABI,
     functionName: 'get_faucet_balance',
   });
 
-  // Leer cantidad por solicitud
   const { data: amountPerRequest } = useReadContract({
     address: FAUCET_ADDRESS,
     abi: FAUCET_ABI,
     functionName: 'amount_per_request',
   });
 
-  // Leer cooldown configurado
   const { data: cooldownTime } = useReadContract({
     address: FAUCET_ADDRESS,
     abi: FAUCET_ABI,
     functionName: 'cooldown_time',
   });
 
-  // Leer balance del usuario
   const { data: userTokenBalance, refetch: refetchUserBalance } = useBalance({
     address: address,
     token: TOKEN_ADDRESS,
   });
 
-  // Leer estadísticas del faucet
   const { data: faucetStats } = useReadContract({
     address: FAUCET_ADDRESS,
     abi: FAUCET_ABI,
     functionName: 'get_stats',
   });
 
-  // Escribir: solicitar tokens
   const { 
     writeContract, 
     data: hash,
@@ -106,7 +96,6 @@ export default function Faucet() {
     reset: resetWrite
   } = useWriteContract();
 
-  // Esperar confirmación de transacción
   const { 
     isLoading: isConfirming, 
     isSuccess,
@@ -115,7 +104,6 @@ export default function Faucet() {
     hash,
   });
 
-  // Actualizar countdown
   useEffect(() => {
     if (timeUntilNext && Number(timeUntilNext) > 0) {
       setTimeLeft(Number(timeUntilNext));
@@ -138,7 +126,6 @@ export default function Faucet() {
     }
   }, [timeUntilNext]);
 
-  // Refetch después de transacción exitosa
   useEffect(() => {
     if (isSuccess) {
       const timer = setTimeout(() => {
@@ -152,7 +139,6 @@ export default function Faucet() {
     }
   }, [isSuccess]);
 
-  // Reset error después de 5 segundos
   useEffect(() => {
     if (writeError || isTxError) {
       const timer = setTimeout(() => {
@@ -253,7 +239,6 @@ export default function Faucet() {
         )}
 
         <div className="p-6">
-          {/* Estadísticas del Faucet */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
               <p className="text-xs text-gray-600 mb-1">Por Solicitud</p>
@@ -292,7 +277,6 @@ export default function Faucet() {
             </div>
           </div>
 
-          {/* Estadísticas totales */}
           {faucetStats && (
             <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">
@@ -348,7 +332,6 @@ export default function Faucet() {
             </div>
           ) : (
             <>
-              {/* Botón principal */}
               <button
                 onClick={handleRequestTokens}
                 disabled={
@@ -394,7 +377,7 @@ export default function Faucet() {
 
               {/* Mensajes de estado */}
               <div className="mt-4 space-y-3">
-                {/* Éxito */}
+
                 {isSuccess && (
                   <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
                     <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -443,7 +426,6 @@ export default function Faucet() {
                   </div>
                 )}
 
-                {/* Error de transacción */}
                 {isTxError && (
                   <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
@@ -458,7 +440,6 @@ export default function Faucet() {
                   </div>
                 )}
 
-                {/* Faucet vacío */}
                 {faucetEmpty && !isSuccess && (
                   <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
@@ -473,7 +454,6 @@ export default function Faucet() {
                   </div>
                 )}
 
-                {/* Info de próxima solicitud */}
                 {!canRequest && timeLeft > 0 && !isSuccess && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
                     <Clock className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
