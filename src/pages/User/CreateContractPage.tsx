@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useChainId } from 'wagmi';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useWallet } from '@/hooks/web3/useWallet';
 import { usePersonalFundFactory } from '@/hooks/funds/usePersonalFundFactory';
+import { CONTRACT_ADDRESSES } from '@/config/addresses';
 import { parseUSDC } from '@/hooks/usdc/usdcUtils';
 import { formatCurrency, formatYears } from '@/lib';
 import {
@@ -22,14 +24,16 @@ import {
   Info,
 } from 'lucide-react';
 
-const FACTORY_ADDRESS = import.meta.env.VITE_FACTORY_ADDRESS as `0x${string}`;
-
 const CreateContractPage: React.FC = () => {
   const navigate = useNavigate();
+  const chainId = useChainId();
   const { planData, clearPlanData } = useRetirementPlan();
   const { isConnected, openModal } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
+
+  // ✅ Factory address dinámico según la red conectada
+  const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
 
   const {
     createPersonalFund,
@@ -42,7 +46,7 @@ const CreateContractPage: React.FC = () => {
     usdcAllowance,
     configuration,
     refetch,
-  } = usePersonalFundFactory(FACTORY_ADDRESS);
+  } = usePersonalFundFactory(factoryAddress);
 
   useEffect(() => {
     if (!planData) {
@@ -66,6 +70,32 @@ const CreateContractPage: React.FC = () => {
 
   if (!planData) {
     return null;
+  }
+
+  // ✅ Verificar que exista el factory en esta red
+  if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center">
+            <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-red-800 mb-4">
+              Contracts Not Deployed
+            </h2>
+            <p className="text-red-700 mb-6">
+              The retirement fund contracts are not deployed on this network yet.
+              Please switch to Arbitrum Sepolia.
+            </p>
+            <button
+              onClick={() => navigate('/calculator')}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition"
+            >
+              Back to Calculator
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
   
   const initialDepositAmount = parseUSDC(planData.initialDeposit);

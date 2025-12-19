@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+import { useChainId } from 'wagmi';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useWallet } from '@/hooks/web3';
+import { CONTRACT_ADDRESSES } from '@/config/addresses';
 import { formatCurrency, formatYears } from '@/lib/formatters';
 import {
   Calculator,
@@ -117,8 +119,13 @@ const FEE_PERCENTAGE = 0.03;
 
 const CalculatorPage: React.FC = () => {
   const navigate = useNavigate();
+  const chainId = useChainId();
   const { setPlanData } = useRetirementPlan();
-  const { isConnected, openModal } = useWallet(); // ✅ Usa tu hook existente
+  const { isConnected, openModal } = useWallet();
+  
+  // ✅ Factory address dinámico según la red conectada
+  const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
+  
   const [chartReady, setChartReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string>('');
@@ -260,10 +267,16 @@ const CalculatorPage: React.FC = () => {
   const handleCreateContract = async () => {
     if (!result) return;
 
+    // ✅ Verificar que tengamos la dirección del factory en esta red
+    if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
+      setError('Contracts not deployed on this network yet. Please switch to Arbitrum Sepolia.');
+      return;
+    }
+
     if (!isConnected) {
       setIsConnecting(true);
       try {
-        openModal(); // ✅ Abre el modal de Reown/AppKit
+        openModal();
         setTimeout(() => {
           setIsConnecting(false);
         }, 1000);

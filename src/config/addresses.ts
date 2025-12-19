@@ -7,32 +7,28 @@ export interface ContractAddresses {
   protocolRegistry?: `0x${string}`
   userPreferences?: `0x${string}`
   dateTime?: `0x${string}`
-  mockUsdc?: `0x${string}`
-
-  testToken?: `0x${string}`
-  faucet?: `0x${string}`
 }
 
 const OFFICIAL_USDC: Record<number, `0x${string}`> = {
 
-  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',  // Arbitrum Sepolia
-  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',   // Polygon Amoy
-  84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',   // Base Sepolia
-  11155420: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7', // Optimism Sepolia
-  11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Ethereum Sepolia
+  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',       // Arbitrum Sepolia
+  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',         // Polygon Amoy
+  84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',         // Base Sepolia
+  11155420: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',      // Optimism Sepolia
+  11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',      // Ethereum Sepolia
   
   // MAINNETS
-  42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // Arbitrum One
-  137: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',   // Polygon
-  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',  // Base
-  10: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',    // Optimism
-  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',     // Ethereum
+  42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',           // Arbitrum One
+  137: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',            // Polygon
+  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',           // Base
+  10: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',             // Optimism
+  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',              // Ethereum
 }
 
 export const ZERO_ADDRESS: `0x${string}` = '0x0000000000000000000000000000000000000000'
 
 export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
-
+  // ✅ ARBITRUM SEPOLIA - DEPLOYED
   421614: {
     personalFundFactory: '0xCC29838D66b4aFFB1A4127Cd7DBc60648BcC93d6',
     usdc: OFFICIAL_USDC[421614],
@@ -42,10 +38,6 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     protocolRegistry: '0xBc6004CA4A0c6CdD1046CBB2598F7C0B20CA6bd8',
     userPreferences: '0x860AB33F149A3dD89cDa6DE77Fd6d40f2AA7a633',
     dateTime: '0x493b4ba152970a04981EC9ccB4794F747b64Af57',
-    mockUsdc: '0x7C27E3d618621Dec3340921AAC5FD7e24aaf3413',
-
-    testToken: ZERO_ADDRESS, // TODO: Actualizar con address deployado
-    faucet: ZERO_ADDRESS,    // TODO: Actualizar con address deployado
   },
 
   // 🟡 POLYGON AMOY - READY TO DEPLOY
@@ -58,10 +50,6 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     protocolRegistry: ZERO_ADDRESS, 
     userPreferences: ZERO_ADDRESS,  
     dateTime: ZERO_ADDRESS,
-    mockUsdc: ZERO_ADDRESS,
-
-    testToken: ZERO_ADDRESS,
-    faucet: ZERO_ADDRESS,
   },
 
   // 🔴 BASE SEPOLIA - PENDING
@@ -71,10 +59,6 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
-    mockUsdc: ZERO_ADDRESS,
-
-    testToken: ZERO_ADDRESS,
-    faucet: ZERO_ADDRESS,
   },
 
   // 🔴 OPTIMISM SEPOLIA - PENDING
@@ -84,10 +68,6 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
-    mockUsdc: ZERO_ADDRESS,
-
-    testToken: ZERO_ADDRESS,
-    faucet: ZERO_ADDRESS,
   },
 
   // 🔴 ETHEREUM SEPOLIA - PENDING
@@ -97,10 +77,6 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
-    mockUsdc: ZERO_ADDRESS,
-
-    testToken: ZERO_ADDRESS,
-    faucet: ZERO_ADDRESS,
   },
 
   // 🔴 ARBITRUM ONE (MAINNET) - PENDING
@@ -110,7 +86,6 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
-
   },
 
   // 🔴 POLYGON (MAINNET) - PENDING
@@ -160,15 +135,12 @@ export const getContractAddress = (
 ): `0x${string}` | undefined => {
   return CONTRACT_ADDRESSES[chainId]?.[contract]
 }
-
 export const hasChainConfig = (chainId: number): boolean => {
   return chainId in CONTRACT_ADDRESSES
 }
-
 export const isValidAddress = (address: string | undefined): address is `0x${string}` => {
   return !!address && address !== ZERO_ADDRESS && /^0x[a-fA-F0-9]{40}$/.test(address)
 }
-
 export const isContractDeployed = (
   chainId: number,
   contract: keyof ContractAddresses
@@ -194,46 +166,6 @@ export const areMainContractsDeployed = (chainId: number): boolean => {
   )
 }
 
-export const hasFaucet = (chainId: number): boolean => {
-  const addresses = CONTRACT_ADDRESSES[chainId]
-  return !!(
-    isValidAddress(addresses?.testToken) &&
-    isValidAddress(addresses?.faucet)
-  )
-}
-
-export const getFaucetAddresses = (chainId: number): {
-  token: `0x${string}`
-  faucet: `0x${string}`
-} | null => {
-  const addresses = CONTRACT_ADDRESSES[chainId]
-  
-  if (!hasFaucet(chainId) || !addresses?.testToken || !addresses?.faucet) {
-    return null
-  }
-  
-  return {
-    token: addresses.testToken,
-    faucet: addresses.faucet,
-  }
-}
-
-export const getTestTokenAddress = (chainId: number): `0x${string}` | undefined => {
-  return CONTRACT_ADDRESSES[chainId]?.testToken
-}
-
-export const getFaucetAddress = (chainId: number): `0x${string}` | undefined => {
-  return CONTRACT_ADDRESSES[chainId]?.faucet
-}
-
-export const isTestTokenDeployed = (chainId: number): boolean => {
-  return isContractDeployed(chainId, 'testToken')
-}
-
-export const isFaucetDeployed = (chainId: number): boolean => {
-  return isContractDeployed(chainId, 'faucet')
-}
-
 export const getOfficialUSDC = (chainId: number): `0x${string}` | undefined => {
   return OFFICIAL_USDC[chainId]
 }
@@ -242,63 +174,15 @@ export const hasUSDC = (chainId: number): boolean => {
   return chainId in OFFICIAL_USDC
 }
 
-export const getMockUSDC = (chainId: number): `0x${string}` | undefined => {
-  const addresses = CONTRACT_ADDRESSES[chainId]
-  return addresses?.mockUsdc
-}
-
-export const hasMockUSDC = (chainId: number): boolean => {
-  const mockUsdc = getMockUSDC(chainId)
-  return isValidAddress(mockUsdc)
-}
-
 export const isTestnetChain = (chainId: number): boolean => {
   const testnets = [421614, 80002, 84532, 11155420, 11155111]
   return testnets.includes(chainId)
 }
 
-export const getUSDCForChain = (
-  chainId: number,
-  preferMock: boolean = true
-): `0x${string}` | undefined => {
+export const getUSDCForChain = (chainId: number): `0x${string}` | undefined => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return undefined
-
-  if (isTestnetChain(chainId) && preferMock) {
-    const mockUsdc = getMockUSDC(chainId)
-    if (isValidAddress(mockUsdc)) {
-      return mockUsdc
-    }
-  }
-  
   return addresses.usdc
-}
-
-export const getUSDCMetadata = (chainId: number, address: `0x${string}`) => {
-  const mockUsdc = getMockUSDC(chainId)
-  const officialUsdc = getOfficialUSDC(chainId)
-  
-  if (address === mockUsdc) {
-    return {
-      type: 'mock' as const,
-      name: 'Mock USDC Test',
-      symbol: 'mUSDC',
-      decimals: 6,
-      canMint: true,
-    }
-  }
-  
-  if (address === officialUsdc) {
-    return {
-      type: 'official' as const,
-      name: 'USD Coin',
-      symbol: 'USDC',
-      decimals: 6,
-      canMint: false,
-    }
-  }
-  
-  return null
 }
 
 export const getDeployedContracts = (chainId: number): (keyof ContractAddresses)[] => {
@@ -325,7 +209,6 @@ export const getDeploymentProgress = (chainId: number): number => {
   
   const total = Object.keys(addresses).length
   const deployed = getDeployedContracts(chainId).length
-  
   return Math.round((deployed / total) * 100)
 }
 
@@ -337,7 +220,6 @@ export const getDeploymentSummary = () => {
     pending: number
     progress: number
     isComplete: boolean
-    hasFaucet: boolean
   }> = {}
   
   const chainNames: Record<number, string> = {
@@ -366,10 +248,8 @@ export const getDeploymentSummary = () => {
       pending: pending.length,
       progress,
       isComplete: areMainContractsDeployed(chainId),
-      hasFaucet: hasFaucet(chainId), // ✨ NUEVO
     }
   })
-  
   return summary
 }
 
@@ -391,21 +271,6 @@ export const updateChainAddresses = (
   Object.assign(current, addresses)
   console.log(`✅ Updated addresses for chain ${chainId}:`, addresses)
 }
-
-export const updateFaucetAddresses = (
-  chainId: number,
-  testToken: `0x${string}`,
-  faucet: `0x${string}`
-): void => {
-  if (import.meta.env.PROD) {
-    console.error('❌ Cannot update addresses in production')
-    return
-  }
-  
-  updateChainAddresses(chainId, { testToken, faucet })
-  console.log('✅ Faucet addresses updated:', { testToken, faucet })
-}
-
 export type ContractName = keyof ContractAddresses
 export type ChainId = keyof typeof CONTRACT_ADDRESSES
 
@@ -415,40 +280,30 @@ export const DEPLOYMENT_STATUS = {
     date: '2024-12-14',
     deployer: '0x2c81Af5Ca0663Ef8aa73b498c0E5BeC54EB24C15',
     verified: true,
-    hasFaucet: false, // TODO: Cambiar a true después del deploy
-    faucetDeployDate: null as string | null,
   },
   80002: {
     status: 'pending' as const,
     date: null,
     deployer: null,
     verified: false,
-    hasFaucet: false,
-    faucetDeployDate: null,
   },
   84532: {
     status: 'pending' as const,
     date: null,
     deployer: null,
     verified: false,
-    hasFaucet: false,
-    faucetDeployDate: null,
   },
   11155420: {
     status: 'pending' as const,
     date: null,
     deployer: null,
     verified: false,
-    hasFaucet: false,
-    faucetDeployDate: null,
   },
   11155111: {
     status: 'pending' as const,
     date: null,
     deployer: null,
     verified: false,
-    hasFaucet: false,
-    faucetDeployDate: null,
   },
 } as const
 
@@ -458,48 +313,12 @@ export const getDeploymentStatus = (chainId: number) => {
     date: null,
     deployer: null,
     verified: false,
-    hasFaucet: false,
-    faucetDeployDate: null,
   }
-}
-
-const validateAddressConfig = () => {
-  const errors: string[] = []
-  
-  Object.entries(CONTRACT_ADDRESSES).forEach(([chainIdStr, addresses]) => {
-    const chainId = parseInt(chainIdStr)
-
-    if (!isTestnetChain(chainId)) {
-      if (addresses.testToken || addresses.faucet) {
-        errors.push(`Mainnet ${chainId} should not have faucet contracts`)
-      }
-    }
-
-    const hasToken = isValidAddress(addresses.testToken)
-    const hasFaucetContract = isValidAddress(addresses.faucet)
-    
-    if (hasToken !== hasFaucetContract) {
-      errors.push(
-        `Chain ${chainId}: testToken and faucet must be deployed together`
-      )
-    }
-  })
-  
-  if (errors.length > 0) {
-    console.warn('⚠️ Address configuration warnings:', errors)
-  }
-  
-  return errors.length === 0
-}
-
-if (import.meta.env.DEV) {
-  validateAddressConfig()
 }
 
 export const CONTRACT_CATEGORIES = {
   core: ['personalFundFactory', 'usdc', 'treasury', 'governance', 'token'] as const,
   optional: ['protocolRegistry', 'userPreferences', 'dateTime'] as const,
-  testnet: ['mockUsdc', 'testToken', 'faucet'] as const,
 } as const
 
 export const getCategoryContracts = (
@@ -516,6 +335,26 @@ export const getContractsByCategory = (chainId: number) => {
   return {
     core: getCategoryContracts(chainId, 'core'),
     optional: getCategoryContracts(chainId, 'optional'),
-    testnet: getCategoryContracts(chainId, 'testnet'),
   }
+}
+
+const validateAddressConfig = () => {
+  const errors: string[] = []
+  
+  Object.entries(CONTRACT_ADDRESSES).forEach(([chainIdStr, addresses]) => {
+    const chainId = parseInt(chainIdStr)
+    if (!addresses.usdc || addresses.usdc === ZERO_ADDRESS) {
+      errors.push(`Chain ${chainId}: Missing USDC address`)
+    }
+  })
+  
+  if (errors.length > 0) {
+    console.warn('⚠️ Address configuration warnings:', errors)
+  }
+  
+  return errors.length === 0
+}
+
+if (import.meta.env.DEV) {
+  validateAddressConfig()
 }

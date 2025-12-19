@@ -19,17 +19,14 @@ export interface ChainMetadata {
   faucets?: string[]
   bridge?: string
   isTestnet: boolean
-  hasFaucet?: boolean 
 }
 
 export const CHAIN_METADATA: Record<number, ChainMetadata> = {
-
   421614: {
     deployed: true,
     hasContracts: true,
     priority: 1,
     isTestnet: true,
-    hasFaucet: true,
     faucets: [
       'https://faucet.quicknode.com/arbitrum/sepolia',
       'https://www.alchemy.com/faucets/arbitrum-sepolia',
@@ -44,7 +41,6 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     hasContracts: false,
     priority: 2,
     isTestnet: true,
-    hasFaucet: false,
     faucets: [
       'https://faucets.chain.link/polygon-amoy',
       'https://faucet.polygon.technology/',
@@ -59,7 +55,6 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     hasContracts: false,
     priority: 3,
     isTestnet: true,
-    hasFaucet: false,
     faucets: [
       'https://www.alchemy.com/faucets/base-sepolia',
       'https://docs.base.org/tools/network-faucets',
@@ -74,7 +69,6 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     hasContracts: false,
     priority: 4,
     isTestnet: true,
-    hasFaucet: false,
     faucets: [
       'https://app.optimism.io/faucet',
       'https://www.alchemy.com/faucets/optimism-sepolia',
@@ -89,7 +83,6 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     hasContracts: false,
     priority: 5,
     isTestnet: true,
-    hasFaucet: false,
     faucets: [
       'https://sepoliafaucet.com',
       'https://faucet.quicknode.com/ethereum/sepolia',
@@ -105,7 +98,6 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     hasContracts: false,
     priority: 10,
     isTestnet: false,
-    hasFaucet: false,
   },
 
   // 🔴 POLYGON (MAINNET) - PENDING
@@ -114,7 +106,6 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     hasContracts: false,
     priority: 11,
     isTestnet: false,
-    hasFaucet: false,
   },
 
   // 🔴 BASE (MAINNET) - PENDING
@@ -123,7 +114,6 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     hasContracts: false,
     priority: 12,
     isTestnet: false,
-    hasFaucet: false,
   },
 
   // 🔴 OPTIMISM (MAINNET) - PENDING
@@ -132,7 +122,6 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     hasContracts: false,
     priority: 13,
     isTestnet: false,
-    hasFaucet: false,
   },
 
   // 🔴 ETHEREUM (MAINNET) - PENDING
@@ -141,7 +130,6 @@ export const CHAIN_METADATA: Record<number, ChainMetadata> = {
     hasContracts: false,
     priority: 14,
     isTestnet: false,
-    hasFaucet: false,
   },
 }
 
@@ -204,10 +192,6 @@ export const hasContracts = (chainId: number): boolean => {
   return CHAIN_METADATA[chainId]?.hasContracts ?? false
 }
 
-export const hasInternalFaucet = (chainId: number): boolean => {
-  return CHAIN_METADATA[chainId]?.hasFaucet ?? false
-}
-
 export const getFaucets = (chainId: number): string[] => {
   return CHAIN_METADATA[chainId]?.faucets ?? []
 }
@@ -216,25 +200,17 @@ export const getBridge = (chainId: number): string | undefined => {
   return CHAIN_METADATA[chainId]?.bridge
 }
 
-export const getChainsWithFaucet = (): Chain[] => {
-  return SUPPORTED_CHAINS.filter(chain => 
-    CHAIN_METADATA[chain.id]?.hasFaucet
-  )
-}
-
 export const getExplorerUrl = (chainId: number, hash?: string): string => {
   const chain = getChainById(chainId)
   const baseUrl = chain?.blockExplorers?.default?.url || ''
   
   if (!hash) return baseUrl
-  
   return `${baseUrl}/tx/${hash}`
 }
 
 export const getExplorerAddressUrl = (chainId: number, address: string): string => {
   const chain = getChainById(chainId)
   const baseUrl = chain?.blockExplorers?.default?.url || ''
-  
   return `${baseUrl}/address/${address}`
 }
 
@@ -318,28 +294,9 @@ export const getChainErrorMessage = (currentChainId?: number): string => {
   return `Wrong network. Current: ${current?.name || 'Unknown'}. Please switch to: ${activeNames}`
 }
 
-export const getFaucetErrorMessage = (currentChainId?: number): string => {
-  if (!currentChainId) {
-    return 'Connect your wallet to use the faucet'
-  }
-  
-  if (!isTestnet(currentChainId)) {
-    return 'Faucet is only available on testnets'
-  }
-  
-  if (!hasInternalFaucet(currentChainId)) {
-    const chainsWithFaucet = getChainsWithFaucet()
-    const names = chainsWithFaucet.map(c => getChainShortName(c.id)).join(', ')
-    return `Faucet not available on this network. Available on: ${names}`
-  }
-  
-  return 'Faucet temporarily unavailable'
-}
-
 export const getChainStatus = (chainId: number): {
   deployed: boolean
   hasContracts: boolean
-  hasFaucet: boolean
   isTestnet: boolean
   isActive: boolean
   status: 'deployed' | 'pending' | 'unknown'
@@ -350,7 +307,6 @@ export const getChainStatus = (chainId: number): {
     return {
       deployed: false,
       hasContracts: false,
-      hasFaucet: false,
       isTestnet: false,
       isActive: false,
       status: 'unknown',
@@ -360,7 +316,6 @@ export const getChainStatus = (chainId: number): {
   return {
     deployed: metadata.deployed,
     hasContracts: metadata.hasContracts,
-    hasFaucet: metadata.hasFaucet ?? false,
     isTestnet: metadata.isTestnet,
     isActive: isChainActive(chainId),
     status: metadata.deployed ? 'deployed' : 'pending',
@@ -384,7 +339,6 @@ export const getChainInfo = (chainId: number) => {
     bridgeUrl: getBridge(chainId),
   }
 }
-
 export const getDeploymentSummary = () => {
   const summary: Record<number, {
     chainId: number
@@ -393,7 +347,6 @@ export const getDeploymentSummary = () => {
     isTestnet: boolean
     deployed: boolean
     hasContracts: boolean
-    hasFaucet: boolean
     priority: number
   }> = {}
   
@@ -408,7 +361,6 @@ export const getDeploymentSummary = () => {
       isTestnet: metadata.isTestnet,
       deployed: metadata.deployed,
       hasContracts: metadata.hasContracts,
-      hasFaucet: metadata.hasFaucet ?? false,
       priority: metadata.priority,
     }
   })
@@ -460,15 +412,9 @@ export const validateChainConfig = () => {
       errors.push(`Chain ${chain.id} (${chain.name}) missing metadata`)
       return
     }
-    
-    // Validar que testnets tengan faucets externos
+
     if (metadata.isTestnet && (!metadata.faucets || metadata.faucets.length === 0)) {
       errors.push(`Testnet ${chain.name} missing external faucets`)
-    }
-    
-    // Validar que chains con hasFaucet=true sean testnets
-    if (metadata.hasFaucet && !metadata.isTestnet) {
-      errors.push(`Mainnet ${chain.name} cannot have internal faucet`)
     }
   })
   
@@ -479,7 +425,6 @@ export const validateChainConfig = () => {
   return errors.length === 0
 }
 
-// Ejecutar validación en desarrollo
 if (import.meta.env.DEV) {
   validateChainConfig()
 }
