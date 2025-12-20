@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useAccount, useChainId } from 'wagmi';
+import { useAccount, useChainId, useSwitchChain } from 'wagmi';
+import { arbitrumSepolia } from 'viem/chains';
 import { useFaucet } from '@/hooks/web3/useFaucet';
 import { FaucetResponse } from '@/lib/faucet-client';
-import { useChainConfig } from '@/config/chains.config';
-import { Loader2, Droplets, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { Loader2, Droplets, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface FaucetButtonProps {
   currentAge?: number;
@@ -15,6 +15,8 @@ interface FaucetButtonProps {
   initialAmount?: number;
   className?: string;
 }
+
+const REQUIRED_CHAIN_ID = arbitrumSepolia.id;
 
 export function FaucetButton({
   currentAge = 30,
@@ -26,58 +28,67 @@ export function FaucetButton({
 }: FaucetButtonProps) {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
-  const { config, hasFaucet, faucetUrl, isTestnet } = useChainConfig();
-  const { requestTokens, loading, error } = useFaucet(faucetUrl);
+  const { switchChain } = useSwitchChain();
+  const { requestTokens, loading, error } = useFaucet();
   const [result, setResult] = useState<FaucetResponse | null>(null);
+  const isCorrectChain = chainId === REQUIRED_CHAIN_ID;
+  const handleSwitchChain = async () => {
+    try {
+      await switchChain({ chainId: REQUIRED_CHAIN_ID });
+    } catch (err) {
+      console.error('Error switching chain:', err);
+    }
+  };
+
   const handleRequest = async () => {
-    if (!address || !isConnected || !faucetUrl) return;
+    if (!address || !isConnected) return;
 
     try {
-      const requestData = {
+      const response = await requestTokens({
         wallet_address: address,
         current_age: currentAge,
         retirement_age: retirementAge,
         desired_monthly_payment: desiredMonthlyPayment,
         monthly_deposit: monthlyDeposit,
         initial_amount: initialAmount,
-      };
+      });
 
-      console.log('🚀 Requesting tokens with data:', requestData);
-      const response = await requestTokens(requestData);
-      console.log('✅ Tokens received:', response);
       setResult(response);
-      
-      setTimeout(() => setResult(null), 20000);
+      setTimeout(() => setResult(null), 15000);
     } catch (err) {
-      console.error('❌ Faucet error:', err);
+      console.error('Faucet error:', err);
     }
   };
-
-  if (!hasFaucet || !isTestnet) {
-    return (
-      <div className={`text-center p-6 bg-blue-50 border-2 border-blue-200 rounded-xl ${className}`}>
-        <Info className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-        <p className="text-blue-900 font-semibold mb-2">
-          {!isTestnet ? 'Producción: Usa USDC real' : 'Faucet no disponible'}
-        </p>
-        <p className="text-sm text-blue-700">
-          {!isTestnet 
-            ? 'Estás en mainnet. Usa USDC real para crear tu fondo de retiro.'
-            : `El faucet no está disponible en ${config?.name || 'esta red'}.`
-          }
-        </p>
-      </div>
-    );
-  }
-
   if (!isConnected) {
     return (
-      <div className={`text-center p-6 bg-amber-50 border-2 border-amber-200 rounded-xl ${className}`}>
+      <div className={`text-center p-6 bg-amber-50 border border-amber-200 rounded-xl ${className}`}>
         <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-3" />
         <p className="text-amber-900 font-semibold mb-2">Wallet no conectada</p>
         <p className="text-sm text-amber-700">
           Conecta tu wallet usando el botón superior para continuar
         </p>
+      </div>
+    );
+  }
+  if (!isCorrectChain) {
+    return (
+      <div className={`space-y-4 ${className}`}>
+        <div className="p-6 bg-orange-50 border border-orange-200 rounded-xl">
+          <AlertCircle className="w-12 h-12 text-orange-600 mx-auto mb-3" />
+          <p className="text-orange-900 font-semibold text-center mb-2">
+            Red incorrecta
+          </p>
+          <p className="text-sm text-orange-700 text-center mb-4">
+            Debes cambiar a Arbitrum Sepolia para solicitar tokens
+          </p>
+          <button
+            onClick={handleSwitchChain}
+            className="w-full px-6 py-3 bg-orange-600 hover:bg-orange-700 
+                       text-white rounded-lg font-semibold transition-colors"
+          >
+            Cambiar a Arbitrum Sepolia
+          </button>
+        </div>
       </div>
     );
   }
@@ -110,33 +121,12 @@ export function FaucetButton({
 
       {/* Error */}
       {error && (
-        <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl animate-in fade-in duration-300">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-semibold text-red-900 mb-1">Error al solicitar tokens</p>
-              <p className="text-sm text-red-700">{error}</p>
-              
-              {error.includes('No se pudo conectar') && (
-                <div className="mt-3 p-3 bg-red-100 rounded-lg">
-                  <p className="text-xs text-red-900 font-semibold mb-2">
-                    💡 Posibles soluciones:
-                  </p>
-                  <ul className="text-xs text-red-800 space-y-1 list-disc list-inside">
-                    <li>Verifica que el backend esté corriendo</li>
-                    <li>Revisa la consola del navegador (F12) para más detalles</li>
-                  </ul>
-                </div>
-              )}
-              
-              {error.includes('24 hours') && (
-                <div className="mt-2 flex items-start gap-2">
-                  <Info size={14} className="flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-red-700">
-                    Ya solicitaste tokens recientemente. Espera 24 horas desde tu última solicitud.
-                  </p>
-                </div>
-              )}
+              <p className="font-semibold text-red-900">Error al solicitar tokens</p>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
             </div>
           </div>
         </div>
@@ -144,91 +134,75 @@ export function FaucetButton({
 
       {/* Success */}
       {result && result.success && (
-        <div className="p-5 bg-green-50 border-2 border-green-300 rounded-xl space-y-4 animate-in fade-in duration-300">
+        <div className="p-5 bg-green-50 border-2 border-green-200 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-start gap-3">
             <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-bold text-green-900 text-lg">
+              <p className="font-semibold text-green-900 text-lg">
                 ¡Tokens enviados exitosamente!
               </p>
               <p className="text-sm text-green-700 mt-1">{result.message}</p>
             </div>
           </div>
           
-          {(result.usdc_amount_sent || result.eth_amount_sent) && (
-            <div className="bg-white rounded-lg p-4 space-y-2 border border-green-200">
-              {result.usdc_amount_sent && (
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">💵 USDC recibidos:</span>
-                  <span className="font-mono font-bold text-gray-900">
-                    {Number(result.usdc_amount_sent).toLocaleString()} USDC
-                  </span>
-                </div>
-              )}
-              
-              {result.eth_amount_sent && (
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">⛽ ETH para gas:</span>
-                  <span className="font-mono font-bold text-gray-900">
-                    {result.eth_amount_sent} ETH
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Amounts */}
+          <div className="bg-white rounded-lg p-4 space-y-2">
+            {result.usdc_amount_sent && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">💵 USDC recibidos:</span>
+                <span className="font-mono font-bold text-gray-900">
+                  {Number(result.usdc_amount_sent).toLocaleString()} USDC
+                </span>
+              </div>
+            )}
+            
+            {result.eth_amount_sent && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">⛽ ETH para gas:</span>
+                <span className="font-mono font-bold text-gray-900">
+                  {result.eth_amount_sent} ETH
+                </span>
+              </div>
+            )}
+          </div>
 
           {/* Explorer Links */}
           <div className="space-y-2">
-            {result.explorer_usdc_url && (
+            {result.usdc_transaction_hash && result.explorer_usdc_url && (
               <a
                 href={result.explorer_usdc_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-center py-3 px-4 bg-green-600 hover:bg-green-700 
-                           text-white rounded-lg transition-colors font-medium text-sm"
+                           text-white rounded-lg transition-colors font-medium"
               >
-                Ver transacción USDC en Explorer ↗
+                Ver transacción USDC en Arbiscan ↗
               </a>
             )}
             
-            {result.explorer_eth_url && (
+            {result.eth_transaction_hash && result.explorer_eth_url && (
               <a
                 href={result.explorer_eth_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-center py-3 px-4 bg-green-600 hover:bg-green-700 
-                           text-white rounded-lg transition-colors font-medium text-sm"
+                           text-white rounded-lg transition-colors font-medium"
               >
-                Ver transacción ETH en Explorer ↗
+                Ver transacción ETH en Arbiscan ↗
               </a>
             )}
           </div>
         </div>
       )}
 
-      {/* Info Box */}
+      {/* Info */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Info className="w-4 h-4 text-blue-700" />
-          <h4 className="font-semibold text-blue-900">Información del Faucet</h4>
-        </div>
-        <ul className="text-sm text-blue-800 space-y-1.5">
-          <li className="flex items-center gap-2">
-            <span className="text-blue-600">⏱️</span>
-            <span>Límite: 1 solicitud cada 24 horas por wallet</span>
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-blue-600">💰</span>
-            <span>Recibirás: 10,000 USDC + 0.001 ETH</span>
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-blue-600">🌐</span>
-            <span>Red: {config?.name || 'Testnet'}</span>
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-blue-600">🎯</span>
-            <span>Los tokens son solo para pruebas (sin valor real)</span>
-          </li>
+        <h4 className="font-semibold text-blue-900 mb-2">ℹ️ Información</h4>
+        <ul className="text-sm text-blue-800 space-y-1">
+          <li>⏱️ Límite: 1 solicitud cada 24 horas por wallet</li>
+          <li>💰 Recibirás: 10,000 USDC + 0.001 ETH</li>
+          <li>🌐 Red: Arbitrum Sepolia (testnet)</li>
+          <li>🎯 Los tokens son solo para pruebas</li>
         </ul>
       </div>
     </div>
