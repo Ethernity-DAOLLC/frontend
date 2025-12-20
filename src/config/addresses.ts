@@ -10,14 +10,12 @@ export interface ContractAddresses {
 }
 
 const OFFICIAL_USDC: Record<number, `0x${string}`> = {
-
-  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',       // Arbitrum Sepolia
+  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',      
   80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',         // Polygon Amoy
   84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',         // Base Sepolia
   11155420: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',      // Optimism Sepolia
   11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',      // Ethereum Sepolia
   
-  // MAINNETS
   42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',           // Arbitrum One
   137: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',            // Polygon
   8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',           // Base
@@ -25,13 +23,22 @@ const OFFICIAL_USDC: Record<number, `0x${string}`> = {
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',              // Ethereum
 }
 
+const MOCK_USDC: Record<number, `0x${string}`> = {
+  421614: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81',
+}
+const USE_MOCK_USDC = import.meta.env.DEV || import.meta.env.VITE_USE_MOCK_USDC === 'true'
+const getUSDCAddress = (chainId: number): `0x${string}` => {
+  if (USE_MOCK_USDC && MOCK_USDC[chainId]) {
+    return MOCK_USDC[chainId]
+  }
+  return OFFICIAL_USDC[chainId]
+}
 export const ZERO_ADDRESS: `0x${string}` = '0x0000000000000000000000000000000000000000'
-
 export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
-  // ✅ ARBITRUM SEPOLIA - DEPLOYED
+
   421614: {
     personalFundFactory: '0xCC29838D66b4aFFB1A4127Cd7DBc60648BcC93d6',
-    usdc: OFFICIAL_USDC[421614],
+    usdc: getUSDCAddress(421614),
     treasury: '0x2F1948D9FA3BB1942f51ebBdA265B1185c3c52dC',
     governance: '0x6206f8B2729EF9c7dBC651DeE4dF08A44A720A3E',
     token: '0x3D7cfDB2a190B0F8bDf753Af19f3f3D13eca0020',
@@ -43,7 +50,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   // 🟡 POLYGON AMOY - READY TO DEPLOY
   80002: {
     personalFundFactory: ZERO_ADDRESS,
-    usdc: OFFICIAL_USDC[80002],
+    usdc: getUSDCAddress(80002),
     treasury: ZERO_ADDRESS, 
     governance: ZERO_ADDRESS, 
     token: ZERO_ADDRESS,     
@@ -55,7 +62,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   // 🔴 BASE SEPOLIA - PENDING
   84532: {
     personalFundFactory: ZERO_ADDRESS,
-    usdc: OFFICIAL_USDC[84532],
+    usdc: getUSDCAddress(84532),
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
@@ -64,7 +71,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   // 🔴 OPTIMISM SEPOLIA - PENDING
   11155420: {
     personalFundFactory: ZERO_ADDRESS,
-    usdc: OFFICIAL_USDC[11155420],
+    usdc: getUSDCAddress(11155420),
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
@@ -73,7 +80,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   // 🔴 ETHEREUM SEPOLIA - PENDING
   11155111: {
     personalFundFactory: ZERO_ADDRESS,
-    usdc: OFFICIAL_USDC[11155111],
+    usdc: getUSDCAddress(11155111),
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
@@ -82,7 +89,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   // 🔴 ARBITRUM ONE (MAINNET) - PENDING
   42161: {
     personalFundFactory: ZERO_ADDRESS,
-    usdc: OFFICIAL_USDC[42161],
+    usdc: getUSDCAddress(42161),
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
@@ -91,7 +98,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   // 🔴 POLYGON (MAINNET) - PENDING
   137: {
     personalFundFactory: ZERO_ADDRESS,
-    usdc: OFFICIAL_USDC[137],
+    usdc: getUSDCAddress(137),
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
@@ -100,7 +107,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   // 🔴 BASE (MAINNET) - PENDING
   8453: {
     personalFundFactory: ZERO_ADDRESS,
-    usdc: OFFICIAL_USDC[8453],
+    usdc: getUSDCAddress(8453),
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
@@ -109,7 +116,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   // 🔴 OPTIMISM (MAINNET) - PENDING
   10: {
     personalFundFactory: ZERO_ADDRESS,
-    usdc: OFFICIAL_USDC[10],
+    usdc: getUSDCAddress(10),
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
@@ -118,11 +125,25 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   // 🔴 ETHEREUM (MAINNET) - PENDING
   1: {
     personalFundFactory: ZERO_ADDRESS,
-    usdc: OFFICIAL_USDC[1],
+    usdc: getUSDCAddress(1),
     treasury: ZERO_ADDRESS,
     governance: ZERO_ADDRESS,
     token: ZERO_ADDRESS,
   },
+}
+export const MOCK_USDC_ADDRESS = MOCK_USDC[421614]
+export const IS_USING_MOCK_USDC = USE_MOCK_USDC
+export const getOfficialUSDC = (chainId: number): `0x${string}` | undefined => {
+  return OFFICIAL_USDC[chainId]
+}
+export const getMockUSDC = (chainId: number): `0x${string}` | undefined => {
+  return MOCK_USDC[chainId]
+}
+export const hasUSDC = (chainId: number): boolean => {
+  return chainId in OFFICIAL_USDC
+}
+export const hasMockUSDC = (chainId: number): boolean => {
+  return chainId in MOCK_USDC
 }
 
 export const getContractAddresses = (chainId: number): ContractAddresses | undefined => {
@@ -148,7 +169,6 @@ export const isContractDeployed = (
   const address = CONTRACT_ADDRESSES[chainId]?.[contract]
   return isValidAddress(address)
 }
-
 export const areMainContractsDeployed = (chainId: number): boolean => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return false
@@ -165,20 +185,10 @@ export const areMainContractsDeployed = (chainId: number): boolean => {
     isContractDeployed(chainId, contract)
   )
 }
-
-export const getOfficialUSDC = (chainId: number): `0x${string}` | undefined => {
-  return OFFICIAL_USDC[chainId]
-}
-
-export const hasUSDC = (chainId: number): boolean => {
-  return chainId in OFFICIAL_USDC
-}
-
 export const isTestnetChain = (chainId: number): boolean => {
   const testnets = [421614, 80002, 84532, 11155420, 11155111]
   return testnets.includes(chainId)
 }
-
 export const getUSDCForChain = (chainId: number): `0x${string}` | undefined => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return undefined
@@ -193,7 +203,6 @@ export const getDeployedContracts = (chainId: number): (keyof ContractAddresses)
     .filter(([_, address]) => isValidAddress(address))
     .map(([name]) => name as keyof ContractAddresses)
 }
-
 export const getPendingContracts = (chainId: number): (keyof ContractAddresses)[] => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return []
@@ -267,13 +276,11 @@ export const updateChainAddresses = (
     console.error(`❌ Chain ${chainId} not configured`)
     return
   }
-  
   Object.assign(current, addresses)
   console.log(`✅ Updated addresses for chain ${chainId}:`, addresses)
 }
 export type ContractName = keyof ContractAddresses
 export type ChainId = keyof typeof CONTRACT_ADDRESSES
-
 export const DEPLOYMENT_STATUS = {
   421614: {
     status: 'deployed' as const,
@@ -330,14 +337,12 @@ export const getCategoryContracts = (
     isContractDeployed(chainId, contract)
   )
 }
-
 export const getContractsByCategory = (chainId: number) => {
   return {
     core: getCategoryContracts(chainId, 'core'),
     optional: getCategoryContracts(chainId, 'optional'),
   }
 }
-
 const validateAddressConfig = () => {
   const errors: string[] = []
   
@@ -351,10 +356,15 @@ const validateAddressConfig = () => {
   if (errors.length > 0) {
     console.warn('⚠️ Address configuration warnings:', errors)
   }
-  
   return errors.length === 0
 }
-
 if (import.meta.env.DEV) {
   validateAddressConfig()
+
+  console.log('🎯 USDC Configuration:', {
+    usingMockUSDC: IS_USING_MOCK_USDC,
+    mockAddress: MOCK_USDC_ADDRESS,
+    officialAddress: OFFICIAL_USDC[421614],
+    currentAddress: getUSDCAddress(421614),
+  })
 }
