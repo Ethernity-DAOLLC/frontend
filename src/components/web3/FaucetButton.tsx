@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { arbitrumSepolia } from 'viem/chains';
-import { useFaucet } from '@/hooks/useFaucet';
+import { useFaucet } from '@/hooks/web3/useFaucet';
 import { FaucetResponse } from '@/lib/faucet-client';
 import { Loader2, Droplets, CheckCircle, AlertCircle } from 'lucide-react';
 
