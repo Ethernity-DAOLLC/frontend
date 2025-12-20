@@ -5,6 +5,7 @@ import { useRetirementPlan } from '@/context/RetirementContext';
 import { useWallet } from '@/hooks/web3';
 import { CONTRACT_ADDRESSES } from '@/config/addresses';
 import { formatCurrency, formatYears } from '@/lib/formatters';
+import { FaucetButton } from '@/components/web3/FaucetButton';
 import {
   Calculator,
   TrendingUp,
@@ -17,6 +18,8 @@ import {
   Info,
   Sparkles,
   AlertCircle,
+  Droplets,
+  ChevronRight,
 } from "lucide-react";
 
 let Chart: any = null;
@@ -123,7 +126,6 @@ const CalculatorPage: React.FC = () => {
   const { setPlanData } = useRetirementPlan();
   const { isConnected, openModal } = useWallet();
   
-  // ✅ Factory address dinámico según la red conectada
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
   
   const [chartReady, setChartReady] = useState(false);
@@ -267,7 +269,6 @@ const CalculatorPage: React.FC = () => {
   const handleCreateContract = async () => {
     if (!result) return;
 
-    // ✅ Verificar que tengamos la dirección del factory en esta red
     if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
       setError('Contracts not deployed on this network yet. Please switch to Arbitrum Sepolia.');
       return;
@@ -370,92 +371,186 @@ const CalculatorPage: React.FC = () => {
         )}
 
         <div className="grid lg:grid-cols-2 gap-6 sm:gap-10">
-          <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 sm:p-8 border border-purple-100">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 sm:mb-8 flex items-center gap-3">
-              <Sparkles className="text-purple-600" />
-              Configure Your Plan
-            </h2>
+          {/* LEFT COLUMN - Calculator Inputs */}
+          <div className="space-y-6">
+            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 sm:p-8 border border-purple-100">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 sm:mb-8 flex items-center gap-3">
+                <Sparkles className="text-purple-600" />
+                Configure Your Plan
+              </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <FormField
-                label="Initial Capital ($)"
-                value={inputs.initialCapital}
-                onChange={(val) => setInputs({ ...inputs, initialCapital: val })}
-                icon={<DollarSign className="w-5 h-5" />}
-                min={0}
-              />
-              <FormField
-                label="Current Age"
-                value={inputs.currentAge}
-                onChange={(val) => setInputs({ ...inputs, currentAge: val })}
-                icon={<Calendar className="w-5 h-5" />}
-                min={18}
-              />
-              <FormField
-                label="Retirement Age"
-                value={inputs.retirementAge}
-                onChange={(val) => setInputs({ ...inputs, retirementAge: val })}
-                icon={<Calendar className="w-5 h-5" />}
-                min={inputs.currentAge + 1}
-              />
-              <FormField
-                label="Desired Monthly Income ($)"
-                value={inputs.desiredMonthly}
-                onChange={(val) => setInputs({ ...inputs, desiredMonthly: val })}
-                icon={<DollarSign className="w-5 h-5" />}
-                min={0}
-              />
-              <FormField
-                label="Expected Annual Rate (%)"
-                value={inputs.annualRate}
-                onChange={(val) => setInputs({ ...inputs, annualRate: val })}
-                step={0.1}
-                icon={<Percent className="w-5 h-5" />}
-                min={0.1}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <FormField
+                  label="Initial Capital ($)"
+                  value={inputs.initialCapital}
+                  onChange={(val) => setInputs({ ...inputs, initialCapital: val })}
+                  icon={<DollarSign className="w-5 h-5" />}
+                  min={0}
+                />
+                <FormField
+                  label="Current Age"
+                  value={inputs.currentAge}
+                  onChange={(val) => setInputs({ ...inputs, currentAge: val })}
+                  icon={<Calendar className="w-5 h-5" />}
+                  min={18}
+                />
+                <FormField
+                  label="Retirement Age"
+                  value={inputs.retirementAge}
+                  onChange={(val) => setInputs({ ...inputs, retirementAge: val })}
+                  icon={<Calendar className="w-5 h-5" />}
+                  min={inputs.currentAge + 1}
+                />
+                <FormField
+                  label="Desired Monthly Income ($)"
+                  value={inputs.desiredMonthly}
+                  onChange={(val) => setInputs({ ...inputs, desiredMonthly: val })}
+                  icon={<DollarSign className="w-5 h-5" />}
+                  min={0}
+                />
+                <FormField
+                  label="Expected Annual Rate (%)"
+                  value={inputs.annualRate}
+                  onChange={(val) => setInputs({ ...inputs, annualRate: val })}
+                  step={0.1}
+                  icon={<Percent className="w-5 h-5" />}
+                  min={0.1}
+                />
 
-              <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                  <TrendingUp className="w-5 h-5" />
-                  Contribution Frequency
-                </label>
-                <select
-                  value={inputs.contributionFrequency}
-                  onChange={(e) => setInputs({ ...inputs, contributionFrequency: e.target.value as any })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-purple-300 focus:border-purple-500 transition"
-                >
-                  <option value="monthly">Monthly</option>
-                  <option value="quarterly">Quarterly</option>
-                  <option value="annual">Annual</option>
-                </select>
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Contribution Frequency
+                  </label>
+                  <select
+                    value={inputs.contributionFrequency}
+                    onChange={(e) => setInputs({ ...inputs, contributionFrequency: e.target.value as any })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-purple-300 focus:border-purple-500 transition"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="annual">Annual</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                    <Calendar className="w-5 h-5" />
+                    Years Receiving Income
+                  </label>
+                  <div className="flex gap-4 items-center">
+                    <input
+                      type="range"
+                      min="10"
+                      max="40"
+                      value={inputs.yearsInRetirement}
+                      onChange={(e) => setInputs({ ...inputs, yearsInRetirement: parseInt(e.target.value) })}
+                      className="flex-1 h-3 bg-gray-200 rounded-lg cursor-pointer accent-purple-600"
+                      aria-label="Years receiving income"
+                      aria-valuemin={10}
+                      aria-valuemax={40}
+                      aria-valuenow={inputs.yearsInRetirement}
+                    />
+                    <span className="bg-purple-100 text-purple-800 font-bold px-4 sm:px-5 py-2 sm:py-3 rounded-xl text-base sm:text-lg min-w-24 sm:min-w-32 text-center">
+                      {formatYears(inputs.yearsInRetirement)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 🎯 GET TEST TOKENS SECTION */}
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl shadow-2xl p-6 sm:p-8 border-2 border-blue-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-blue-600 p-3 rounded-xl">
+                  <Droplets className="text-white" size={24} />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                  Get Test Tokens
+                </h3>
+              </div>
+              
+              <p className="text-gray-700 mb-6">
+                Request USDC and ETH tokens to test the platform on Arbitrum Sepolia testnet.
+              </p>
+
+              <FaucetButton
+                currentAge={inputs.currentAge}
+                retirementAge={inputs.retirementAge}
+                desiredMonthlyPayment={inputs.desiredMonthly}
+                monthlyDeposit={inputs.initialCapital}
+                initialAmount={inputs.initialCapital}
+              />
+            </div>
+
+            {/* 🎯 STEP-BY-STEP GUIDE */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl shadow-2xl p-6 sm:p-8 border-2 border-purple-200">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                <Info className="text-purple-600" />
+                How to Get Started
+              </h3>
+
+              <div className="space-y-4">
+                {[
+                  {
+                    step: 1,
+                    title: "Connect Your Wallet",
+                    description: "Connect your MetaMask or compatible wallet to Arbitrum Sepolia",
+                    icon: <Wallet className="w-5 h-5" />,
+                  },
+                  {
+                    step: 2,
+                    title: "Request Test Tokens",
+                    description: "Get free USDC and ETH tokens using the faucet above",
+                    icon: <Droplets className="w-5 h-5" />,
+                  },
+                  {
+                    step: 3,
+                    title: "Configure Your Plan",
+                    description: "Enter your retirement goals and financial information",
+                    icon: <Calculator className="w-5 h-5" />,
+                  },
+                  {
+                    step: 4,
+                    title: "Create Your Contract",
+                    description: "Deploy your personalized retirement smart contract",
+                    icon: <CheckCircle className="w-5 h-5" />,
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.step}
+                    className="bg-white rounded-xl p-4 flex items-start gap-4 shadow-md hover:shadow-lg transition-shadow"
+                  >
+                    <div className="bg-purple-100 text-purple-700 font-bold w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
+                      {item.step}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-purple-600">{item.icon}</span>
+                        <h4 className="font-semibold text-gray-800">{item.title}</h4>
+                      </div>
+                      <p className="text-sm text-gray-600">{item.description}</p>
+                    </div>
+                    <ChevronRight className="text-gray-400 flex-shrink-0" size={20} />
+                  </div>
+                ))}
               </div>
 
-              <div className="sm:col-span-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
-                  <Calendar className="w-5 h-5" />
-                  Years Receiving Income
-                </label>
-                <div className="flex gap-4 items-center">
-                  <input
-                    type="range"
-                    min="10"
-                    max="40"
-                    value={inputs.yearsInRetirement}
-                    onChange={(e) => setInputs({ ...inputs, yearsInRetirement: parseInt(e.target.value) })}
-                    className="flex-1 h-3 bg-gray-200 rounded-lg cursor-pointer accent-purple-600"
-                    aria-label="Years receiving income"
-                    aria-valuemin={10}
-                    aria-valuemax={40}
-                    aria-valuenow={inputs.yearsInRetirement}
-                  />
-                  <span className="bg-purple-100 text-purple-800 font-bold px-4 sm:px-5 py-2 sm:py-3 rounded-xl text-base sm:text-lg min-w-24 sm:min-w-32 text-center">
-                    {formatYears(inputs.yearsInRetirement)}
-                  </span>
+              <div className="mt-6 bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+                  <div>
+                    <h4 className="font-semibold text-amber-900 mb-1">Testnet Only</h4>
+                    <p className="text-sm text-amber-800">
+                      These are test tokens with no real value. Perfect for learning how the platform works!
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* RIGHT COLUMN - Results */}
           {result && (
             <div className="space-y-6 sm:space-y-8">
               {chartReady && Line && chartOptions && chartDataConfig ? (
