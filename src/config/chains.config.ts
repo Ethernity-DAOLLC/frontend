@@ -10,18 +10,12 @@ export interface ChainConfig {
     usdc: `0x${string}`;
     personalFundFactory?: `0x${string}`;
     treasury?: `0x${string}`;
-    governance: `0x${string}`;
-    token: `0x${string}`;
-    protocolRegistry?: `0x${string}`;
-    userPreferences?: `0x${string}`;
-    dateTime?: `0x${string}`;
   };
   faucet?: {
     enabled: boolean;
     apiUrl: string;
   };
 }
-
 export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
   [arbitrumSepolia.id]: {
     chainId: arbitrumSepolia.id,
@@ -31,13 +25,8 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
     explorerUrl: 'https://sepolia.arbiscan.io',
     contracts: {
       usdc: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81', // MockUSDC
-      personalFundFactory: '0xCC29838D66b4aFFB1A4127Cd7DBc60648BcC93d6',
+      personalFundFactory: '0x0000000000000000000000000000000000000000', // Actualiza cuando despliegues
       treasury: '0xEe4A90a9d3E24cBB7b1522552717D4F379d405B2',
-      governance: '0x6206f8B2729EF9c7dBC651DeE4dF08A44A720A3E',
-      token: '0x3D7cfDB2a190B0F8bDf753Af19f3f3D13eca0020',
-      protocolRegistry: '0xBc6004CA4A0c6CdD1046CBB2598F7C0B20CA6bd8',
-      userPreferences: '0x860AB33F149A3dD89cDa6DE77Fd6d40f2AA7a633',
-      dateTime: '0x493b4ba152970a04981EC9ccB4794F747b64Af57',
     },
     faucet: {
       enabled: true,
@@ -53,8 +42,8 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
     explorerUrl: 'https://etherscan.io',
     contracts: {
       usdc: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC oficial
-      // personalFundFactory: '0x...', //
-      // treasury: '0x...', // Treasury en mainnet
+      // personalFundFactory: '0x...', // Despliega cuando estés listo
+      // treasury: '0x...', // Tu treasury en mainnet
     },
     // Sin faucet en mainnet
   },
@@ -67,7 +56,7 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
     explorerUrl: 'https://arbiscan.io',
     contracts: {
       usdc: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // USDC oficial (nativo)
-      // O '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8' para USDC.e (bridged)
+      // O: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8' para USDC.e (bridged)
     },
   },
 
@@ -90,7 +79,7 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
     explorerUrl: 'https://polygonscan.com',
     contracts: {
       usdc: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // USDC oficial (nativo)
-      // '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174' para USDC.e (bridged)
+      // O: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174' para USDC.e (bridged)
     },
   },
 
@@ -101,13 +90,14 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
     rpcUrl: 'https://mainnet.base.org',
     explorerUrl: 'https://basescan.org',
     contracts: {
-      usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC oficial
+      usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     },
   },
 };
 export const DEFAULT_CHAIN_ID = import.meta.env.PROD 
-  ? arbitrum.id  // Producción: Arbitrum mainnet
-  : arbitrumSepolia.id;  // Desarrollo: Arbitrum Sepolia
+  ? arbitrum.id 
+  : arbitrumSepolia.id;  
+
 export function getChainConfig(chainId: number): ChainConfig | undefined {
   return CHAIN_CONFIGS[chainId];
 }
