@@ -31,8 +31,6 @@ const CreateContractPage: React.FC = () => {
   const { isConnected, openModal } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
-
-  // ✅ Factory address dinámico según la red conectada
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
 
   const {
@@ -67,12 +65,10 @@ const CreateContractPage: React.FC = () => {
       }, 2000);
     }
   }, [isSuccess, hash, navigate, planData, clearPlanData]);
-
   if (!planData) {
     return null;
   }
 
-  // ✅ Verificar que exista el factory en esta red
   if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
@@ -97,10 +93,10 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
-  
-  const initialDepositAmount = parseUSDC(planData.initialDeposit);
+
+  const principalAmount = parseUSDC(planData.principal);
   const monthlyDepositAmount = parseUSDC(planData.monthlyDeposit);
-  const principal = initialDepositAmount - monthlyDepositAmount;
+  const initialDepositAmount = parseUSDC(planData.initialDeposit);
   
   const handleConnectWallet = () => {
     openModal();
@@ -116,7 +112,7 @@ const CreateContractPage: React.FC = () => {
 
     try {
       await createPersonalFund({
-        principal,
+        principal: principalAmount,
         monthlyDeposit: monthlyDepositAmount,
         currentAge: planData.currentAge,
         retirementAge: planData.retirementAge,
@@ -131,12 +127,11 @@ const CreateContractPage: React.FC = () => {
       setIsProcessing(false);
     }
   };
-  
+
   const feeAmount = (parseFloat(planData.initialDeposit) * 0.03).toFixed(2);
   const netToOwner = (parseFloat(planData.initialDeposit) * 0.97).toFixed(2);
   const hasEnoughBalance = usdcBalance && usdcBalance >= initialDepositAmount;
   const hasEnoughAllowance = usdcAllowance && usdcAllowance >= initialDepositAmount;
-
   const getStepMessage = () => {
     if (creationStep === 'approving') return 'Approving USDC...';
     if (creationStep === 'creating') return 'Creating your retirement fund...';
@@ -211,6 +206,16 @@ const CreateContractPage: React.FC = () => {
                 <p className="text-4xl font-black text-emerald-700">
                   {formatCurrency(parseFloat(planData.initialDeposit))}
                 </p>
+                <div className="mt-3 pt-3 border-t border-emerald-200 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-gray-600">Principal:</p>
+                    <p className="font-bold text-gray-800">{formatCurrency(parseFloat(planData.principal))}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">First Monthly:</p>
+                    <p className="font-bold text-gray-800">{formatCurrency(parseFloat(planData.monthlyDeposit))}</p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -303,11 +308,11 @@ const CreateContractPage: React.FC = () => {
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-6 sm:p-8">
               <h3 className="text-xl sm:text-2xl font-bold text-blue-800 mb-4 flex items-center gap-3">
                 <Info className="w-6 h-6" />
-                Fee Breakdown
+                Fee Breakdown (Initial Deposit)
               </h3>
               <div className="space-y-4">
                 <div className="bg-white rounded-2xl p-4 shadow">
-                  <p className="text-gray-600 text-sm">Total Deposit</p>
+                  <p className="text-gray-600 text-sm">Total Initial Deposit</p>
                   <p className="text-3xl font-black text-gray-800">
                     {formatCurrency(parseFloat(planData.initialDeposit))}
                   </p>
@@ -320,12 +325,17 @@ const CreateContractPage: React.FC = () => {
                   <p className="text-xs text-gray-500 mt-1">Goes to Treasury</p>
                 </div>
                 <div className="bg-white rounded-2xl p-4 shadow">
-                  <p className="text-gray-600 text-sm">Net to Your Fund (97%)</p>
+                  <p className="text-gray-600 text-sm">Net Returned to You (97%)</p>
                   <p className="text-3xl font-black text-green-600">
                     {formatCurrency(parseFloat(netToOwner))}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">For DeFi Investment</p>
                 </div>
+              </div>
+              <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <p className="text-xs text-amber-800">
+                  💡 <strong>Note:</strong> The same 3% fee applies to all monthly deposits
+                </p>
               </div>
             </div>
 
@@ -386,7 +396,7 @@ const CreateContractPage: React.FC = () => {
                       <div>
                         <p className="font-semibold text-red-900 mb-1">Insufficient Balance</p>
                         <p className="text-sm text-red-800">
-                          Please deposit more USDC to complete the request. You need{' '}
+                          Please deposit more USDC. You need{' '}
                           <strong>
                             {formatCurrency(parseFloat((Number(initialDepositAmount - (usdcBalance || BigInt(0))) / 1e6).toFixed(2)))}
                           </strong>{' '}
@@ -461,8 +471,8 @@ const CreateContractPage: React.FC = () => {
               <h4 className="font-bold text-blue-900 mb-2">Important Information</h4>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>• Your fund will be created as a smart contract on Arbitrum Sepolia</li>
-                <li>• 3% fee goes to Ethernity DAO Treasury for protocol maintenance</li>
-                <li>• 97% of your deposit is returned to you for DeFi investment</li>
+                <li>• 3% fee applies to initial deposit AND all monthly deposits</li>
+                <li>• 97% of each deposit is returned to you for DeFi investment</li>
                 <li>• You retain full control of your funds through the smart contract</li>
                 <li>• The timelock ensures funds are secured until retirement age</li>
               </ul>
