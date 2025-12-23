@@ -194,7 +194,7 @@ const CalculatorPage: React.FC = () => {
       return;
     }
 
-    if (safeInputs.desiredMonthly <= 0) {
+    if (safeInputs.desiredMonthlyIncome <= 0) {
       setError('Desired monthly income must be greater than 0');
       setResult(null);
       setChartData([]);
@@ -211,7 +211,7 @@ const CalculatorPage: React.FC = () => {
     const periodsPerYear = getPeriodsPerYear(safeInputs.contributionFrequency);
     const r = safeInputs.annualRate / 100 / periodsPerYear;
     const n = yearsToRetirement * periodsPerYear;
-    const totalNeededAtRetirement = safeInputs.desiredMonthly * 12 * safeInputs.yearsInRetirement;
+    const totalNeededAtRetirement = safeInputs.desiredMonthlyIncome * 12 * safeInputs.yearsInRetirement;
     const fvInitial = safeInputs.initialCapital * Math.pow(1 + r, n);
 
     let requiredPMT = 0;
@@ -405,8 +405,8 @@ const CalculatorPage: React.FC = () => {
                 />
                 <FormField
                   label="Desired Monthly Income ($)"
-                  value={inputs.desiredMonthly}
-                  onChange={(val) => setInputs({ ...inputs, desiredMonthly: val })}
+                  value={inputs.desiredMonthlyIncome}
+                  onChange={(val) => setInputs({ ...inputs, desiredMonthlyIncome: val })}
                   icon={<DollarSign className="w-5 h-5" />}
                   min={0}
                 />
@@ -479,7 +479,7 @@ const CalculatorPage: React.FC = () => {
               <FaucetButton
                 currentAge={inputs.currentAge}
                 retirementAge={inputs.retirementAge}
-                desiredMonthlyPayment={inputs.desiredMonthly}
+                desiredMonthlyPayment={inputs.desiredMonthlyIncome}
                 monthlyDeposit={inputs.initialCapital}
                 initialAmount={inputs.initialCapital}
               />
