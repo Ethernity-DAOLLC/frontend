@@ -22,6 +22,7 @@ import {
   Sparkles,
   Clock,
   Info,
+  Loader,
 } from 'lucide-react';
 
 const CreateContractPage: React.FC = () => {
@@ -31,6 +32,8 @@ const CreateContractPage: React.FC = () => {
   const { isConnected, openModal } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
+
+  // ✅ Factory address dinámico según la red conectada
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
 
   const {
@@ -59,16 +62,20 @@ const CreateContractPage: React.FC = () => {
           state: {
             txHash: hash,
             initialDeposit: planData?.initialDeposit || '0',
+            monthlyDeposit: planData?.monthlyDeposit || '0',
+            fundAddress: '', // TODO: Obtener del evento FundCreated
           },
         });
         clearPlanData();
       }, 2000);
     }
   }, [isSuccess, hash, navigate, planData, clearPlanData]);
+
   if (!planData) {
     return null;
   }
 
+  // ✅ Verificar que exista el factory en esta red
   if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
@@ -93,10 +100,13 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
-
+  
+  // ✅ Usar los valores directamente de planData sin recalcular
+  // Solo convertimos a unidades USDC (6 decimales)
   const principalAmount = parseUSDC(planData.principal);
   const monthlyDepositAmount = parseUSDC(planData.monthlyDeposit);
   const initialDepositAmount = parseUSDC(planData.initialDeposit);
+  const desiredMonthlyAmount = parseUSDC(planData.desiredMonthlyIncome.toString());
   
   const handleConnectWallet = () => {
     openModal();
@@ -116,7 +126,7 @@ const CreateContractPage: React.FC = () => {
         monthlyDeposit: monthlyDepositAmount,
         currentAge: planData.currentAge,
         retirementAge: planData.retirementAge,
-        desiredMonthly: parseUSDC(planData.desiredMonthlyIncome.toString()),
+        desiredMonthly: desiredMonthlyAmount,  // ✅ Número en unidades USDC
         yearsPayments: planData.yearsPayments,
         interestRate: Math.round(planData.interestRate * 100),
         timelockYears: planData.timelockYears,
@@ -127,16 +137,18 @@ const CreateContractPage: React.FC = () => {
       setIsProcessing(false);
     }
   };
-
+  
+  // ✅ Calcular fees SOLO para mostrar al usuario (no modifica los valores enviados al contrato)
   const feeAmount = (parseFloat(planData.initialDeposit) * 0.03).toFixed(2);
   const netToOwner = (parseFloat(planData.initialDeposit) * 0.97).toFixed(2);
   const hasEnoughBalance = usdcBalance && usdcBalance >= initialDepositAmount;
   const hasEnoughAllowance = usdcAllowance && usdcAllowance >= initialDepositAmount;
+
   const getStepMessage = () => {
-    if (creationStep === 'approving') return 'Approving USDC...';
-    if (creationStep === 'creating') return 'Creating your retirement fund...';
-    if (isConfirming) return 'Confirming transaction...';
-    if (isSuccess) return 'Success! Redirecting...';
+    if (creationStep === 'approving') return 'Step 1/2: Approving USDC... Please confirm in your wallet';
+    if (creationStep === 'creating') return 'Step 2/2: Creating your retirement fund... Please confirm in your wallet';
+    if (isConfirming) return 'Confirming transaction on blockchain...';
+    if (isSuccess) return 'Success! Redirecting to confirmation page...';
     return '';
   };
 
@@ -177,13 +189,23 @@ const CreateContractPage: React.FC = () => {
               {isSuccess ? (
                 <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
               ) : (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 flex-shrink-0 mt-0.5"></div>
+                <Loader className="animate-spin text-blue-600 flex-shrink-0 mt-0.5" size={20} />
               )}
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold text-blue-800 mb-1">
-                  {isSuccess ? 'Success!' : 'Processing...'}
+                  {isSuccess ? 'Success!' : 'Processing Transaction...'}
                 </h3>
                 <p className="text-blue-700 text-sm">{getStepMessage()}</p>
+                {creationStep && !isSuccess && (
+                  <div className="mt-3 bg-white rounded-lg p-3">
+                    <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+                      <div className={`w-2 h-2 rounded-full ${creationStep === 'approving' ? 'bg-blue-500 animate-pulse' : 'bg-green-500'}`} />
+                      <span>Approve USDC</span>
+                      <div className={`w-2 h-2 rounded-full ${creationStep === 'creating' ? 'bg-blue-500 animate-pulse' : creationStep === 'approving' ? 'bg-gray-300' : 'bg-green-500'}`} />
+                      <span>Create Fund</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -259,14 +281,15 @@ const CreateContractPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-4">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
                   <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
                     <DollarSign size={14} />
-                    Desired Monthly
+                    Desired Monthly Income
                   </p>
-                  <p className="text-xl font-bold text-gray-800">
+                  <p className="text-xl font-bold text-blue-700">
                     {formatCurrency(planData.desiredMonthlyIncome)}
                   </p>
+                  <p className="text-xs text-gray-500 mt-1">Your retirement goal</p>
                 </div>
 
                 <div className="bg-gray-50 rounded-xl p-4">
@@ -437,7 +460,7 @@ const CreateContractPage: React.FC = () => {
                   >
                     {isPending || isConfirming ? (
                       <>
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-700"></div>
+                        <Loader className="animate-spin" size={24} />
                         Processing...
                       </>
                     ) : (
@@ -471,10 +494,12 @@ const CreateContractPage: React.FC = () => {
               <h4 className="font-bold text-blue-900 mb-2">Important Information</h4>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>• Your fund will be created as a smart contract on Arbitrum Sepolia</li>
+                <li>• You'll need to approve 2 transactions: (1) Approve USDC, (2) Create Fund</li>
                 <li>• 3% fee applies to initial deposit AND all monthly deposits</li>
                 <li>• 97% of each deposit is returned to you for DeFi investment</li>
                 <li>• You retain full control of your funds through the smart contract</li>
                 <li>• The timelock ensures funds are secured until retirement age</li>
+                <li>• Your desired monthly income ({formatCurrency(planData.desiredMonthlyIncome)}) is saved as your retirement goal</li>
               </ul>
             </div>
           </div>
