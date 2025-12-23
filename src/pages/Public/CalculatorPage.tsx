@@ -295,13 +295,15 @@ const CalculatorPage: React.FC = () => {
     if (!result) return;
 
     const timelockYears = Math.max(15, Math.floor((inputs.retirementAge - inputs.currentAge) * 0.3));
-
+    const principal = inputs.initialCapital;
+    
     setPlanData({
+      principal: principal.toFixed(2),     
       initialDeposit: result.initialDeposit.toFixed(2),
       monthlyDeposit: result.monthlyDeposit.toFixed(2),
       currentAge: inputs.currentAge,
       retirementAge: inputs.retirementAge,
-      desiredMonthlyIncome: inputs.desiredMonthly,
+      desiredMonthlyIncome: inputs.desiredMonthlyIncome,
       yearsPayments: inputs.yearsInRetirement,
       interestRate: inputs.annualRate,
       timelockYears,
@@ -459,7 +461,7 @@ const CalculatorPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 🎯 GET TEST TOKENS SECTION */}
+            {/* GET TEST TOKENS SECTION */}
             <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl shadow-2xl p-6 sm:p-8 border-2 border-blue-200">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-blue-600 p-3 rounded-xl">
@@ -483,7 +485,7 @@ const CalculatorPage: React.FC = () => {
               />
             </div>
 
-            {/* 🎯 STEP-BY-STEP GUIDE */}
+            {/* STEP-BY-STEP GUIDE */}
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl shadow-2xl p-6 sm:p-8 border-2 border-purple-200">
               <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
                 <Info className="text-purple-600" />

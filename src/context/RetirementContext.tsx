@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface RetirementPlanData {
-  initialDeposit: string;
+  principal: string;       
+  initialDeposit: string;   
   monthlyDeposit: string;
   currentAge: number;
   retirementAge: number;
@@ -10,7 +11,6 @@ interface RetirementPlanData {
   interestRate: number;
   timelockYears: number;
 }
-
 interface RetirementContextType {
   planData: RetirementPlanData | null;
   setPlanData: (data: RetirementPlanData) => void;
@@ -20,12 +20,10 @@ const RetirementContext = createContext<RetirementContextType | undefined>(undef
 
 export const RetirementProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [planData, setPlanDataState] = useState<RetirementPlanData | null>(null);
-
   const setPlanData = (data: RetirementPlanData) => {
     setPlanDataState(data);
     localStorage.setItem('retirementPlan', JSON.stringify(data));
   };
-
   const clearPlanData = () => {
     setPlanDataState(null);
     localStorage.removeItem('retirementPlan');
