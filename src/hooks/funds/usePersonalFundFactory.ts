@@ -26,9 +26,9 @@ interface FactoryConfiguration {
   minPrincipal: bigint;
   maxPrincipal: bigint;
   minMonthlyDeposit: bigint;
-  maxMonthlyDeposit: bigint;
-  minInterestRate: bigint;
-  maxInterestRate: bigint;
+  minAge: bigint;
+  maxAge: bigint;
+  minRetirementAge: bigint;
   minTimelockYears: bigint;
   maxTimelockYears: bigint;
 }
@@ -54,6 +54,7 @@ interface UsePersonalFundFactoryReturn {
   hash: `0x${string}` | undefined;
 
   createPersonalFund: (params: CreateParams) => void;
+  useCalculateInitialDeposit: (principal: bigint, monthlyDeposit: bigint) => any;
   refetch: () => void;
   refetchAllowance: () => void;
 }
@@ -62,6 +63,7 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`): UsePerson
   const { address: userAddress } = useAccount();
   const { writeContract, data: hash, isPending } = useWriteContract();
   const [creationStep, setCreationStep] = useState<'idle' | 'approving' | 'creating'>('idle');
+
   const { data, isLoading, refetch } = useReadContracts({
     contracts: [
       {
@@ -97,7 +99,7 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`): UsePerson
       {
         address: factoryAddress,
         abi: FactoryABI,
-        functionName: 'configuration',
+        functionName: 'getConfiguration',
       },
       {
         address: factoryAddress,
@@ -114,7 +116,7 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`): UsePerson
       {
         address: factoryAddress,
         abi: FactoryABI,
-        functionName: 'userFundCount',
+        functionName: 'getUserFundCount',
         args: [userAddress],
       },
       {
@@ -152,9 +154,9 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`): UsePerson
         minPrincipal: config.result[0] as bigint,
         maxPrincipal: config.result[1] as bigint,
         minMonthlyDeposit: config.result[2] as bigint,
-        maxMonthlyDeposit: config.result[3] as bigint,
-        minInterestRate: config.result[4] as bigint,
-        maxInterestRate: config.result[5] as bigint,
+        minAge: config.result[3] as bigint,
+        maxAge: config.result[4] as bigint,
+        minRetirementAge: config.result[5] as bigint,
         minTimelockYears: config.result[6] as bigint,
         maxTimelockYears: config.result[7] as bigint,
       }
@@ -162,34 +164,46 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`): UsePerson
 
   const usdcBalance = usdcBalanceData?.result as bigint | undefined;
   const usdcAllowance = usdcAllowanceData?.result as bigint | undefined;
-
   const refetchAllowance = async () => {
     await refetch();
   };
 
-  const createPersonalFund = useCallback(async (params: CreateParams) => {
-    if (!userAddress) return;
-
-    setCreationStep('approving');
-
-    setCreationStep('creating');
-    writeContract({
+  const useCalculateInitialDeposit = (principal: bigint, monthlyDeposit: bigint) => {
+    return useReadContract({
       address: factoryAddress,
       abi: FactoryABI,
-      functionName: 'createPersonalFund',
-      args: [
-        params.principal,
-        params.monthlyDeposit,
-        BigInt(params.currentAge),
-        BigInt(params.retirementAge),
-        params.desiredMonthly,
-        BigInt(params.yearsPayments),
-        BigInt(params.interestRate),
-        BigInt(params.timelockYears),
-      ],
-      value: 0n,
+      functionName: 'calculateInitialDeposit',
+      args: [principal, monthlyDeposit],
+      query: { enabled: principal > 0n && monthlyDeposit > 0n },
     });
-  }, [userAddress, usdcBalance, usdcAllowance, factoryAddress, writeContract, refetchAllowance]);
+  };
+
+  const createPersonalFund = useCallback(
+    async (params: CreateParams) => {
+      if (!userAddress) return;
+
+      setCreationStep('approving');
+
+      setCreationStep('creating');
+      writeContract({
+        address: factoryAddress,
+        abi: FactoryABI,
+        functionName: 'createPersonalFund',
+        args: [
+          params.principal,
+          params.monthlyDeposit,
+          BigInt(params.currentAge),
+          BigInt(params.retirementAge),
+          params.desiredMonthly,
+          BigInt(params.yearsPayments),
+          BigInt(params.interestRate),
+          BigInt(params.timelockYears),
+        ],
+        value: 0n,
+      });
+    },
+    [userAddress, factoryAddress, writeContract]
+  );
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -212,6 +226,7 @@ export function usePersonalFundFactory(factoryAddress: `0x${string}`): UsePerson
     isSuccess,
     creationStep,
     createPersonalFund,
+    useCalculateInitialDeposit,
     refetch,
     refetchAllowance,
     hash,

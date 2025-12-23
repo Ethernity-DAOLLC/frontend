@@ -1,10 +1,14 @@
 import {
   useAccount,
+  useReadContract,
   useReadContracts,
   useWriteContract,
   useWaitForTransactionReceipt,
 } from 'wagmi';
+import { erc20Abi } from 'viem';
 import PersonalFundABI from '@/abis/PersonalFund.json';
+
+const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS as `0x${string}`;
 
 export function usePersonalFund(fundAddress?: `0x${string}`) {
   const { address: userAddress } = useAccount();
@@ -62,6 +66,17 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
         abi: PersonalFundABI,
         functionName: 'isEarlyRetirementApproved',
       },
+      {
+        address: fundAddress,
+        abi: PersonalFundABI,
+        functionName: 'getInitialDeposit',
+      },
+      {
+        address: USDC_ADDRESS,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [fundAddress],
+      },
     ],
     query: {
       enabled: !!fundAddress,
@@ -79,6 +94,8 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
     timelockInfo,
     canStartRetirement,
     isEarlyRetirementApproved,
+    initialDeposit,
+    balance,
   ] = data || [];
 
   const parsedFundInfo = fundInfo?.result
@@ -111,6 +128,16 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
       }
     : undefined;
 
+  const useCalculateFee = (amount: bigint) => {
+    return useReadContract({
+      address: fundAddress,
+      abi: PersonalFundABI,
+      functionName: 'calculateFeeForAmount',
+      args: [amount],
+      query: { enabled: !!fundAddress && amount > 0n },
+    });
+  };
+
   const depositMonthly = () => {
     if (!fundAddress) throw new Error('Fund address not provided');
 
@@ -118,7 +145,7 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
       address: fundAddress,
       abi: PersonalFundABI,
       functionName: 'depositMonthly',
-      args: [], // No recibe argumentos
+      args: [],
     });
   };
 
@@ -157,6 +184,8 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
     timelockInfo: parsedTimelockInfo,
     canStartRetirement: canStartRetirement?.result as boolean | undefined,
     isEarlyRetirementApproved: isEarlyRetirementApproved?.result as boolean | undefined,
+    initialDeposit: initialDeposit?.result as bigint | undefined,
+    balance: balance?.result as bigint | undefined,
 
     isLoading,
     isError,
@@ -165,6 +194,8 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
     isConfirming,
     isSuccess,
     hash,
+
+    useCalculateFee,
     depositMonthly,
     startRetirement,
     approveEarlyRetirement,
