@@ -1,6 +1,7 @@
 import {
   useAccount,
   useReadContracts,
+  useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
 } from 'wagmi';
@@ -42,11 +43,12 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
         abi: TreasuryABI,
         functionName: 'pendingCount',
       },
-      {
-        address: treasuryAddress,
-        abi: TreasuryABI,
-        functionName: 'getTotalFeesCollected',
-      },
+      // ❌ REMOVIDO: getTotalFeesCollected no existe
+      // {
+      //   address: treasuryAddress,
+      //   abi: TreasuryABI,
+      //   functionName: 'getTotalFeesCollected',
+      // },
       {
         address: treasuryAddress,
         abi: TreasuryABI,
@@ -73,14 +75,19 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
     usdc,
     fundCount,
     pendingCount,
-    totalFeesCollected,
+    // totalFeesCollected, // ❌ REMOVIDO
     feePercentage,
     treasuryBalance,
     isTreasuryManager,
   ] = data || [];
 
-  // ✅ Funciones que SÍ existen en Treasury.vy
-  
+  // ✅ Hook separado para leer totalDeposited (si existe en el ABI)
+  const { data: totalDeposited } = useReadContract({
+    address: treasuryAddress,
+    abi: TreasuryABI,
+    functionName: 'totalDeposited',
+  });
+
   const setGovernance = (governanceAddress: `0x${string}`) => {
     writeContract({
       address: treasuryAddress,
@@ -103,7 +110,7 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
     writeContract({
       address: treasuryAddress,
       abi: TreasuryABI,
-      functionName: 'addTreasuryManager', // ✅ Corregido: era "addTreasureManager"
+      functionName: 'addTreasuryManager',
       args: [manager],
     });
   };
@@ -180,7 +187,7 @@ export function useTreasury(treasuryAddress: `0x${string}`) {
     usdc: usdc?.result as `0x${string}` | undefined,
     fundCount: fundCount?.result as bigint | undefined,
     pendingCount: pendingCount?.result as bigint | undefined,
-    totalFeesCollected: totalFeesCollected?.result as bigint | undefined,
+    totalDeposited: totalDeposited as bigint | undefined, // ✅ Usar esto en lugar de totalFeesCollected
     feePercentage: feePercentage?.result as bigint | undefined,
     treasuryBalance: treasuryBalance?.result as bigint | undefined,
     isTreasuryManager: isTreasuryManager?.result as boolean | undefined,
