@@ -32,8 +32,6 @@ const CreateContractPage: React.FC = () => {
   const { isConnected, openModal } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
-
-  // ✅ Factory address dinámico según la red conectada
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
 
   const {
@@ -63,7 +61,7 @@ const CreateContractPage: React.FC = () => {
             txHash: hash,
             initialDeposit: planData?.initialDeposit || '0',
             monthlyDeposit: planData?.monthlyDeposit || '0',
-            fundAddress: '', // TODO: Obtener del evento FundCreated
+            fundAddress: '',
           },
         });
         clearPlanData();
@@ -75,7 +73,6 @@ const CreateContractPage: React.FC = () => {
     return null;
   }
 
-  // ✅ Verificar que exista el factory en esta red
   if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
@@ -100,13 +97,12 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
-  
-  // ✅ Usar los valores directamente de planData sin recalcular
-  // Solo convertimos a unidades USDC (6 decimales)
-  const principalAmount = parseUSDC(planData.principal);
-  const monthlyDepositAmount = parseUSDC(planData.monthlyDeposit);
-  const initialDepositAmount = parseUSDC(planData.initialDeposit);
-  const desiredMonthlyAmount = parseUSDC(planData.desiredMonthlyIncome.toString());
+
+  const desiredMonthlyValue = planData.desiredMonthlyIncome ?? 0;
+  const desiredMonthlyAmount = parseUSDC(desiredMonthlyValue.toString());
+  const principalAmount = parseUSDC(planData.principal || '0');
+  const monthlyDepositAmount = parseUSDC(planData.monthlyDeposit || '0');
+  const initialDepositAmount = parseUSDC(planData.initialDeposit || '0');
   
   const handleConnectWallet = () => {
     openModal();
@@ -124,12 +120,12 @@ const CreateContractPage: React.FC = () => {
       await createPersonalFund({
         principal: principalAmount,
         monthlyDeposit: monthlyDepositAmount,
-        currentAge: planData.currentAge,
-        retirementAge: planData.retirementAge,
-        desiredMonthly: desiredMonthlyAmount,  // ✅ Número en unidades USDC
-        yearsPayments: planData.yearsPayments,
-        interestRate: Math.round(planData.interestRate * 100),
-        timelockYears: planData.timelockYears,
+        currentAge: planData.currentAge || 0,
+        retirementAge: planData.retirementAge || 0,
+        desiredMonthly: desiredMonthlyAmount, 
+        yearsPayments: planData.yearsPayments || 0,
+        interestRate: Math.round((planData.interestRate || 0) * 100),
+        timelockYears: planData.timelockYears || 0,
       });
     } catch (err: any) {
       console.error('Error creating fund:', err);
@@ -138,9 +134,9 @@ const CreateContractPage: React.FC = () => {
     }
   };
   
-  // ✅ Calcular fees SOLO para mostrar al usuario (no modifica los valores enviados al contrato)
-  const feeAmount = (parseFloat(planData.initialDeposit) * 0.03).toFixed(2);
-  const netToOwner = (parseFloat(planData.initialDeposit) * 0.97).toFixed(2);
+  const initialDepositValue = parseFloat(planData.initialDeposit || '0');
+  const feeAmount = (initialDepositValue * 0.03).toFixed(2);
+  const netToOwner = (initialDepositValue * 0.97).toFixed(2);
   const hasEnoughBalance = usdcBalance && usdcBalance >= initialDepositAmount;
   const hasEnoughAllowance = usdcAllowance && usdcAllowance >= initialDepositAmount;
 
@@ -226,16 +222,16 @@ const CreateContractPage: React.FC = () => {
                   Initial Deposit (Principal + First Monthly)
                 </p>
                 <p className="text-4xl font-black text-emerald-700">
-                  {formatCurrency(parseFloat(planData.initialDeposit))}
+                  {formatCurrency(initialDepositValue)}
                 </p>
                 <div className="mt-3 pt-3 border-t border-emerald-200 grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <p className="text-gray-600">Principal:</p>
-                    <p className="font-bold text-gray-800">{formatCurrency(parseFloat(planData.principal))}</p>
+                    <p className="font-bold text-gray-800">{formatCurrency(parseFloat(planData.principal || '0'))}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">First Monthly:</p>
-                    <p className="font-bold text-gray-800">{formatCurrency(parseFloat(planData.monthlyDeposit))}</p>
+                    <p className="font-bold text-gray-800">{formatCurrency(parseFloat(planData.monthlyDeposit || '0'))}</p>
                   </div>
                 </div>
               </div>
@@ -247,7 +243,7 @@ const CreateContractPage: React.FC = () => {
                     Monthly Deposit
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {formatCurrency(parseFloat(planData.monthlyDeposit))}
+                    {formatCurrency(parseFloat(planData.monthlyDeposit || '0'))}
                   </p>
                 </div>
 
@@ -257,7 +253,7 @@ const CreateContractPage: React.FC = () => {
                     Current Age
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {planData.currentAge} years
+                    {planData.currentAge || 0} years
                   </p>
                 </div>
 
@@ -267,7 +263,7 @@ const CreateContractPage: React.FC = () => {
                     Retirement Age
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {planData.retirementAge} years
+                    {planData.retirementAge || 0} years
                   </p>
                 </div>
 
@@ -277,7 +273,7 @@ const CreateContractPage: React.FC = () => {
                     Years to Retire
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {planData.retirementAge - planData.currentAge} years
+                    {(planData.retirementAge || 0) - (planData.currentAge || 0)} years
                   </p>
                 </div>
 
@@ -287,7 +283,7 @@ const CreateContractPage: React.FC = () => {
                     Desired Monthly Income
                   </p>
                   <p className="text-xl font-bold text-blue-700">
-                    {formatCurrency(planData.desiredMonthlyIncome)}
+                    {formatCurrency(desiredMonthlyValue)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">Your retirement goal</p>
                 </div>
@@ -298,7 +294,7 @@ const CreateContractPage: React.FC = () => {
                     Payment Years
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {formatYears(planData.yearsPayments)}
+                    {formatYears(planData.yearsPayments || 0)}
                   </p>
                 </div>
 
@@ -308,7 +304,7 @@ const CreateContractPage: React.FC = () => {
                     Interest Rate
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {planData.interestRate}%
+                    {planData.interestRate || 0}%
                   </p>
                 </div>
 
@@ -318,7 +314,7 @@ const CreateContractPage: React.FC = () => {
                     Timelock
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {formatYears(planData.timelockYears)}
+                    {formatYears(planData.timelockYears || 0)}
                   </p>
                 </div>
               </div>
@@ -337,7 +333,7 @@ const CreateContractPage: React.FC = () => {
                 <div className="bg-white rounded-2xl p-4 shadow">
                   <p className="text-gray-600 text-sm">Total Initial Deposit</p>
                   <p className="text-3xl font-black text-gray-800">
-                    {formatCurrency(parseFloat(planData.initialDeposit))}
+                    {formatCurrency(initialDepositValue)}
                   </p>
                 </div>
                 <div className="bg-white rounded-2xl p-4 shadow">
@@ -400,7 +396,7 @@ const CreateContractPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600 text-sm">Required Amount:</span>
                       <span className="font-bold text-indigo-700 text-lg">
-                        {formatCurrency(parseFloat(planData.initialDeposit))}
+                        {formatCurrency(initialDepositValue)}
                       </span>
                     </div>
                   </div>
@@ -499,7 +495,7 @@ const CreateContractPage: React.FC = () => {
                 <li>• 97% of each deposit is returned to you for DeFi investment</li>
                 <li>• You retain full control of your funds through the smart contract</li>
                 <li>• The timelock ensures funds are secured until retirement age</li>
-                <li>• Your desired monthly income ({formatCurrency(planData.desiredMonthlyIncome)}) is saved as your retirement goal</li>
+                <li>• Your desired monthly income ({formatCurrency(desiredMonthlyValue)}) is saved as your retirement goal</li>
               </ul>
             </div>
           </div>
