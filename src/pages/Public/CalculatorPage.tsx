@@ -65,7 +65,7 @@ interface Inputs {
   initialCapital: number;
   currentAge: number;
   retirementAge: number;
-  desiredMonthly: number;
+  desiredMonthlyIncome: number;
   annualRate: number;
   contributionFrequency: "monthly" | "quarterly" | "annual";
   yearsInRetirement: number;
@@ -135,7 +135,7 @@ const CalculatorPage: React.FC = () => {
     initialCapital: 10000,
     currentAge: 30,
     retirementAge: 65,
-    desiredMonthly: 4000,
+    desiredMonthlyIncome: 4000,
     annualRate: 7,
     contributionFrequency: "monthly",
     yearsInRetirement: 25,
@@ -159,7 +159,7 @@ const CalculatorPage: React.FC = () => {
       initialCapital: inputs.initialCapital || 0,
       currentAge: inputs.currentAge || 0,
       retirementAge: inputs.retirementAge || 0,
-      desiredMonthly: inputs.desiredMonthly || 0,
+      desiredMonthlyIncome: inputs.desiredMonthlyIncome || 0,
       annualRate: inputs.annualRate || 0,
       contributionFrequency: inputs.contributionFrequency,
       yearsInRetirement: inputs.yearsInRetirement || 0,
