@@ -6,24 +6,20 @@ export const USDC_DECIMALS = 6;
 export function getUSDCAddress(chainId: number): `0x${string}` | undefined {
   return getContractAddress(chainId, 'usdc');
 }
-
 export function useUSDCAddress(): `0x${string}` | undefined {
   const chainId = useChainId();
   return getUSDCAddress(chainId);
 }
-
 export function formatUSDC(amount: bigint | undefined): string {
   if (!amount) return '0.00';
   return parseFloat(formatUnits(amount, USDC_DECIMALS)).toFixed(2);
 }
-
 export function formatUSDCWithSymbol(amount: bigint | undefined): string {
   if (!amount) return '$0.00 USDC';
   const formatted = formatUSDC(amount);
   const number = parseFloat(formatted);
   return `$${number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC`;
 }
-
 export function formatUSDCDisplay(amount: bigint | undefined): string {
   if (!amount) return '0';
   const value = parseFloat(formatUnits(amount, USDC_DECIMALS));
@@ -34,11 +30,9 @@ export function parseUSDC(amount: string | number): bigint {
   const amountStr = typeof amount === 'number' ? amount.toString() : amount;
   return parseUnits(amountStr, USDC_DECIMALS);
 }
-
 export function usdcToNumber(amount: bigint): number {
   return parseFloat(formatUnits(amount, USDC_DECIMALS));
 }
-
 export function isValidUSDCAmount(amount: string): boolean {
   if (!amount || amount.trim() === '') return false;
   
@@ -66,17 +60,14 @@ export function hasEnoughBalance(
   if (!balance) return false;
   return balance >= required;
 }
-
 export function compareUSDC(a: bigint, b: bigint): number {
   if (a > b) return 1;
   if (a < b) return -1;
   return 0;
 }
-
 export function minUSDC(a: bigint, b: bigint): bigint {
   return a < b ? a : b;
 }
-
 export function maxUSDC(a: bigint, b: bigint): bigint {
   return a > b ? a : b;
 }
@@ -113,3 +104,4 @@ export const USDC_PRESETS = {
 } as const;
 
 export type USDCPreset = keyof typeof USDC_PRESETS;
+export const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS as `0x${string}` | undefined;

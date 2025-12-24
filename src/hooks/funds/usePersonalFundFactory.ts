@@ -60,29 +60,36 @@ interface UsePersonalFundFactoryReturn {
 
 export function usePersonalFundFactory(factoryAddress?: `0x${string}`): UsePersonalFundFactoryReturn {
   const { address: userAddress } = useAccount();
+  const usdcAddress = useUSDCAddress(); // ✅ Obtener la dirección USDC del chain actual
   const { writeContract, data: writeHash, isPending: isWritePending, reset: resetWrite } = useWriteContract();
   const [creationStep, setCreationStep] = useState<'idle' | 'approving' | 'creating' | 'success' | 'error'>('idle');
   const [approveHash, setApproveHash] = useState<`0x${string}` | undefined>(undefined);
   const [createHash, setCreateHash] = useState<`0x${string}` | undefined>(undefined);
   const [pendingParams, setPendingParams] = useState<CreateParams | null>(null);
+
+  // ✅ Construir los contratos dinámicamente solo si existen las direcciones
+  const contracts = factoryAddress && userAddress && usdcAddress
+    ? [
+        { address: factoryAddress, abi: FactoryABI, functionName: 'admin' },
+        { address: factoryAddress, abi: FactoryABI, functionName: 'treasury' },
+        { address: factoryAddress, abi: FactoryABI, functionName: 'token' },
+        { address: factoryAddress, abi: FactoryABI, functionName: 'usdc' },
+        { address: factoryAddress, abi: FactoryABI, functionName: 'personalFundImplementation' },
+        { address: factoryAddress, abi: FactoryABI, functionName: 'totalFundsCreated' },
+        { address: factoryAddress, abi: FactoryABI, functionName: 'getConfiguration' },
+        { address: factoryAddress, abi: FactoryABI, functionName: 'getUserFund', args: [userAddress] },
+        { address: factoryAddress, abi: FactoryABI, functionName: 'canUserCreateFund', args: [userAddress] },
+        { address: factoryAddress, abi: FactoryABI, functionName: 'getUserFundCount', args: [userAddress] },
+        { address: usdcAddress, abi: erc20Abi, functionName: 'balanceOf', args: [userAddress] },
+        { address: usdcAddress, abi: erc20Abi, functionName: 'allowance', args: [userAddress, factoryAddress] },
+      ]
+    : [];
+
   const { data, isLoading, refetch } = useReadContracts({
-    contracts: factoryAddress
-      ? [
-          { address: factoryAddress, abi: FactoryABI, functionName: 'admin' },
-          { address: factoryAddress, abi: FactoryABI, functionName: 'treasury' },
-          { address: factoryAddress, abi: FactoryABI, functionName: 'token' },
-          { address: factoryAddress, abi: FactoryABI, functionName: 'usdc' },
-          { address: factoryAddress, abi: FactoryABI, functionName: 'personalFundImplementation' },
-          { address: factoryAddress, abi: FactoryABI, functionName: 'totalFundsCreated' },
-          { address: factoryAddress, abi: FactoryABI, functionName: 'getConfiguration' },
-          { address: factoryAddress, abi: FactoryABI, functionName: 'getUserFund', args: [userAddress] },
-          { address: factoryAddress, abi: FactoryABI, functionName: 'canUserCreateFund', args: [userAddress] },
-          { address: factoryAddress, abi: FactoryABI, functionName: 'getUserFundCount', args: [userAddress] },
-          { address: useUSDCAddress, abi: erc20Abi, functionName: 'balanceOf', args: [userAddress] },
-          { address: useUSDCAddress, abi: erc20Abi, functionName: 'allowance', args: [userAddress, factoryAddress] },
-        ]
-      : [],
-    query: { enabled: !!factoryAddress && !!userAddress },
+    contracts,
+    query: { 
+      enabled: !!factoryAddress && !!userAddress && !!usdcAddress, // ✅ Solo hacer query si todo existe
+    },
   });
 
   const [
@@ -115,6 +122,7 @@ export function usePersonalFundFactory(factoryAddress?: `0x${string}`): UsePerso
 
   const usdcBalance = usdcBalanceData?.result as bigint | undefined;
   const usdcAllowance = usdcAllowanceData?.result as bigint | undefined;
+
   const refetchAllowance = useCallback(async () => {
     await refetch();
   }, [refetch]);
@@ -176,8 +184,19 @@ export function usePersonalFundFactory(factoryAddress?: `0x${string}`): UsePerso
 
   const createPersonalFund = useCallback(
     async (params: CreateParams) => {
-      if (!factoryAddress || !userAddress) return;
+      if (!factoryAddress || !userAddress || !usdcAddress) {
+        console.error('❌ Missing required addresses:', { factoryAddress, userAddress, usdcAddress });
+        return;
+      }
       const requiredAmount = params.principal + params.monthlyDeposit;
+
+      console.log('💰 Creating fund with params:', {
+        principal: params.principal.toString(),
+        monthlyDeposit: params.monthlyDeposit.toString(),
+        requiredAmount: requiredAmount.toString(),
+        currentAllowance: usdcAllowance?.toString(),
+        currentBalance: usdcBalance?.toString(),
+      });
 
       setPendingParams(params);
       resetWrite();
@@ -185,15 +204,16 @@ export function usePersonalFundFactory(factoryAddress?: `0x${string}`): UsePerso
       setCreateHash(undefined);
 
       if (needsApproval(usdcAllowance, requiredAmount)) {
+        console.log('🔐 Needs approval, requesting...');
         setCreationStep('approving');
         writeContract({
-          address: useUSDCAddress,
+          address: usdcAddress,
           abi: erc20Abi,
           functionName: 'approve',
           args: [factoryAddress, requiredAmount],
         });
-
       } else {
+        console.log('✅ Already approved, creating fund...');
         setCreationStep('creating');
         writeContract({
           address: factoryAddress,
@@ -213,7 +233,7 @@ export function usePersonalFundFactory(factoryAddress?: `0x${string}`): UsePerso
         });
       }
     },
-    [factoryAddress, userAddress, usdcAllowance, writeContract, resetWrite]
+    [factoryAddress, userAddress, usdcAddress, usdcAllowance, usdcBalance, writeContract, resetWrite]
   );
 
   useEffect(() => {

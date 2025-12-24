@@ -7,7 +7,7 @@ import {
 } from 'wagmi';
 import { erc20Abi } from 'viem';
 import PersonalFundABI from '@/abis/PersonalFund.json';
-import { parseUSDC, USDC_ADDRESS, needsApproval } from '../usdc/usdcUtils';
+import { parseUSDC, useUSDCAddress, needsApproval } from '../usdc/usdcUtils';
 
 type TransactionStep = 'idle' | 'approving' | 'approved' | 'depositing' | 'success' | 'error';
 
@@ -23,6 +23,7 @@ export function usePersonalFundWithApproval({
   onError,
 }: UsePersonalFundWithApprovalProps) {
   const { address: userAddress } = useAccount();
+  const USDC_ADDRESS = useUSDCAddress();
   
   const [step, setStep] = useState<TransactionStep>('idle');
   const [pendingAmount, setPendingAmount] = useState<bigint>(0n);
@@ -34,7 +35,7 @@ export function usePersonalFundWithApproval({
     abi: erc20Abi,
     functionName: 'allowance',
     args: userAddress && fundAddress ? [userAddress, fundAddress] : undefined,
-    query: { enabled: !!userAddress && !!fundAddress },
+    query: { enabled: !!userAddress && !!fundAddress && !!USDC_ADDRESS },
   });
 
   const {
@@ -111,8 +112,8 @@ export function usePersonalFundWithApproval({
   }, [fundAddress, pendingAmount, depositType, writeDeposit]);
 
   const deposit = useCallback(async (amount: string) => {
-    if (!fundAddress || !userAddress) {
-      setErrorMessage('Wallet not connected');
+    if (!fundAddress || !userAddress || !USDC_ADDRESS) {
+      setErrorMessage('Wallet not connected or USDC not available');
       return;
     }
 
@@ -140,11 +141,11 @@ export function usePersonalFundWithApproval({
         value: 0n,
       });
     }
-  }, [fundAddress, userAddress, currentAllowance, writeApprove, writeDeposit]);
+  }, [fundAddress, userAddress, USDC_ADDRESS, currentAllowance, writeApprove, writeDeposit]);
 
   const depositMonthly = useCallback(async (monthlyAmount: bigint) => {
-    if (!fundAddress || !userAddress) {
-      setErrorMessage('Wallet not connected');
+    if (!fundAddress || !userAddress || !USDC_ADDRESS) {
+      setErrorMessage('Wallet not connected or USDC not available');
       return;
     }
 
@@ -170,11 +171,11 @@ export function usePersonalFundWithApproval({
         value: 0n,
       });
     }
-  }, [fundAddress, userAddress, currentAllowance, writeApprove, writeDeposit]);
+  }, [fundAddress, userAddress, USDC_ADDRESS, currentAllowance, writeApprove, writeDeposit]);
 
   const depositExtra = useCallback(async (amount: string) => {
-    if (!fundAddress || !userAddress) {
-      setErrorMessage('Wallet not connected');
+    if (!fundAddress || !userAddress || !USDC_ADDRESS) {
+      setErrorMessage('Wallet not connected or USDC not available');
       return;
     }
 
@@ -202,10 +203,10 @@ export function usePersonalFundWithApproval({
         value: 0n,
       });
     }
-  }, [fundAddress, userAddress, currentAllowance, writeApprove, writeDeposit]);
+  }, [fundAddress, userAddress, USDC_ADDRESS, currentAllowance, writeApprove, writeDeposit]);
 
   const approveMax = useCallback(() => {
-    if (!fundAddress) return;
+    if (!fundAddress || !USDC_ADDRESS) return;
 
     setStep('approving');
     const maxUint256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
@@ -217,7 +218,7 @@ export function usePersonalFundWithApproval({
       args: [fundAddress, maxUint256],
       value: 0n,
     });
-  }, [fundAddress, writeApprove]);
+  }, [fundAddress, USDC_ADDRESS, writeApprove]);
 
   const reset = useCallback(() => {
     setStep('idle');
@@ -246,14 +247,12 @@ export function usePersonalFundWithApproval({
     pendingAmount,
     currentAllowance,
     errorMessage,
-
     deposit,
     depositMonthly,
     depositExtra,
     approveMax,
     reset,
     refetchAllowance,
-
     isProcessing,
     isPending,
     isConfirming,
@@ -268,13 +267,13 @@ export function usePersonalFundWithApproval({
 
 export function useUSDCAllowanceForFund(fundAddress?: `0x${string}`) {
   const { address: userAddress } = useAccount();
-
+  const USDC_ADDRESS = useUSDCAddress();
   const { data: allowance, refetch } = useReadContract({
     address: USDC_ADDRESS,
     abi: erc20Abi,
     functionName: 'allowance',
     args: userAddress && fundAddress ? [userAddress, fundAddress] : undefined,
-    query: { enabled: !!userAddress && !!fundAddress },
+    query: { enabled: !!userAddress && !!fundAddress && !!USDC_ADDRESS },
   });
 
   return {
