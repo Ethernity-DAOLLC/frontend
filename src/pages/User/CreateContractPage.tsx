@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useChainId } from 'wagmi';
-import { useRetirementPlan } from '@/context/RetirementContext';
-import { useWallet } from '@/hooks/web3/useWallet';
-import { usePersonalFundFactory } from '@/hooks/funds/usePersonalFundFactory';
-import { CONTRACT_ADDRESSES } from '@/config/addresses';
-import { parseUSDC } from '@/hooks/usdc/usdcUtils';
-import { formatCurrency, formatYears } from '@/lib';
+import { useRetirementPlan } from '../context/RetirementContext';
+import { useWallet } from '../hooks/web3/useWallet';
+import { usePersonalFundFactory } from '../hooks/funds/usePersonalFundFactory';
+import { CONTRACT_ADDRESSES } from '../config/addresses';
+import { parseUSDC } from '../hooks/usdc/usdcUtils';
 import {
   Wallet,
   Shield,
@@ -24,6 +23,17 @@ import {
   Info,
   Loader,
 } from 'lucide-react';
+
+// Funciones auxiliares de formateo
+const formatCurrency = (num: string | number) =>
+  new Intl.NumberFormat('en-US', { 
+    style: 'currency', 
+    currency: 'USD',
+    maximumFractionDigits: 2 
+  }).format(Number(num));
+
+const formatYears = (years: number) => 
+  years === 1 ? '1 year' : `${years} years`;
 
 const CreateContractPage: React.FC = () => {
   const navigate = useNavigate();
@@ -97,10 +107,14 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
+
+  // ✅ CORRECTO: NO usar parseUSDC aquí, usar valores en dólares normales
   const desiredMonthlyValue = planData.desiredMonthlyIncome ?? 0;
   const principalValue = parseFloat(planData.principal || '0');
   const monthlyDepositValue = parseFloat(planData.monthlyDeposit || '0');
   const initialDepositValue = parseFloat(planData.initialDeposit || '0');
+
+  // ✅ Convertir a wei (unidades mínimas de USDC con 6 decimales) SOLO para enviar al contrato
   const desiredMonthlyAmount = parseUSDC(desiredMonthlyValue.toString());
   const principalAmount = parseUSDC(principalValue.toString());
   const monthlyDepositAmount = parseUSDC(monthlyDepositValue.toString());
@@ -119,13 +133,13 @@ const CreateContractPage: React.FC = () => {
     setIsProcessing(true);
 
     try {
-
+      // ✅ CORRECTO: Pasar bigint (USDC en unidades mínimas) al hook
       await createPersonalFund({
-        principal: principalAmount,  
-        monthlyDeposit: monthlyDepositAmount,
+        principal: principalAmount,           // bigint USDC en wei (6 decimales)
+        monthlyDeposit: monthlyDepositAmount, // bigint USDC en wei (6 decimales)
         currentAge: planData.currentAge || 0,
         retirementAge: planData.retirementAge || 0,
-        desiredMonthly: desiredMonthlyAmount,
+        desiredMonthly: desiredMonthlyAmount, // bigint USDC en wei (6 decimales)
         yearsPayments: planData.yearsPayments || 0,
         interestRate: Math.round((planData.interestRate || 0) * 100),
         timelockYears: planData.timelockYears || 0,
@@ -139,6 +153,8 @@ const CreateContractPage: React.FC = () => {
   
   const feeAmount = (initialDepositValue * 0.03).toFixed(2);
   const netToOwner = (initialDepositValue * 0.97).toFixed(2);
+  
+  // ✅ CORRECTO: Comparar bigint con bigint
   const hasEnoughBalance = usdcBalance && usdcBalance >= initialDepositAmount;
   const hasEnoughAllowance = usdcAllowance && usdcAllowance >= initialDepositAmount;
 
@@ -408,7 +424,7 @@ const CreateContractPage: React.FC = () => {
                       <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
                       <div>
                         <p className="font-semibold text-green-900 mb-1">Balance OK</p>
-                        <p className="text-sm text-green-800">You have enough USDC to create your own Personal Retirement Fund</p>
+                        <p className="text-sm text-green-800">You have sufficient USDC to create your retirement fund</p>
                       </div>
                     </div>
                   ) : (

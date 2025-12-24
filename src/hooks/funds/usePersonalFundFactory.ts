@@ -8,7 +8,7 @@ import {
 } from 'wagmi';
 import { erc20Abi } from 'viem';
 import FactoryABI from '@/abis/PersonalFundFactory.json';
-import { USDC_ADDRESS, needsApproval } from '@/hooks/usdc/usdcUtils';
+import { useUSDCAddress, needsApproval } from '@/hooks/usdc/usdcUtils';
 
 interface CreateParams {
   principal: bigint;
@@ -78,8 +78,8 @@ export function usePersonalFundFactory(factoryAddress?: `0x${string}`): UsePerso
           { address: factoryAddress, abi: FactoryABI, functionName: 'getUserFund', args: [userAddress] },
           { address: factoryAddress, abi: FactoryABI, functionName: 'canUserCreateFund', args: [userAddress] },
           { address: factoryAddress, abi: FactoryABI, functionName: 'getUserFundCount', args: [userAddress] },
-          { address: USDC_ADDRESS, abi: erc20Abi, functionName: 'balanceOf', args: [userAddress] },
-          { address: USDC_ADDRESS, abi: erc20Abi, functionName: 'allowance', args: [userAddress, factoryAddress] },
+          { address: useUSDCAddress, abi: erc20Abi, functionName: 'balanceOf', args: [userAddress] },
+          { address: useUSDCAddress, abi: erc20Abi, functionName: 'allowance', args: [userAddress, factoryAddress] },
         ]
       : [],
     query: { enabled: !!factoryAddress && !!userAddress },
@@ -187,7 +187,7 @@ export function usePersonalFundFactory(factoryAddress?: `0x${string}`): UsePerso
       if (needsApproval(usdcAllowance, requiredAmount)) {
         setCreationStep('approving');
         writeContract({
-          address: USDC_ADDRESS,
+          address: useUSDCAddress,
           abi: erc20Abi,
           functionName: 'approve',
           args: [factoryAddress, requiredAmount],
