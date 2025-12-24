@@ -60,14 +60,12 @@ interface UsePersonalFundFactoryReturn {
 
 export function usePersonalFundFactory(factoryAddress?: `0x${string}`): UsePersonalFundFactoryReturn {
   const { address: userAddress } = useAccount();
-  const usdcAddress = useUSDCAddress(); // ✅ Obtener la dirección USDC del chain actual
+  const usdcAddress = useUSDCAddress();
   const { writeContract, data: writeHash, isPending: isWritePending, reset: resetWrite } = useWriteContract();
   const [creationStep, setCreationStep] = useState<'idle' | 'approving' | 'creating' | 'success' | 'error'>('idle');
   const [approveHash, setApproveHash] = useState<`0x${string}` | undefined>(undefined);
   const [createHash, setCreateHash] = useState<`0x${string}` | undefined>(undefined);
   const [pendingParams, setPendingParams] = useState<CreateParams | null>(null);
-
-  // ✅ Construir los contratos dinámicamente solo si existen las direcciones
   const contracts = factoryAddress && userAddress && usdcAddress
     ? [
         { address: factoryAddress, abi: FactoryABI, functionName: 'admin' },
@@ -88,7 +86,7 @@ export function usePersonalFundFactory(factoryAddress?: `0x${string}`): UsePerso
   const { data, isLoading, refetch } = useReadContracts({
     contracts,
     query: { 
-      enabled: !!factoryAddress && !!userAddress && !!usdcAddress, // ✅ Solo hacer query si todo existe
+      enabled: !!factoryAddress && !!userAddress && !!usdcAddress,
     },
   });
 

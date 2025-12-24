@@ -6,8 +6,10 @@ import {
   useReadContract,
 } from 'wagmi';
 import { erc20Abi } from 'viem';
-import PersonalFundABI from '@/abis/PersonalFund.json';
+import PersonalFundJSON from '@/abis/PersonalFund.json';
 import { parseUSDC, useUSDCAddress, needsApproval } from '../usdc/usdcUtils';
+
+const PersonalFundABI = PersonalFundJSON.abi;
 
 type TransactionStep = 'idle' | 'approving' | 'approved' | 'depositing' | 'success' | 'error';
 

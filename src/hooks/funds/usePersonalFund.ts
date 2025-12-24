@@ -6,12 +6,14 @@ import {
   useWaitForTransactionReceipt,
 } from 'wagmi';
 import { erc20Abi } from 'viem';
-import PersonalFundABI from '@/abis/PersonalFund.json';
-import { useUSDCAddress } from '@/hooks/usdc/usdcUtils'; // ✅ Importar correctamente
+import PersonalFundJSON from '@/abis/PersonalFund.json';
+import { useUSDCAddress } from '@/hooks/usdc/usdcUtils';
+
+const PersonalFundABI = PersonalFundJSON.abi;
 
 export function usePersonalFund(fundAddress?: `0x${string}`) {
   const { address: userAddress } = useAccount();
-  const USDC_ADDRESS = useUSDCAddress(); // ✅ Usar el hook
+  const USDC_ADDRESS = useUSDCAddress(); 
   const { writeContract, data: hash, isPending } = useWriteContract();
   
   const { data, isLoading, isError, error, refetch } = useReadContracts({
@@ -72,14 +74,14 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
         functionName: 'getInitialDeposit',
       },
       {
-        address: USDC_ADDRESS, // ✅ Usar la dirección correcta
+        address: USDC_ADDRESS,
         abi: erc20Abi,
         functionName: 'balanceOf',
         args: [fundAddress],
       },
     ],
     query: {
-      enabled: !!fundAddress && !!USDC_ADDRESS, // ✅ Verificar que existe
+      enabled: !!fundAddress && !!USDC_ADDRESS,
     },
   });
 

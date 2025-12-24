@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
 import { erc20Abi } from 'viem';
 import { useUSDCAddress } from './usdcUtils';
