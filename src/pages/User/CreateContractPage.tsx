@@ -24,16 +24,32 @@ import {
   Loader,
 } from 'lucide-react';
 
-// Funciones auxiliares de formateo
-const formatCurrency = (num: string | number) =>
-  new Intl.NumberFormat('en-US', { 
+const formatCurrency = (num: string | number | null | undefined): string => {
+  const value = Number(num);
+  if (isNaN(value)) return '$0.00';
+  return new Intl.NumberFormat('en-US', { 
     style: 'currency', 
     currency: 'USD',
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2 
-  }).format(Number(num));
+  }).format(value);
+};
 
-const formatYears = (years: number) => 
-  years === 1 ? '1 year' : `${years} years`;
+const formatYears = (years: number | null | undefined): string => {
+  const safeYears = years || 0;
+  return safeYears === 1 ? '1 year' : `${safeYears} years`;
+};
+
+const bigintToNumber = (value: bigint | undefined, decimals: number = 6): number => {
+  if (!value) return 0;
+  return Number(value) / Math.pow(10, decimals);
+};
+
+const safeParseFloat = (value: string | number | null | undefined, defaultValue: number = 0): number => {
+  if (value === null || value === undefined) return defaultValue;
+  const parsed = parseFloat(String(value));
+  return isNaN(parsed) ? defaultValue : parsed;
+};
 
 const CreateContractPage: React.FC = () => {
   const navigate = useNavigate();
@@ -59,23 +75,26 @@ const CreateContractPage: React.FC = () => {
 
   useEffect(() => {
     if (!planData) {
+      console.warn('No plan data found, redirecting to calculator');
       navigate('/calculator', { replace: true });
     }
   }, [planData, navigate]);
 
   useEffect(() => {
-    if (isSuccess && hash) {
-      setTimeout(() => {
+    if (isSuccess && hash && planData) {
+      const timeout = setTimeout(() => {
         navigate('/contract-created', {
           state: {
             txHash: hash,
-            initialDeposit: planData?.initialDeposit || '0',
-            monthlyDeposit: planData?.monthlyDeposit || '0',
+            initialDeposit: planData.initialDeposit || '0',
+            monthlyDeposit: planData.monthlyDeposit || '0',
             fundAddress: '',
           },
         });
         clearPlanData();
       }, 2000);
+
+      return () => clearTimeout(timeout);
     }
   }, [isSuccess, hash, navigate, planData, clearPlanData]);
 
@@ -108,20 +127,81 @@ const CreateContractPage: React.FC = () => {
     );
   }
 
-  // ✅ CORRECTO: NO usar parseUSDC aquí, usar valores en dólares normales
-  const desiredMonthlyValue = planData.desiredMonthlyIncome ?? 0;
-  const principalValue = parseFloat(planData.principal || '0');
-  const monthlyDepositValue = parseFloat(planData.monthlyDeposit || '0');
-  const initialDepositValue = parseFloat(planData.initialDeposit || '0');
+  const desiredMonthlyValue = safeParseFloat(planData.desiredMonthlyIncome, 0);
+  const principalValue = safeParseFloat(planData.principal, 0);
+  const monthlyDepositValue = safeParseFloat(planData.monthlyDeposit, 0);
+  const initialDepositValue = safeParseFloat(planData.initialDeposit, 0);
+  const currentAge = planData.currentAge || 0;
+  const retirementAge = planData.retirementAge || 0;
+  const yearsPayments = planData.yearsPayments || 0;
+  const interestRate = planData.interestRate || 0;
+  const timelockYears = planData.timelockYears || 0;
 
-  // ✅ Convertir a wei (unidades mínimas de USDC con 6 decimales) SOLO para enviar al contrato
-  const desiredMonthlyAmount = parseUSDC(desiredMonthlyValue.toString());
-  const principalAmount = parseUSDC(principalValue.toString());
-  const monthlyDepositAmount = parseUSDC(monthlyDepositValue.toString());
-  const initialDepositAmount = parseUSDC(initialDepositValue.toString());
+  if (initialDepositValue <= 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center">
+            <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-red-800 mb-4">
+              Invalid Plan Data
+            </h2>
+            <p className="text-red-700 mb-6">
+              The initial deposit amount is invalid. Please recalculate your plan.
+            </p>
+            <button
+              onClick={() => navigate('/calculator')}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition"
+            >
+              Back to Calculator
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  let desiredMonthlyAmount: bigint;
+  let principalAmount: bigint;
+  let monthlyDepositAmount: bigint;
+  let initialDepositAmount: bigint;
+
+  try {
+    desiredMonthlyAmount = parseUSDC(desiredMonthlyValue.toFixed(2));
+    principalAmount = parseUSDC(principalValue.toFixed(2));
+    monthlyDepositAmount = parseUSDC(monthlyDepositValue.toFixed(2));
+    initialDepositAmount = parseUSDC(initialDepositValue.toFixed(2));
+  } catch (err) {
+    console.error('Error parsing USDC amounts:', err);
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center">
+            <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-red-800 mb-4">
+              Error Processing Amounts
+            </h2>
+            <p className="text-red-700 mb-6">
+              There was an error processing your deposit amounts. Please try again.
+            </p>
+            <button
+              onClick={() => navigate('/calculator')}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition"
+            >
+              Back to Calculator
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   const handleConnectWallet = () => {
-    openModal();
+    try {
+      openModal();
+    } catch (err) {
+      console.error('Error opening wallet modal:', err);
+      setError('Failed to open wallet connection. Please try again.');
+    }
   };
 
   const handleCreateContract = async () => {
@@ -129,36 +209,65 @@ const CreateContractPage: React.FC = () => {
       setError('Please connect your wallet first');
       return;
     }
+
+    if (initialDepositAmount <= 0n) {
+      setError('Initial deposit must be greater than 0');
+      return;
+    }
+
+    if (currentAge >= retirementAge) {
+      setError('Retirement age must be greater than current age');
+      return;
+    }
+
     setError('');
     setIsProcessing(true);
 
     try {
-      // ✅ CORRECTO: Pasar bigint (USDC en unidades mínimas) al hook
       await createPersonalFund({
-        principal: principalAmount,           // bigint USDC en wei (6 decimales)
-        monthlyDeposit: monthlyDepositAmount, // bigint USDC en wei (6 decimales)
-        currentAge: planData.currentAge || 0,
-        retirementAge: planData.retirementAge || 0,
-        desiredMonthly: desiredMonthlyAmount, // bigint USDC en wei (6 decimales)
-        yearsPayments: planData.yearsPayments || 0,
-        interestRate: Math.round((planData.interestRate || 0) * 100),
-        timelockYears: planData.timelockYears || 0,
+        principal: principalAmount,
+        monthlyDeposit: monthlyDepositAmount,
+        currentAge: currentAge,
+        retirementAge: retirementAge,
+        desiredMonthly: desiredMonthlyAmount,
+        yearsPayments: yearsPayments,
+        interestRate: Math.round(interestRate * 100),
+        timelockYears: timelockYears,
       });
     } catch (err: any) {
       console.error('Error creating fund:', err);
-      setError(err.message || 'Failed to create retirement fund');
+      let errorMessage = 'Failed to create retirement fund';
+      
+      if (err.message?.includes('User rejected')) {
+        errorMessage = 'Transaction was rejected. Please try again and approve the transaction.';
+      } else if (err.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds in your wallet to complete this transaction.';
+      } else if (err.message?.includes('allowance')) {
+        errorMessage = 'USDC approval failed. Please try again.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setIsProcessing(false);
     }
   };
-  
+
   const feeAmount = (initialDepositValue * 0.03).toFixed(2);
   const netToOwner = (initialDepositValue * 0.97).toFixed(2);
-  
-  // ✅ CORRECTO: Comparar bigint con bigint
-  const hasEnoughBalance = usdcBalance && usdcBalance >= initialDepositAmount;
-  const hasEnoughAllowance = usdcAllowance && usdcAllowance >= initialDepositAmount;
+  const hasEnoughBalance = 
+    usdcBalance !== undefined && 
+    usdcBalance !== null && 
+    initialDepositAmount !== undefined &&
+    usdcBalance >= initialDepositAmount;
 
-  const getStepMessage = () => {
+  const hasEnoughAllowance = 
+    usdcAllowance !== undefined && 
+    usdcAllowance !== null && 
+    initialDepositAmount !== undefined &&
+    usdcAllowance >= initialDepositAmount;
+
+  const getStepMessage = (): string => {
     if (creationStep === 'approving') return 'Step 1/2: Approving USDC... Please confirm in your wallet';
     if (creationStep === 'creating') return 'Step 2/2: Creating your retirement fund... Please confirm in your wallet';
     if (isConfirming) return 'Confirming transaction on blockchain...';
@@ -188,10 +297,17 @@ const CreateContractPage: React.FC = () => {
           <div className="max-w-2xl mx-auto mb-6">
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-start gap-3">
               <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold text-red-800 mb-1">Error</h3>
                 <p className="text-red-700 text-sm">{error}</p>
               </div>
+              <button
+                onClick={() => setError('')}
+                className="text-red-600 hover:text-red-800 font-bold"
+                aria-label="Close error message"
+              >
+                ✕
+              </button>
             </div>
           </div>
         )}
@@ -271,7 +387,7 @@ const CreateContractPage: React.FC = () => {
                     Current Age
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {planData.currentAge || 0} years
+                    {currentAge} years
                   </p>
                 </div>
 
@@ -281,7 +397,7 @@ const CreateContractPage: React.FC = () => {
                     Retirement Age
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {planData.retirementAge || 0} years
+                    {retirementAge} years
                   </p>
                 </div>
 
@@ -291,7 +407,7 @@ const CreateContractPage: React.FC = () => {
                     Years to Retire
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {(planData.retirementAge || 0) - (planData.currentAge || 0)} years
+                    {retirementAge - currentAge} years
                   </p>
                 </div>
 
@@ -312,7 +428,7 @@ const CreateContractPage: React.FC = () => {
                     Payment Years
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {formatYears(planData.yearsPayments || 0)}
+                    {formatYears(yearsPayments)}
                   </p>
                 </div>
 
@@ -322,7 +438,7 @@ const CreateContractPage: React.FC = () => {
                     Interest Rate
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {planData.interestRate || 0}%
+                    {interestRate.toFixed(1)}%
                   </p>
                 </div>
 
@@ -332,7 +448,7 @@ const CreateContractPage: React.FC = () => {
                     Timelock
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {formatYears(planData.timelockYears || 0)}
+                    {formatYears(timelockYears)}
                   </p>
                 </div>
               </div>
@@ -371,7 +487,7 @@ const CreateContractPage: React.FC = () => {
               </div>
               <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3">
                 <p className="text-xs text-amber-800">
-                  💡 <strong>Note:</strong> The same 3% fee applies to all monthly deposits
+                  <strong>Note:</strong> The same 3% fee applies to all monthly deposits
                 </p>
               </div>
             </div>
@@ -406,8 +522,8 @@ const CreateContractPage: React.FC = () => {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-600 text-sm">Your USDC Balance:</span>
                       <span className="font-bold text-gray-800 text-lg">
-                        {usdcBalance !== undefined 
-                          ? formatCurrency(parseFloat((Number(usdcBalance) / 1e6).toFixed(2))) 
+                        {usdcBalance !== undefined && usdcBalance !== null
+                          ? formatCurrency(bigintToNumber(usdcBalance, 6))
                           : 'Loading...'}
                       </span>
                     </div>
@@ -435,7 +551,12 @@ const CreateContractPage: React.FC = () => {
                         <p className="text-sm text-red-800">
                           Please deposit more USDC. You need{' '}
                           <strong>
-                            {formatCurrency(parseFloat((Number(initialDepositAmount - (usdcBalance || BigInt(0))) / 1e6).toFixed(2)))}
+                            {formatCurrency(
+                              bigintToNumber(
+                                initialDepositAmount - (usdcBalance || 0n),
+                                6
+                              )
+                            )}
                           </strong>{' '}
                           more USDC.
                         </p>
