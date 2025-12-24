@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useChainId } from 'wagmi';
-import { useRetirementPlan } from '../context/RetirementContext';
-import { useWallet } from '../hooks/web3/useWallet';
-import { usePersonalFundFactory } from '../hooks/funds/usePersonalFundFactory';
-import { CONTRACT_ADDRESSES } from '../config/addresses';
-import { parseUSDC } from '../hooks/usdc/usdcUtils';
+import { useRetirementPlan } from '../../context/RetirementContext';
+import { useWallet } from '../../hooks/web3/useWallet';
+import { usePersonalFundFactory } from '../../hooks/funds/usePersonalFundFactory';
+import { CONTRACT_ADDRESSES } from '../../config/addresses';
+import { parseUSDC } from '../../hooks/usdc/usdcUtils';
 import {
   Wallet,
   Shield,
