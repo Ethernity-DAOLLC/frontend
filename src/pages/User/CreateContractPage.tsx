@@ -97,12 +97,14 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
-
   const desiredMonthlyValue = planData.desiredMonthlyIncome ?? 0;
+  const principalValue = parseFloat(planData.principal || '0');
+  const monthlyDepositValue = parseFloat(planData.monthlyDeposit || '0');
+  const initialDepositValue = parseFloat(planData.initialDeposit || '0');
   const desiredMonthlyAmount = parseUSDC(desiredMonthlyValue.toString());
-  const principalAmount = parseUSDC(planData.principal || '0');
-  const monthlyDepositAmount = parseUSDC(planData.monthlyDeposit || '0');
-  const initialDepositAmount = parseUSDC(planData.initialDeposit || '0');
+  const principalAmount = parseUSDC(principalValue.toString());
+  const monthlyDepositAmount = parseUSDC(monthlyDepositValue.toString());
+  const initialDepositAmount = parseUSDC(initialDepositValue.toString());
   
   const handleConnectWallet = () => {
     openModal();
@@ -117,12 +119,13 @@ const CreateContractPage: React.FC = () => {
     setIsProcessing(true);
 
     try {
+
       await createPersonalFund({
-        principal: principalAmount,
+        principal: principalAmount,  
         monthlyDeposit: monthlyDepositAmount,
         currentAge: planData.currentAge || 0,
         retirementAge: planData.retirementAge || 0,
-        desiredMonthly: desiredMonthlyAmount, 
+        desiredMonthly: desiredMonthlyAmount,
         yearsPayments: planData.yearsPayments || 0,
         interestRate: Math.round((planData.interestRate || 0) * 100),
         timelockYears: planData.timelockYears || 0,
@@ -134,7 +137,6 @@ const CreateContractPage: React.FC = () => {
     }
   };
   
-  const initialDepositValue = parseFloat(planData.initialDeposit || '0');
   const feeAmount = (initialDepositValue * 0.03).toFixed(2);
   const netToOwner = (initialDepositValue * 0.97).toFixed(2);
   const hasEnoughBalance = usdcBalance && usdcBalance >= initialDepositAmount;
@@ -227,11 +229,11 @@ const CreateContractPage: React.FC = () => {
                 <div className="mt-3 pt-3 border-t border-emerald-200 grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <p className="text-gray-600">Principal:</p>
-                    <p className="font-bold text-gray-800">{formatCurrency(parseFloat(planData.principal || '0'))}</p>
+                    <p className="font-bold text-gray-800">{formatCurrency(principalValue)}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">First Monthly:</p>
-                    <p className="font-bold text-gray-800">{formatCurrency(parseFloat(planData.monthlyDeposit || '0'))}</p>
+                    <p className="font-bold text-gray-800">{formatCurrency(monthlyDepositValue)}</p>
                   </div>
                 </div>
               </div>
@@ -243,7 +245,7 @@ const CreateContractPage: React.FC = () => {
                     Monthly Deposit
                   </p>
                   <p className="text-xl font-bold text-gray-800">
-                    {formatCurrency(parseFloat(planData.monthlyDeposit || '0'))}
+                    {formatCurrency(monthlyDepositValue)}
                   </p>
                 </div>
 
@@ -331,7 +333,7 @@ const CreateContractPage: React.FC = () => {
               </h3>
               <div className="space-y-4">
                 <div className="bg-white rounded-2xl p-4 shadow">
-                  <p className="text-gray-600 text-sm">Total Initial Deposit</p>
+                  <p className="text-gray-600 text-sm">Total Initial Deposit (USDC)</p>
                   <p className="text-3xl font-black text-gray-800">
                     {formatCurrency(initialDepositValue)}
                   </p>
@@ -406,7 +408,7 @@ const CreateContractPage: React.FC = () => {
                       <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
                       <div>
                         <p className="font-semibold text-green-900 mb-1">Balance OK</p>
-                        <p className="text-sm text-green-800">You have sufficient USDC to create your retirement fund</p>
+                        <p className="text-sm text-green-800">You have enough USDC to create your own Personal Retirement Fund</p>
                       </div>
                     </div>
                   ) : (
@@ -495,6 +497,7 @@ const CreateContractPage: React.FC = () => {
                 <li>• 97% of each deposit is returned to you for DeFi investment</li>
                 <li>• You retain full control of your funds through the smart contract</li>
                 <li>• The timelock ensures funds are secured until retirement age</li>
+                <li>• All amounts are in USDC (stablecoin) to avoid ETH volatility</li>
                 <li>• Your desired monthly income ({formatCurrency(desiredMonthlyValue)}) is saved as your retirement goal</li>
               </ul>
             </div>
