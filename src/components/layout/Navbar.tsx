@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAccount, useDisconnect, useBalance, useChainId, useSwitchChain } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
+import { useHasFund } from '@/hooks/funds/useHasFund';
 import { Wallet, ChevronDown, AlertTriangle, ExternalLink, CheckCircle, Menu, X } from 'lucide-react';
 import { 
   appConfig, 
@@ -22,6 +23,7 @@ const Navbar: React.FC = () => {
   const { open } = useAppKit();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { hasFund, isLoading } = useHasFund();
 
   useEffect(() => {
     setIsMobileMenuOpen(false);

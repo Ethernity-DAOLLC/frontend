@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useChainId } from 'wagmi';
+import { useChainId, usePublicClient } from 'wagmi';
 import { useRetirementPlan } from '../../context/RetirementContext';
 import { useWallet } from '../../hooks/web3/useWallet';
 import { usePersonalFundFactory } from '../../hooks/funds/usePersonalFundFactory';
+import { useHasFund } from '@/hooks/funds/useHasFund';
 import { CONTRACT_ADDRESSES } from '../../config/addresses';
 import { parseUSDC } from '../../hooks/usdc/usdcUtils';
 import {
@@ -54,10 +55,12 @@ const safeParseFloat = (value: string | number | null | undefined, defaultValue:
 const CreateContractPage: React.FC = () => {
   const navigate = useNavigate();
   const chainId = useChainId();
+  const publicClient = usePublicClient();
   const { planData, clearPlanData } = useRetirementPlan();
   const { isConnected, openModal } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
+  const [createdFundAddress, setCreatedFundAddress] = useState<string>('');
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
 
   const {
@@ -71,7 +74,10 @@ const CreateContractPage: React.FC = () => {
     usdcAllowance,
     configuration,
     refetch,
+    userFund,
   } = usePersonalFundFactory(factoryAddress);
+
+  const { refetch: refetchHasFund } = useHasFund();
 
   useEffect(() => {
     if (!planData) {
@@ -81,14 +87,91 @@ const CreateContractPage: React.FC = () => {
   }, [planData, navigate]);
 
   useEffect(() => {
-    if (isSuccess && hash && planData) {
+    const extractFundAddress = async () => {
+      if (isSuccess && hash && !createdFundAddress && publicClient) {
+        try {
+          console.log('🔍 Extracting fund address from transaction...');
+          console.log('📝 Transaction hash:', hash);
+
+          const receipt = await publicClient.waitForTransactionReceipt({ 
+            hash,
+            confirmations: 1 
+          });
+          
+          console.log('📄 Transaction receipt:', receipt);
+          console.log('📊 Total logs:', receipt.logs.length);
+
+          const fundCreatedLog = receipt.logs.find((log: any) => {
+            return log.topics && log.topics.length === 3;
+          });
+
+          if (fundCreatedLog && fundCreatedLog.topics[2]) {
+            const fundAddressHex = fundCreatedLog.topics[2];
+            const fundAddr = `0x${fundAddressHex.slice(-40)}` as `0x${string}`;
+            
+            console.log('✅ Fund address extracted from event:', fundAddr);
+            console.log('📍 Event details:', {
+              transactionHash: fundCreatedLog.transactionHash,
+              logIndex: fundCreatedLog.logIndex,
+              topics: fundCreatedLog.topics
+            });
+            
+            setCreatedFundAddress(fundAddr);
+            await refetch();
+            await refetchHasFund();
+          } else {
+            console.warn('⚠️ FundCreated event not found in logs');
+            console.log('📋 Available logs:', receipt.logs.map((log: any, idx: number) => ({
+              index: idx,
+              address: log.address,
+              topicsCount: log.topics?.length || 0,
+              topics: log.topics
+            })));
+
+            console.log('🔄 Trying fallback method...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await refetch();
+            await refetchHasFund();
+
+            if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
+              console.log('✅ Fund address obtained from factory:', userFund);
+              setCreatedFundAddress(userFund);
+            }
+          }
+        } catch (err) {
+          console.error('❌ Error extracting fund address:', err);
+          try {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await refetch();
+            await refetchHasFund();
+            
+            if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
+              console.log('✅ Fund address obtained from factory (after error):', userFund);
+              setCreatedFundAddress(userFund);
+            }
+          } catch (fallbackErr) {
+            console.error('❌ Fallback also failed:', fallbackErr);
+          }
+        }
+      }
+    };
+    extractFundAddress();
+  }, [isSuccess, hash, createdFundAddress, publicClient, refetch, refetchHasFund, userFund]);
+
+  useEffect(() => {
+    if (isSuccess && hash && planData && createdFundAddress) {
+      console.log('🎉 Navigating to ContractCreatedPage');
+      console.log('📍 Fund Address:', createdFundAddress);
+      console.log('💰 Initial Deposit:', planData.initialDeposit);
+      console.log('📅 Monthly Deposit:', planData.monthlyDeposit);
+      
       const timeout = setTimeout(() => {
         navigate('/contract-created', {
           state: {
             txHash: hash,
             initialDeposit: planData.initialDeposit || '0',
             monthlyDeposit: planData.monthlyDeposit || '0',
-            fundAddress: '',
+            fundAddress: createdFundAddress,
           },
         });
         clearPlanData();
@@ -96,7 +179,7 @@ const CreateContractPage: React.FC = () => {
 
       return () => clearTimeout(timeout);
     }
-  }, [isSuccess, hash, navigate, planData, clearPlanData]);
+  }, [isSuccess, hash, navigate, planData, clearPlanData, createdFundAddress]);
 
   if (!planData) {
     return null;
@@ -160,6 +243,7 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
+  
   let desiredMonthlyAmount: bigint;
   let principalAmount: bigint;
   let monthlyDepositAmount: bigint;
@@ -271,7 +355,8 @@ const CreateContractPage: React.FC = () => {
     if (creationStep === 'approving') return 'Step 1/2: Approving USDC... Please confirm in your wallet';
     if (creationStep === 'creating') return 'Step 2/2: Creating your retirement fund... Please confirm in your wallet';
     if (isConfirming) return 'Confirming transaction on blockchain...';
-    if (isSuccess) return 'Success! Redirecting to confirmation page...';
+    if (isSuccess && !createdFundAddress) return 'Extracting fund contract address...';
+    if (isSuccess && createdFundAddress) return 'Success! Redirecting to confirmation page...';
     return '';
   };
 
@@ -540,7 +625,7 @@ const CreateContractPage: React.FC = () => {
                       <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
                       <div>
                         <p className="font-semibold text-green-900 mb-1">Balance OK</p>
-                        <p className="text-sm text-green-800">You have enough USDC to create and generate your own Personal Retirement Fund on the Blockchain</p>
+                        <p className="text-sm text-green-800">You have enough USDC to create your Personal Retirement Fund</p>
                       </div>
                     </div>
                   ) : (
