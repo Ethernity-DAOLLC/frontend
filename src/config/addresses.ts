@@ -10,30 +10,34 @@ export interface ContractAddresses {
 }
 
 const OFFICIAL_USDC: Record<number, `0x${string}`> = {
-  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',      
-  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',         // Polygon Amoy
-  84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',         // Base Sepolia
-  11155420: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',      // Optimism Sepolia
-  11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',      // Ethereum Sepolia
+  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
+  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',       // Polygon Amoy
+  84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',       // Base Sepolia
+  11155420: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',    // Optimism Sepolia
+  11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',    // Ethereum Sepolia
   
-  42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',           // Arbitrum One
-  137: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',            // Polygon
-  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',           // Base
-  10: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',             // Optimism
-  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',              // Ethereum
+  // Mainnets
+  42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',       // Arbitrum One
+  137: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',        // Polygon
+  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',       // Base
+  10: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',         // Optimism
+  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',          // Ethereum
 }
-
 const MOCK_USDC: Record<number, `0x${string}`> = {
   421614: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81',
 }
-const USE_MOCK_USDC = import.meta.env.DEV || import.meta.env.VITE_USE_MOCK_USDC === 'true'
 const getUSDCAddress = (chainId: number): `0x${string}` => {
-  if (USE_MOCK_USDC && MOCK_USDC[chainId]) {
-    return MOCK_USDC[chainId]
+  if (chainId === 421614) {
+    return MOCK_USDC[421614];
   }
-  return OFFICIAL_USDC[chainId]
+  if (MOCK_USDC[chainId]) {
+    return MOCK_USDC[chainId];
+  }
+  return OFFICIAL_USDC[chainId];
 }
+
 export const ZERO_ADDRESS: `0x${string}` = '0x0000000000000000000000000000000000000000'
+
 export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
 
   421614: {
@@ -132,16 +136,28 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   },
 }
 export const MOCK_USDC_ADDRESS = MOCK_USDC[421614]
-export const IS_USING_MOCK_USDC = USE_MOCK_USDC
+export const OFFICIAL_USDC_ADDRESS = OFFICIAL_USDC[421614]
+export const getCurrentUSDCType = (chainId: number): 'mock' | 'official' | 'unknown' => {
+  const currentAddress = CONTRACT_ADDRESSES[chainId]?.usdc;
+  
+  if (!currentAddress) return 'unknown';
+  if (currentAddress === MOCK_USDC[chainId]) return 'mock';
+  if (currentAddress === OFFICIAL_USDC[chainId]) return 'official';
+  return 'unknown';
+}
+
 export const getOfficialUSDC = (chainId: number): `0x${string}` | undefined => {
   return OFFICIAL_USDC[chainId]
 }
+
 export const getMockUSDC = (chainId: number): `0x${string}` | undefined => {
   return MOCK_USDC[chainId]
 }
+
 export const hasUSDC = (chainId: number): boolean => {
-  return chainId in OFFICIAL_USDC
+  return chainId in OFFICIAL_USDC || chainId in MOCK_USDC
 }
+
 export const hasMockUSDC = (chainId: number): boolean => {
   return chainId in MOCK_USDC
 }
@@ -156,12 +172,15 @@ export const getContractAddress = (
 ): `0x${string}` | undefined => {
   return CONTRACT_ADDRESSES[chainId]?.[contract]
 }
+
 export const hasChainConfig = (chainId: number): boolean => {
   return chainId in CONTRACT_ADDRESSES
 }
+
 export const isValidAddress = (address: string | undefined): address is `0x${string}` => {
   return !!address && address !== ZERO_ADDRESS && /^0x[a-fA-F0-9]{40}$/.test(address)
 }
+
 export const isContractDeployed = (
   chainId: number,
   contract: keyof ContractAddresses
@@ -169,6 +188,7 @@ export const isContractDeployed = (
   const address = CONTRACT_ADDRESSES[chainId]?.[contract]
   return isValidAddress(address)
 }
+
 export const areMainContractsDeployed = (chainId: number): boolean => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return false
@@ -185,10 +205,12 @@ export const areMainContractsDeployed = (chainId: number): boolean => {
     isContractDeployed(chainId, contract)
   )
 }
+
 export const isTestnetChain = (chainId: number): boolean => {
   const testnets = [421614, 80002, 84532, 11155420, 11155111]
   return testnets.includes(chainId)
 }
+
 export const getUSDCForChain = (chainId: number): `0x${string}` | undefined => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return undefined
@@ -203,6 +225,7 @@ export const getDeployedContracts = (chainId: number): (keyof ContractAddresses)
     .filter(([_, address]) => isValidAddress(address))
     .map(([name]) => name as keyof ContractAddresses)
 }
+
 export const getPendingContracts = (chainId: number): (keyof ContractAddresses)[] => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return []
@@ -215,7 +238,6 @@ export const getPendingContracts = (chainId: number): (keyof ContractAddresses)[
 export const getDeploymentProgress = (chainId: number): number => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return 0
-  
   const total = Object.keys(addresses).length
   const deployed = getDeployedContracts(chainId).length
   return Math.round((deployed / total) * 100)
@@ -279,8 +301,10 @@ export const updateChainAddresses = (
   Object.assign(current, addresses)
   console.log(`✅ Updated addresses for chain ${chainId}:`, addresses)
 }
+
 export type ContractName = keyof ContractAddresses
 export type ChainId = keyof typeof CONTRACT_ADDRESSES
+
 export const DEPLOYMENT_STATUS = {
   421614: {
     status: 'deployed' as const,
@@ -337,12 +361,14 @@ export const getCategoryContracts = (
     isContractDeployed(chainId, contract)
   )
 }
+
 export const getContractsByCategory = (chainId: number) => {
   return {
     core: getCategoryContracts(chainId, 'core'),
     optional: getCategoryContracts(chainId, 'optional'),
   }
 }
+
 const validateAddressConfig = () => {
   const errors: string[] = []
   
@@ -358,13 +384,21 @@ const validateAddressConfig = () => {
   }
   return errors.length === 0
 }
+
 if (import.meta.env.DEV) {
   validateAddressConfig()
 
-  console.log('🎯 USDC Configuration:', {
-    usingMockUSDC: IS_USING_MOCK_USDC,
-    mockAddress: MOCK_USDC_ADDRESS,
-    officialAddress: OFFICIAL_USDC[421614],
-    currentAddress: getUSDCAddress(421614),
+  console.log('🎯 USDC Configuration for Arbitrum Sepolia (421614):')
+  console.log({
+    'MockUSDC (TU contrato)': MOCK_USDC[421614],
+    'Official Circle USDC': OFFICIAL_USDC[421614],
+    'Currently using': CONTRACT_ADDRESSES[421614].usdc,
+    'Type': getCurrentUSDCType(421614),
   })
+  
+  if (CONTRACT_ADDRESSES[421614].usdc !== MOCK_USDC[421614]) {
+    console.error('❌ ERROR: Not using MockUSDC! Check addresses.ts')
+  } else {
+    console.log('✅ Correctly using MockUSDC')
+  }
 }
