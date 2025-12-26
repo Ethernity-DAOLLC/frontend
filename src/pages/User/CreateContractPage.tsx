@@ -540,7 +540,7 @@ const CreateContractPage: React.FC = () => {
                       <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
                       <div>
                         <p className="font-semibold text-green-900 mb-1">Balance OK</p>
-                        <p className="text-sm text-green-800">You have sufficient USDC to create your retirement fund</p>
+                        <p className="text-sm text-green-800">You have enough USDC to create and generate your own Personal Retirement Fund on the Blockchain</p>
                       </div>
                     </div>
                   ) : (

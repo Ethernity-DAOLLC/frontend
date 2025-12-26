@@ -30,11 +30,10 @@ const HomePage: React.FC = () => {
       <section className="bg-gradient-to-b from-gray-800 to-green-800 text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl font-bold mb-6">
-            Plan Your Future with Confidence
+            Financial Freedom in your hands
           </h1>
           <p className="text-xl mb-8 text-gray-200">
-            Secure your retirement with total control over your assets and
-            secure your financial future.
+            Secure Your tomorrow with the decision you make today
           </p>
           <button
             onClick={handleGetStarted}
