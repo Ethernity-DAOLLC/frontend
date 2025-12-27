@@ -85,76 +85,61 @@ const CreateContractPage: React.FC = () => {
       navigate('/calculator', { replace: true });
     }
   }, [planData, navigate]);
-
   useEffect(() => {
     const extractFundAddress = async () => {
-      if (isSuccess && hash && !createdFundAddress && publicClient) {
+      if (isSuccess && hash && !createdFundAddress) {
         try {
-          console.log('🔍 Extracting fund address from transaction...');
+          console.log('🔍 Extracting fund address from factory...');
           console.log('📝 Transaction hash:', hash);
 
-          const receipt = await publicClient.waitForTransactionReceipt({ 
-            hash,
-            confirmations: 1 
-          });
-          
-          console.log('📄 Transaction receipt:', receipt);
-          console.log('📊 Total logs:', receipt.logs.length);
-
-          const fundCreatedLog = receipt.logs.find((log: any) => {
-            return log.topics && log.topics.length === 3;
-          });
-
-          if (fundCreatedLog && fundCreatedLog.topics[2]) {
-            const fundAddressHex = fundCreatedLog.topics[2];
-            const fundAddr = `0x${fundAddressHex.slice(-40)}` as `0x${string}`;
-            
-            console.log('✅ Fund address extracted from event:', fundAddr);
-            console.log('📍 Event details:', {
-              transactionHash: fundCreatedLog.transactionHash,
-              logIndex: fundCreatedLog.logIndex,
-              topics: fundCreatedLog.topics
+          if (publicClient) {
+            await publicClient.waitForTransactionReceipt({ 
+              hash,
+              confirmations: 2 
             });
-            
-            setCreatedFundAddress(fundAddr);
-            await refetch();
-            await refetchHasFund();
-          } else {
-            console.warn('⚠️ FundCreated event not found in logs');
-            console.log('📋 Available logs:', receipt.logs.map((log: any, idx: number) => ({
-              index: idx,
-              address: log.address,
-              topicsCount: log.topics?.length || 0,
-              topics: log.topics
-            })));
+          }
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          console.log('🔄 Refetching factory data...');
+          await refetch();
+          await refetchHasFund();
+          await new Promise(resolve => setTimeout(resolve, 1000));
 
-            console.log('🔄 Trying fallback method...');
+          if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
+            console.log('✅ Fund address obtained from factory:', userFund);
+            setCreatedFundAddress(userFund);
+          } else {
+            console.warn('⚠️ userFund not available yet, trying again...');
             await new Promise(resolve => setTimeout(resolve, 2000));
             await refetch();
             await refetchHasFund();
-
+            
             if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
-              console.log('✅ Fund address obtained from factory:', userFund);
+              console.log('✅ Fund address obtained from factory (2nd attempt):', userFund);
               setCreatedFundAddress(userFund);
+            } else {
+              console.error('❌ Could not get fund address from factory');
             }
           }
         } catch (err) {
           console.error('❌ Error extracting fund address:', err);
+
           try {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 3000));
             await refetch();
             await refetchHasFund();
             
             if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
-              console.log('✅ Fund address obtained from factory (after error):', userFund);
+              console.log('✅ Fund address obtained from factory (final attempt):', userFund);
               setCreatedFundAddress(userFund);
             }
           } catch (fallbackErr) {
-            console.error('❌ Fallback also failed:', fallbackErr);
+            console.error('❌ All attempts failed:', fallbackErr);
           }
         }
       }
     };
+
     extractFundAddress();
   }, [isSuccess, hash, createdFundAddress, publicClient, refetch, refetchHasFund, userFund]);
 
