@@ -77,6 +77,8 @@ interface Result {
   totalInterest: number;
   futureValue: number;
   yearsToRetirement: number;
+  principal: number;
+  firstMonthlyDeposit: number;
   initialDeposit: number;
   feeAmount: number;
   netToOwner: number;
@@ -117,17 +119,13 @@ const FormField: React.FC<{
     )}
   </div>
 );
-
 const FEE_PERCENTAGE = 0.03;
-
 const CalculatorPage: React.FC = () => {
   const navigate = useNavigate();
   const chainId = useChainId();
   const { setPlanData } = useRetirementPlan();
   const { isConnected, openModal } = useWallet();
-  
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
-  
   const [chartReady, setChartReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string>('');
@@ -147,11 +145,9 @@ const CalculatorPage: React.FC = () => {
   useEffect(() => {
     loadChartJS().then(setChartReady);
   }, []);
-
   useEffect(() => {
     calculatePlan();
   }, [inputs]);
-
   const calculatePlan = () => {
     setError('');
     
@@ -164,7 +160,6 @@ const CalculatorPage: React.FC = () => {
       contributionFrequency: inputs.contributionFrequency,
       yearsInRetirement: inputs.yearsInRetirement || 0,
     };
-
     if (safeInputs.currentAge <= 0) {
       setError('Current age must be greater than 0');
       setResult(null);
@@ -186,14 +181,12 @@ const CalculatorPage: React.FC = () => {
       setChartData([]);
       return;
     }
-
     if (yearsToRetirement < 5) {
       setError('You must have at least 5 years until retirement to use this plan');
       setResult(null);
       setChartData([]);
       return;
     }
-
     if (safeInputs.desiredMonthlyIncome <= 0) {
       setError('Desired monthly income must be greater than 0');
       setResult(null);
@@ -207,13 +200,11 @@ const CalculatorPage: React.FC = () => {
       setChartData([]);
       return;
     }
-
     const periodsPerYear = getPeriodsPerYear(safeInputs.contributionFrequency);
     const r = safeInputs.annualRate / 100 / periodsPerYear;
     const n = yearsToRetirement * periodsPerYear;
     const totalNeededAtRetirement = safeInputs.desiredMonthlyIncome * 12 * safeInputs.yearsInRetirement;
     const fvInitial = safeInputs.initialCapital * Math.pow(1 + r, n);
-
     let requiredPMT = 0;
     if (r > 0) {
       requiredPMT = (totalNeededAtRetirement - fvInitial) * (r / (Math.pow(1 + r, n) - 1));
@@ -237,19 +228,22 @@ const CalculatorPage: React.FC = () => {
         contributions.push(requiredPMT);
       }
     }
-
     const totalContributed = safeInputs.initialCapital + contributions.reduce((a, b) => a + b, 0);
     const totalInterest = balance - totalContributed;
-    const initialDeposit = safeInputs.initialCapital + Math.max(0, monthlyDeposit);
+    const principal = safeInputs.initialCapital;
+    const firstMonthlyDeposit = Math.max(0, monthlyDeposit);
+    const initialDeposit = principal + firstMonthlyDeposit;
     const feeAmount = initialDeposit * FEE_PERCENTAGE;
     const netToOwner = initialDeposit - feeAmount;
 
     setResult({
-      monthlyDeposit: Math.max(0, monthlyDeposit),
+      monthlyDeposit: firstMonthlyDeposit,
       totalContributed,
       totalInterest,
       futureValue: balance,
       yearsToRetirement,
+      principal,
+      firstMonthlyDeposit,
       initialDeposit,
       feeAmount,
       netToOwner,
@@ -265,15 +259,12 @@ const CalculatorPage: React.FC = () => {
       default: return 12;
     }
   };
-
   const handleCreateContract = async () => {
     if (!result) return;
-
     if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
       setError('Contracts not deployed on this network yet. Please switch to Arbitrum Sepolia.');
       return;
     }
-
     if (!isConnected) {
       setIsConnecting(true);
       try {
@@ -287,18 +278,13 @@ const CalculatorPage: React.FC = () => {
       }
       return;
     }
-
     proceedToCreateContract();
   };
-
   const proceedToCreateContract = () => {
     if (!result) return;
-
     const timelockYears = Math.max(15, Math.floor((inputs.retirementAge - inputs.currentAge) * 0.3));
-    const principal = inputs.initialCapital;
-    
     setPlanData({
-      principal: principal.toFixed(2),     
+      principal: result.principal.toFixed(2),
       initialDeposit: result.initialDeposit.toFixed(2),
       monthlyDeposit: result.monthlyDeposit.toFixed(2),
       currentAge: inputs.currentAge,
@@ -308,7 +294,6 @@ const CalculatorPage: React.FC = () => {
       interestRate: inputs.annualRate,
       timelockYears,
     });
-
     navigate('/create-contract');
   };
 
@@ -331,7 +316,6 @@ const CalculatorPage: React.FC = () => {
       },
     },
   } : null;
-
   const chartDataConfig = chartReady ? {
     labels: chartData.map(d => `Age ${d.year}`),
     datasets: [
@@ -418,7 +402,6 @@ const CalculatorPage: React.FC = () => {
                   icon={<Percent className="w-5 h-5" />}
                   min={0.1}
                 />
-
                 <div>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
                     <TrendingUp className="w-5 h-5" />
@@ -537,7 +520,6 @@ const CalculatorPage: React.FC = () => {
                   </div>
                 ))}
               </div>
-
               <div className="mt-6 bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
@@ -573,7 +555,6 @@ const CalculatorPage: React.FC = () => {
                   </div>
                 </div>
               )}
-
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-6 sm:p-8">
                 <h3 className="text-xl sm:text-2xl font-bold text-blue-800 mb-4 sm:mb-6 flex items-center gap-3">
                   <Info className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -602,7 +583,6 @@ const CalculatorPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-
               <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-3xl shadow-2xl p-6 sm:p-10 text-white text-center">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 sm:mb-6">
                   {isConnected ? "Your fund is ready!" : "Last step"}
@@ -653,5 +633,4 @@ const CalculatorPage: React.FC = () => {
     </div>
   );
 };
-
 export default CalculatorPage;

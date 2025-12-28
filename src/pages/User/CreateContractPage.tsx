@@ -61,7 +61,6 @@ const CreateContractPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
-
   const {
     createPersonalFund,
     isPending,
@@ -75,7 +74,9 @@ const CreateContractPage: React.FC = () => {
     refetch,
     userFund,
   } = usePersonalFundFactory(factoryAddress);
+  
   const { refetch: refetchHasFund } = useHasFund();
+
   useEffect(() => {
     if (!planData) {
       console.warn('⚠️ No plan data found, redirecting to calculator');
@@ -84,29 +85,35 @@ const CreateContractPage: React.FC = () => {
   }, [planData, navigate]);
 
   useEffect(() => {
-    if (!isSuccess || !hash || !planData) {
+    if (!isSuccess || !hash) {
       return;
     }
+    if (!planData) {
+      console.error('❌ Plan data missing after successful transaction');
+      setError('Plan data not found. Please check your dashboard.');
+      return;
+    }
+
     let mounted = true;
     let pollAttempts = 0;
-    const MAX_POLLS = 12; 
-    const POLL_INTERVAL = 2000; 
+    const MAX_POLLS = 12;
+    const POLL_INTERVAL = 2000;
 
-    console.log('🎯 Transaction successful, starting fund address extraction...');
-    console.log('📝 TX Hash:', hash);
+    console.log('🎯 Transaction successful, extracting fund address...');
+    console.log('🔍 TX Hash:', hash);
+
     const extractAddressAndNavigate = async () => {
       try {
         if (publicClient) {
-          console.log('⏳ Waiting for transaction confirmation (2 blocks)...');
-          await publicClient.waitForTransactionReceipt({ 
-            hash, 
-            confirmations: 2 
+          console.log('⏳ Waiting for 2 confirmations...');
+          await publicClient.waitForTransactionReceipt({
+            hash,
+            confirmations: 2
           });
-          console.log('✅ Transaction confirmed on blockchain');
+          console.log('✅ Transaction confirmed');
         }
         await new Promise(resolve => setTimeout(resolve, 1500));
         console.log('🔄 Starting polling for fund address...');
-
         while (pollAttempts < MAX_POLLS && mounted) {
           pollAttempts++;
           console.log(`🔄 Poll attempt ${pollAttempts}/${MAX_POLLS}`);
@@ -118,17 +125,10 @@ const CreateContractPage: React.FC = () => {
             console.warn('⚠️ Refetch error (will retry):', refetchError);
           }
           if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
-            console.log('✅ Fund address obtained successfully:', userFund);
+            console.log('✅ Fund address obtained:', userFund);
 
             if (mounted) {
-              console.log('🎉 Navigating to ContractCreatedPage with data:', {
-                txHash: hash,
-                initialDeposit: planData.initialDeposit,
-                monthlyDeposit: planData.monthlyDeposit,
-                fundAddress: userFund,
-              });
-              await new Promise(resolve => setTimeout(resolve, 1000));
-
+              console.log('🎉 Navigating to success page...');
               navigate('/contract-created', {
                 state: {
                   txHash: hash,
@@ -137,32 +137,30 @@ const CreateContractPage: React.FC = () => {
                   fundAddress: userFund,
                 },
               });
+
               clearPlanData();
             }
-            return; 
+            return;
           }
           if (pollAttempts < MAX_POLLS && mounted) {
-            console.log(`⏳ Fund address not ready yet, waiting ${POLL_INTERVAL}ms...`);
+            console.log(`⏳ Waiting ${POLL_INTERVAL}ms before retry...`);
             await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
           }
         }
         if (mounted) {
-          console.error('❌ Failed to obtain fund address after', MAX_POLLS, 'attempts');
-          console.error('📊 Final state:', { userFund, isSuccess, hash });
+          console.error('❌ Failed to get fund address after', MAX_POLLS, 'attempts');
           setError(
             'Contract created successfully, but could not retrieve its address. ' +
-            'Please check your Dashboard or Arbiscan for the contract details.'
+            'Please check your Dashboard for the contract details.'
           );
-
           setTimeout(() => {
             if (mounted) {
-              console.log('⚠️ Navigating without fund address (fallback)');
               navigate('/contract-created', {
                 state: {
                   txHash: hash,
                   initialDeposit: planData.initialDeposit || '0',
                   monthlyDeposit: planData.monthlyDeposit || '0',
-                  fundAddress: undefined, 
+                  fundAddress: undefined,
                 },
               });
               clearPlanData();
@@ -171,30 +169,27 @@ const CreateContractPage: React.FC = () => {
         }
 
       } catch (err) {
-        console.error('❌ Critical error in extraction flow:', err);
-        
+        console.error('❌ Error in extraction flow:', err);
+
         if (mounted) {
-          const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-          setError(
-            `An error occurred while processing your fund: ${errorMessage}. ` +
-            'Please check your Dashboard or contact support.'
-          );
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          setError(`Error processing fund: ${errorMessage}`);
+
           setTimeout(() => {
             if (mounted) {
-              console.log('🔄 Redirecting to Dashboard (error fallback)');
               navigate('/dashboard');
             }
           }, 5000);
         }
       }
     };
-
     extractAddressAndNavigate();
+
     return () => {
       mounted = false;
-      console.log('🧹 Cleanup: extraction effect unmounted');
+      console.log('🧹 Cleanup: polling stopped');
     };
-  }, [isSuccess, hash, planData]); 
+  }, [isSuccess, hash]);
   if (!planData) {
     return null;
   }
@@ -223,7 +218,6 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
-
   const desiredMonthlyValue = safeParseFloat(planData.desiredMonthlyIncome, 0);
   const principalValue = safeParseFloat(planData.principal, 0);
   const monthlyDepositValue = safeParseFloat(planData.monthlyDeposit, 0);
@@ -257,7 +251,6 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
-
   let desiredMonthlyAmount: bigint;
   let principalAmount: bigint;
   let monthlyDepositAmount: bigint;
@@ -348,7 +341,7 @@ const CreateContractPage: React.FC = () => {
     } catch (err: any) {
       console.error('❌ Error creating fund:', err);
       let errorMessage = 'Failed to create retirement fund';
-      
+
       if (err.message?.includes('User rejected') || err.message?.includes('user rejected')) {
         errorMessage = 'Transaction was rejected. Please try again and approve the transaction.';
       } else if (err.message?.includes('insufficient funds')) {
@@ -358,12 +351,10 @@ const CreateContractPage: React.FC = () => {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
       setError(errorMessage);
       setIsProcessing(false);
     }
   };
-
   const feeAmount = (initialDepositValue * 0.03).toFixed(2);
   const netToOwner = (initialDepositValue * 0.97).toFixed(2);
   const hasEnoughBalance = 
@@ -387,7 +378,6 @@ const CreateContractPage: React.FC = () => {
   };
 
   const canCreate = isConnected && hasEnoughBalance && !isProcessing && !isPending;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8 sm:py-12 px-4">
       <div className="max-w-5xl mx-auto">
@@ -755,5 +745,4 @@ const CreateContractPage: React.FC = () => {
     </div>
   );
 };
-
 export default CreateContractPage;
