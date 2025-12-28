@@ -60,7 +60,6 @@ const CreateContractPage: React.FC = () => {
   const { isConnected, openModal } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
-  const [createdFundAddress, setCreatedFundAddress] = useState<string>('');
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
 
   const {
@@ -76,96 +75,126 @@ const CreateContractPage: React.FC = () => {
     refetch,
     userFund,
   } = usePersonalFundFactory(factoryAddress);
-
   const { refetch: refetchHasFund } = useHasFund();
-
   useEffect(() => {
     if (!planData) {
-      console.warn('No plan data found, redirecting to calculator');
+      console.warn('⚠️ No plan data found, redirecting to calculator');
       navigate('/calculator', { replace: true });
     }
   }, [planData, navigate]);
+
   useEffect(() => {
-    const extractFundAddress = async () => {
-      if (isSuccess && hash && !createdFundAddress) {
-        try {
-          console.log('🔍 Extracting fund address from factory...');
-          console.log('📝 Transaction hash:', hash);
+    if (!isSuccess || !hash || !planData) {
+      return;
+    }
+    let mounted = true;
+    let pollAttempts = 0;
+    const MAX_POLLS = 12; 
+    const POLL_INTERVAL = 2000; 
 
-          if (publicClient) {
-            await publicClient.waitForTransactionReceipt({ 
-              hash,
-              confirmations: 2 
-            });
-          }
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          console.log('🔄 Refetching factory data...');
-          await refetch();
-          await refetchHasFund();
-          await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log('🎯 Transaction successful, starting fund address extraction...');
+    console.log('📝 TX Hash:', hash);
+    const extractAddressAndNavigate = async () => {
+      try {
+        if (publicClient) {
+          console.log('⏳ Waiting for transaction confirmation (2 blocks)...');
+          await publicClient.waitForTransactionReceipt({ 
+            hash, 
+            confirmations: 2 
+          });
+          console.log('✅ Transaction confirmed on blockchain');
+        }
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log('🔄 Starting polling for fund address...');
 
-          if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
-            console.log('✅ Fund address obtained from factory:', userFund);
-            setCreatedFundAddress(userFund);
-          } else {
-            console.warn('⚠️ userFund not available yet, trying again...');
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            await refetch();
-            await refetchHasFund();
-            
-            if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
-              console.log('✅ Fund address obtained from factory (2nd attempt):', userFund);
-              setCreatedFundAddress(userFund);
-            } else {
-              console.error('❌ Could not get fund address from factory');
-            }
-          }
-        } catch (err) {
-          console.error('❌ Error extracting fund address:', err);
+        while (pollAttempts < MAX_POLLS && mounted) {
+          pollAttempts++;
+          console.log(`🔄 Poll attempt ${pollAttempts}/${MAX_POLLS}`);
 
           try {
-            await new Promise(resolve => setTimeout(resolve, 3000));
             await refetch();
             await refetchHasFund();
-            
-            if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
-              console.log('✅ Fund address obtained from factory (final attempt):', userFund);
-              setCreatedFundAddress(userFund);
-            }
-          } catch (fallbackErr) {
-            console.error('❌ All attempts failed:', fallbackErr);
+          } catch (refetchError) {
+            console.warn('⚠️ Refetch error (will retry):', refetchError);
           }
+          if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
+            console.log('✅ Fund address obtained successfully:', userFund);
+
+            if (mounted) {
+              console.log('🎉 Navigating to ContractCreatedPage with data:', {
+                txHash: hash,
+                initialDeposit: planData.initialDeposit,
+                monthlyDeposit: planData.monthlyDeposit,
+                fundAddress: userFund,
+              });
+              await new Promise(resolve => setTimeout(resolve, 1000));
+
+              navigate('/contract-created', {
+                state: {
+                  txHash: hash,
+                  initialDeposit: planData.initialDeposit || '0',
+                  monthlyDeposit: planData.monthlyDeposit || '0',
+                  fundAddress: userFund,
+                },
+              });
+              clearPlanData();
+            }
+            return; 
+          }
+          if (pollAttempts < MAX_POLLS && mounted) {
+            console.log(`⏳ Fund address not ready yet, waiting ${POLL_INTERVAL}ms...`);
+            await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+          }
+        }
+        if (mounted) {
+          console.error('❌ Failed to obtain fund address after', MAX_POLLS, 'attempts');
+          console.error('📊 Final state:', { userFund, isSuccess, hash });
+          setError(
+            'Contract created successfully, but could not retrieve its address. ' +
+            'Please check your Dashboard or Arbiscan for the contract details.'
+          );
+
+          setTimeout(() => {
+            if (mounted) {
+              console.log('⚠️ Navigating without fund address (fallback)');
+              navigate('/contract-created', {
+                state: {
+                  txHash: hash,
+                  initialDeposit: planData.initialDeposit || '0',
+                  monthlyDeposit: planData.monthlyDeposit || '0',
+                  fundAddress: undefined, 
+                },
+              });
+              clearPlanData();
+            }
+          }, 3000);
+        }
+
+      } catch (err) {
+        console.error('❌ Critical error in extraction flow:', err);
+        
+        if (mounted) {
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+          setError(
+            `An error occurred while processing your fund: ${errorMessage}. ` +
+            'Please check your Dashboard or contact support.'
+          );
+          setTimeout(() => {
+            if (mounted) {
+              console.log('🔄 Redirecting to Dashboard (error fallback)');
+              navigate('/dashboard');
+            }
+          }, 5000);
         }
       }
     };
 
-    extractFundAddress();
-  }, [isSuccess, hash, createdFundAddress, publicClient, refetch, refetchHasFund, userFund]);
-
-  useEffect(() => {
-    if (isSuccess && hash && planData && createdFundAddress) {
-      console.log('🎉 Navigating to ContractCreatedPage');
-      console.log('📍 Fund Address:', createdFundAddress);
-      console.log('💰 Initial Deposit:', planData.initialDeposit);
-      console.log('📅 Monthly Deposit:', planData.monthlyDeposit);
-      
-      const timeout = setTimeout(() => {
-        navigate('/contract-created', {
-          state: {
-            txHash: hash,
-            initialDeposit: planData.initialDeposit || '0',
-            monthlyDeposit: planData.monthlyDeposit || '0',
-            fundAddress: createdFundAddress,
-          },
-        });
-        clearPlanData();
-      }, 2000);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [isSuccess, hash, navigate, planData, clearPlanData, createdFundAddress]);
-
+    extractAddressAndNavigate();
+    return () => {
+      mounted = false;
+      console.log('🧹 Cleanup: extraction effect unmounted');
+    };
+  }, [isSuccess, hash, planData]); 
   if (!planData) {
     return null;
   }
@@ -228,7 +257,7 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
-  
+
   let desiredMonthlyAmount: bigint;
   let principalAmount: bigint;
   let monthlyDepositAmount: bigint;
@@ -240,7 +269,7 @@ const CreateContractPage: React.FC = () => {
     monthlyDepositAmount = parseUSDC(monthlyDepositValue.toFixed(2));
     initialDepositAmount = parseUSDC(initialDepositValue.toFixed(2));
   } catch (err) {
-    console.error('Error parsing USDC amounts:', err);
+    console.error('❌ Error parsing USDC amounts:', err);
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
         <div className="max-w-2xl mx-auto">
@@ -263,12 +292,12 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
-  
+
   const handleConnectWallet = () => {
     try {
       openModal();
     } catch (err) {
-      console.error('Error opening wallet modal:', err);
+      console.error('❌ Error opening wallet modal:', err);
       setError('Failed to open wallet connection. Please try again.');
     }
   };
@@ -293,6 +322,17 @@ const CreateContractPage: React.FC = () => {
     setIsProcessing(true);
 
     try {
+      console.log('🚀 Starting fund creation with params:', {
+        principal: principalAmount.toString(),
+        monthlyDeposit: monthlyDepositAmount.toString(),
+        currentAge,
+        retirementAge,
+        desiredMonthly: desiredMonthlyAmount.toString(),
+        yearsPayments,
+        interestRate: Math.round(interestRate * 100),
+        timelockYears,
+      });
+
       await createPersonalFund({
         principal: principalAmount,
         monthlyDeposit: monthlyDepositAmount,
@@ -303,11 +343,13 @@ const CreateContractPage: React.FC = () => {
         interestRate: Math.round(interestRate * 100),
         timelockYears: timelockYears,
       });
+
+      console.log('✅ Fund creation transaction sent');
     } catch (err: any) {
-      console.error('Error creating fund:', err);
+      console.error('❌ Error creating fund:', err);
       let errorMessage = 'Failed to create retirement fund';
       
-      if (err.message?.includes('User rejected')) {
+      if (err.message?.includes('User rejected') || err.message?.includes('user rejected')) {
         errorMessage = 'Transaction was rejected. Please try again and approve the transaction.';
       } else if (err.message?.includes('insufficient funds')) {
         errorMessage = 'Insufficient funds in your wallet to complete this transaction.';
@@ -340,8 +382,7 @@ const CreateContractPage: React.FC = () => {
     if (creationStep === 'approving') return 'Step 1/2: Approving USDC... Please confirm in your wallet';
     if (creationStep === 'creating') return 'Step 2/2: Creating your retirement fund... Please confirm in your wallet';
     if (isConfirming) return 'Confirming transaction on blockchain...';
-    if (isSuccess && !createdFundAddress) return 'Extracting fund contract address...';
-    if (isSuccess && createdFundAddress) return 'Success! Redirecting to confirmation page...';
+    if (isSuccess) return 'Success! Extracting fund details...';
     return '';
   };
 
