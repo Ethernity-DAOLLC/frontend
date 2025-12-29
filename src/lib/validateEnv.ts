@@ -1,16 +1,17 @@
 interface EnvVars {
   VITE_WALLETCONNECT_PROJECT_ID: string;
+  VITE_SUPABASE_URL: string;
+  VITE_SUPABASE_ANON_KEY: string;
   VITE_API_URL?: string;
 }
-
 const REQUIRED_ENV_VARS: (keyof EnvVars)[] = [
   'VITE_WALLETCONNECT_PROJECT_ID',
+  'VITE_SUPABASE_URL',
+  'VITE_SUPABASE_ANON_KEY',
 ];
-
 const OPTIONAL_ENV_VARS: (keyof EnvVars)[] = [
   'VITE_API_URL',
 ];
-
 export function validateEnv(): void {
   const missingVars: string[] = [];
   const warnings: string[] = [];
@@ -43,7 +44,6 @@ export function validateEnv(): void {
   }
   console.log('✅ Environment variables validated successfully');
 }
-
 export function getEnv(key: keyof EnvVars, fallback?: string): string {
   const value = import.meta.env[key];
   
@@ -53,10 +53,8 @@ export function getEnv(key: keyof EnvVars, fallback?: string): string {
     }
     throw new Error(`Environment variable ${key} is not defined and no fallback provided`);
   }
-  
   return value;
 }
-
 export const WALLETCONNECT_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
 export const API_URL = getEnv('VITE_API_URL', 'http://localhost:4000');
 
