@@ -25,14 +25,12 @@ export const useTokenBalance = ({
 }: UseTokenBalanceParams): UseTokenBalanceReturn => {
   const { address, isConnected } = useWallet();
   const publicClient = usePublicClient();
-  
   const [balance, setBalance] = useState<string>('0');
   const [balanceRaw, setBalanceRaw] = useState<bigint>(0n);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const fetchBalance = async () => {
-    if (!enabled || !isConnected || !address || !tokenAddress || !publicClient) {
+    if (!enabled || !isConnected || !address || !tokenAddress || !publicClient || !decimals || !tokenAbi) {
       setBalance('0');
       setBalanceRaw(0n);
       return;
@@ -48,7 +46,6 @@ export const useTokenBalance = ({
         functionName: 'balanceOf',
         args: [address as `0x${string}`],
       }) as bigint;
-
       setBalanceRaw(result);
 
       const balanceInTokens = Number(result) / Math.pow(10, decimals);

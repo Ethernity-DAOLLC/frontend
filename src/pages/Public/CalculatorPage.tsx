@@ -4,7 +4,7 @@ import { useChainId } from 'wagmi';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useWallet } from '@/hooks/web3';
 import { CONTRACT_ADDRESSES } from '@/config/addresses';
-import { formatCurrency, formatYears } from '@/lib/formatters';
+import { formatCurrency, formatYears } from '@/lib';
 import { FaucetButton } from '@/components/web3/FaucetButton';
 import {
   Calculator,
@@ -29,7 +29,6 @@ const loadChartJS = async () => {
   try {
     const ChartJS = await import('chart.js');
     const { Line: LineChart } = await import('react-chartjs-2');
-    
     const {
       CategoryScale,
       LinearScale,
@@ -138,7 +137,6 @@ const CalculatorPage: React.FC = () => {
     contributionFrequency: "monthly",
     yearsInRetirement: 25,
   });
-
   const [result, setResult] = useState<Result | null>(null);
   const [chartData, setChartData] = useState<{ year: number; balance: number }[]>([]);
 

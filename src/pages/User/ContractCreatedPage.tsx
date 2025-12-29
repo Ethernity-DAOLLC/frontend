@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { CheckCircle, Copy, ExternalLink, ArrowRight, Sparkles, DollarSign, Calendar, Loader, AlertCircle } from 'lucide-react';
+import { CheckCircle, Copy, ExternalLink, ArrowRight, ArrowLeft, Sparkles, DollarSign, Calendar, Loader, AlertCircle } from 'lucide-react';
 import { parseUSDC } from '../../hooks/usdc/usdcUtils';
+import { formatCurrency, formatYears, formatUSDC } from '../../lib/formatters';
 
 interface LocationState {
   planData: {
@@ -72,13 +73,6 @@ const ContractCreatedPage: React.FC = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  const formatCurrency = (num: string | number) =>
-    new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD',
-      maximumFractionDigits: 2 
-    }).format(Number(num));
 
   const handleConfirm = async () => {
     if (!planData || !factoryAddress) {
@@ -307,7 +301,6 @@ const ContractCreatedPage: React.FC = () => {
     );
   }
 
-  // Página de confirmación (antes de crear el contrato)
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center px-4 py-16">
       <div className="max-w-4xl w-full">
