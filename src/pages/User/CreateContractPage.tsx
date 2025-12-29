@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useChainId, usePublicClient } from 'wagmi';
+import { useChainId } from 'wagmi';
 import { useRetirementPlan } from '../../context/RetirementContext';
 import { useWallet } from '../../hooks/web3/useWallet';
-import { usePersonalFundFactory } from '../../hooks/funds/usePersonalFundFactory';
-import { useHasFund } from '@/hooks/funds/useHasFund';
+import { useUSDC } from '../../hooks/usdc/useUSDC';
 import { CONTRACT_ADDRESSES } from '../../config/addresses';
 import { parseUSDC } from '../../hooks/usdc/usdcUtils';
 import {
@@ -22,9 +21,7 @@ import {
   Sparkles,
   Clock,
   Info,
-  Loader,
 } from 'lucide-react';
-
 const formatCurrency = (num: string | number | null | undefined): string => {
   const value = Number(num);
   if (isNaN(value)) return '$0.00';
@@ -40,42 +37,26 @@ const formatYears = (years: number | null | undefined): string => {
   const safeYears = years || 0;
   return safeYears === 1 ? '1 year' : `${safeYears} years`;
 };
-
 const bigintToNumber = (value: bigint | undefined, decimals: number = 6): number => {
   if (!value) return 0;
   return Number(value) / Math.pow(10, decimals);
 };
-
 const safeParseFloat = (value: string | number | null | undefined, defaultValue: number = 0): number => {
   if (value === null || value === undefined) return defaultValue;
   const parsed = parseFloat(String(value));
   return isNaN(parsed) ? defaultValue : parsed;
 };
-
 const CreateContractPage: React.FC = () => {
   const navigate = useNavigate();
   const chainId = useChainId();
-  const publicClient = usePublicClient();
-  const { planData, clearPlanData } = useRetirementPlan();
+  const { planData } = useRetirementPlan();
   const { isConnected, openModal } = useWallet();
-  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
-  const {
-    createPersonalFund,
-    isPending,
-    isConfirming,
-    isSuccess,
-    hash,
-    creationStep,
-    usdcBalance,
-    usdcAllowance,
-    configuration,
-    refetch,
-    userFund,
-  } = usePersonalFundFactory(factoryAddress);
-  
-  const { refetch: refetchHasFund } = useHasFund();
+  const { 
+    balance: usdcBalance, 
+    refetchBalance,
+  } = useUSDC(factoryAddress);
 
   useEffect(() => {
     if (!planData) {
@@ -85,111 +66,10 @@ const CreateContractPage: React.FC = () => {
   }, [planData, navigate]);
 
   useEffect(() => {
-    if (!isSuccess || !hash) {
-      return;
+    if (isConnected) {
+      refetchBalance();
     }
-    if (!planData) {
-      console.error('❌ Plan data missing after successful transaction');
-      setError('Plan data not found. Please check your dashboard.');
-      return;
-    }
-
-    let mounted = true;
-    let pollAttempts = 0;
-    const MAX_POLLS = 12;
-    const POLL_INTERVAL = 2000;
-
-    console.log('🎯 Transaction successful, extracting fund address...');
-    console.log('🔍 TX Hash:', hash);
-
-    const extractAddressAndNavigate = async () => {
-      try {
-        if (publicClient) {
-          console.log('⏳ Waiting for 2 confirmations...');
-          await publicClient.waitForTransactionReceipt({
-            hash,
-            confirmations: 2
-          });
-          console.log('✅ Transaction confirmed');
-        }
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        console.log('🔄 Starting polling for fund address...');
-        while (pollAttempts < MAX_POLLS && mounted) {
-          pollAttempts++;
-          console.log(`🔄 Poll attempt ${pollAttempts}/${MAX_POLLS}`);
-
-          try {
-            await refetch();
-            await refetchHasFund();
-          } catch (refetchError) {
-            console.warn('⚠️ Refetch error (will retry):', refetchError);
-          }
-          if (userFund && userFund !== '0x0000000000000000000000000000000000000000') {
-            console.log('✅ Fund address obtained:', userFund);
-
-            if (mounted) {
-              console.log('🎉 Navigating to success page...');
-              navigate('/contract-created', {
-                state: {
-                  txHash: hash,
-                  initialDeposit: planData.initialDeposit || '0',
-                  monthlyDeposit: planData.monthlyDeposit || '0',
-                  fundAddress: userFund,
-                },
-              });
-
-              clearPlanData();
-            }
-            return;
-          }
-          if (pollAttempts < MAX_POLLS && mounted) {
-            console.log(`⏳ Waiting ${POLL_INTERVAL}ms before retry...`);
-            await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-          }
-        }
-        if (mounted) {
-          console.error('❌ Failed to get fund address after', MAX_POLLS, 'attempts');
-          setError(
-            'Contract created successfully, but could not retrieve its address. ' +
-            'Please check your Dashboard for the contract details.'
-          );
-          setTimeout(() => {
-            if (mounted) {
-              navigate('/contract-created', {
-                state: {
-                  txHash: hash,
-                  initialDeposit: planData.initialDeposit || '0',
-                  monthlyDeposit: planData.monthlyDeposit || '0',
-                  fundAddress: undefined,
-                },
-              });
-              clearPlanData();
-            }
-          }, 3000);
-        }
-
-      } catch (err) {
-        console.error('❌ Error in extraction flow:', err);
-
-        if (mounted) {
-          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-          setError(`Error processing fund: ${errorMessage}`);
-
-          setTimeout(() => {
-            if (mounted) {
-              navigate('/dashboard');
-            }
-          }, 5000);
-        }
-      }
-    };
-    extractAddressAndNavigate();
-
-    return () => {
-      mounted = false;
-      console.log('🧹 Cleanup: polling stopped');
-    };
-  }, [isSuccess, hash]);
+  }, [isConnected, refetchBalance]);
   if (!planData) {
     return null;
   }
@@ -218,6 +98,7 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
+
   const desiredMonthlyValue = safeParseFloat(planData.desiredMonthlyIncome, 0);
   const principalValue = safeParseFloat(planData.principal, 0);
   const monthlyDepositValue = safeParseFloat(planData.monthlyDeposit, 0);
@@ -227,6 +108,7 @@ const CreateContractPage: React.FC = () => {
   const yearsPayments = planData.yearsPayments || 0;
   const interestRate = planData.interestRate || 0;
   const timelockYears = planData.timelockYears || 0;
+  const totalDepositAmount = initialDepositValue + monthlyDepositValue;
 
   if (initialDepositValue <= 0) {
     return (
@@ -251,16 +133,9 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
-  let desiredMonthlyAmount: bigint;
-  let principalAmount: bigint;
-  let monthlyDepositAmount: bigint;
-  let initialDepositAmount: bigint;
-
+  let totalDepositBigInt: bigint;
   try {
-    desiredMonthlyAmount = parseUSDC(desiredMonthlyValue.toFixed(2));
-    principalAmount = parseUSDC(principalValue.toFixed(2));
-    monthlyDepositAmount = parseUSDC(monthlyDepositValue.toFixed(2));
-    initialDepositAmount = parseUSDC(initialDepositValue.toFixed(2));
+    totalDepositBigInt = parseUSDC(totalDepositAmount.toFixed(2));
   } catch (err) {
     console.error('❌ Error parsing USDC amounts:', err);
     return (
@@ -295,89 +170,35 @@ const CreateContractPage: React.FC = () => {
     }
   };
 
-  const handleCreateContract = async () => {
+  const handleCreateContract = () => {
     if (!isConnected) {
       setError('Please connect your wallet first');
+      openModal();
       return;
     }
 
-    if (initialDepositAmount <= 0n) {
-      setError('Initial deposit must be greater than 0');
+    if (!hasEnoughBalance) {
+      setError('Insufficient USDC balance. Please deposit more funds.');
       return;
     }
-
-    if (currentAge >= retirementAge) {
-      setError('Retirement age must be greater than current age');
-      return;
-    }
-
-    setError('');
-    setIsProcessing(true);
-
-    try {
-      console.log('🚀 Starting fund creation with params:', {
-        principal: principalAmount.toString(),
-        monthlyDeposit: monthlyDepositAmount.toString(),
-        currentAge,
-        retirementAge,
-        desiredMonthly: desiredMonthlyAmount.toString(),
-        yearsPayments,
-        interestRate: Math.round(interestRate * 100),
-        timelockYears,
-      });
-
-      await createPersonalFund({
-        principal: principalAmount,
-        monthlyDeposit: monthlyDepositAmount,
-        currentAge: currentAge,
-        retirementAge: retirementAge,
-        desiredMonthly: desiredMonthlyAmount,
-        yearsPayments: yearsPayments,
-        interestRate: Math.round(interestRate * 100),
-        timelockYears: timelockYears,
-      });
-
-      console.log('✅ Fund creation transaction sent');
-    } catch (err: any) {
-      console.error('❌ Error creating fund:', err);
-      let errorMessage = 'Failed to create retirement fund';
-
-      if (err.message?.includes('User rejected') || err.message?.includes('user rejected')) {
-        errorMessage = 'Transaction was rejected. Please try again and approve the transaction.';
-      } else if (err.message?.includes('insufficient funds')) {
-        errorMessage = 'Insufficient funds in your wallet to complete this transaction.';
-      } else if (err.message?.includes('allowance')) {
-        errorMessage = 'USDC approval failed. Please try again.';
-      } else if (err.message) {
-        errorMessage = err.message;
+    navigate('/contract-created', {
+      state: {
+        planData: planData,
+        totalDeposit: totalDepositAmount,
+        factoryAddress: factoryAddress
       }
-      setError(errorMessage);
-      setIsProcessing(false);
-    }
+    });
   };
-  const feeAmount = (initialDepositValue * 0.03).toFixed(2);
-  const netToOwner = (initialDepositValue * 0.97).toFixed(2);
+
+  const feeAmount = (totalDepositAmount * 0.03).toFixed(2);
+  const netToOwner = (totalDepositAmount * 0.97).toFixed(2);
   const hasEnoughBalance = 
     usdcBalance !== undefined && 
     usdcBalance !== null && 
-    initialDepositAmount !== undefined &&
-    usdcBalance >= initialDepositAmount;
+    totalDepositBigInt !== undefined &&
+    usdcBalance >= totalDepositBigInt;
+  const canProceed = isConnected && hasEnoughBalance;
 
-  const hasEnoughAllowance = 
-    usdcAllowance !== undefined && 
-    usdcAllowance !== null && 
-    initialDepositAmount !== undefined &&
-    usdcAllowance >= initialDepositAmount;
-
-  const getStepMessage = (): string => {
-    if (creationStep === 'approving') return 'Step 1/2: Approving USDC... Please confirm in your wallet';
-    if (creationStep === 'creating') return 'Step 2/2: Creating your retirement fund... Please confirm in your wallet';
-    if (isConfirming) return 'Confirming transaction on blockchain...';
-    if (isSuccess) return 'Success! Extracting fund details...';
-    return '';
-  };
-
-  const canCreate = isConnected && hasEnoughBalance && !isProcessing && !isPending;
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8 sm:py-12 px-4">
       <div className="max-w-5xl mx-auto">
@@ -385,11 +206,11 @@ const CreateContractPage: React.FC = () => {
         <div className="text-center mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-800 mb-4 flex items-center justify-center gap-3 sm:gap-4">
             <Shield className="text-indigo-600" size={40} />
-            <span className="hidden sm:inline">Create Your Retirement Fund</span>
-            <span className="sm:hidden">Create Fund</span>
+            <span className="hidden sm:inline">Review Your Retirement Plan</span>
+            <span className="sm:hidden">Review Plan</span>
           </h1>
           <p className="text-base sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-            Review your plan details and create your smart contract on Arbitrum Sepolia
+            Verify your balance and plan details before creating your fund
           </p>
         </div>
 
@@ -413,35 +234,6 @@ const CreateContractPage: React.FC = () => {
           </div>
         )}
 
-        {/* Processing Status */}
-        {(isPending || isConfirming || isSuccess) && (
-          <div className="max-w-2xl mx-auto mb-6">
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 flex items-start gap-3">
-              {isSuccess ? (
-                <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
-              ) : (
-                <Loader className="animate-spin text-blue-600 flex-shrink-0 mt-0.5" size={20} />
-              )}
-              <div className="flex-1">
-                <h3 className="font-semibold text-blue-800 mb-1">
-                  {isSuccess ? 'Success!' : 'Processing Transaction...'}
-                </h3>
-                <p className="text-blue-700 text-sm">{getStepMessage()}</p>
-                {creationStep && !isSuccess && (
-                  <div className="mt-3 bg-white rounded-lg p-3">
-                    <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-                      <div className={`w-2 h-2 rounded-full ${creationStep === 'approving' ? 'bg-blue-500 animate-pulse' : 'bg-green-500'}`} />
-                      <span>Approve USDC</span>
-                      <div className={`w-2 h-2 rounded-full ${creationStep === 'creating' ? 'bg-blue-500 animate-pulse' : creationStep === 'approving' ? 'bg-gray-300' : 'bg-green-500'}`} />
-                      <span>Create Fund</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
           {/* Plan Details */}
           <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 sm:p-8 border border-purple-100">
@@ -454,10 +246,10 @@ const CreateContractPage: React.FC = () => {
               <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-6 border-2 border-emerald-200">
                 <p className="text-gray-600 text-sm mb-1 flex items-center gap-2">
                   <DollarSign size={16} />
-                  Initial Deposit (Principal + First Monthly)
+                  Total Initial Deposit
                 </p>
                 <p className="text-4xl font-black text-emerald-700">
-                  {formatCurrency(initialDepositValue)}
+                  {formatCurrency(totalDepositAmount)}
                 </p>
                 <div className="mt-3 pt-3 border-t border-emerald-200 grid grid-cols-2 gap-2 text-sm">
                   <div>
@@ -491,7 +283,6 @@ const CreateContractPage: React.FC = () => {
                     {currentAge} years
                   </p>
                 </div>
-
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
                     <Calendar size={14} />
@@ -501,7 +292,6 @@ const CreateContractPage: React.FC = () => {
                     {retirementAge} years
                   </p>
                 </div>
-
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
                     <TrendingUp size={14} />
@@ -511,7 +301,6 @@ const CreateContractPage: React.FC = () => {
                     {retirementAge - currentAge} years
                   </p>
                 </div>
-
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
                   <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
                     <DollarSign size={14} />
@@ -522,7 +311,6 @@ const CreateContractPage: React.FC = () => {
                   </p>
                   <p className="text-xs text-gray-500 mt-1">Your retirement goal</p>
                 </div>
-
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
                     <Clock size={14} />
@@ -542,7 +330,6 @@ const CreateContractPage: React.FC = () => {
                     {interestRate.toFixed(1)}%
                   </p>
                 </div>
-
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
                     <Lock size={14} />
@@ -555,21 +342,20 @@ const CreateContractPage: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Fee Breakdown & Actions */}
           <div className="space-y-6">
             {/* Fee Breakdown */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-6 sm:p-8">
               <h3 className="text-xl sm:text-2xl font-bold text-blue-800 mb-4 flex items-center gap-3">
                 <Info className="w-6 h-6" />
-                Fee Breakdown (Initial Deposit)
+                Fee Breakdown
               </h3>
               <div className="space-y-4">
                 <div className="bg-white rounded-2xl p-4 shadow">
-                  <p className="text-gray-600 text-sm">Total Initial Deposit (USDC)</p>
+                  <p className="text-gray-600 text-sm">Total Deposit (USDC)</p>
                   <p className="text-3xl font-black text-gray-800">
-                    {formatCurrency(initialDepositValue)}
+                    {formatCurrency(totalDepositAmount)}
                   </p>
+                  <p className="text-xs text-gray-500 mt-1">Initial + First Monthly</p>
                 </div>
                 <div className="bg-white rounded-2xl p-4 shadow">
                   <p className="text-gray-600 text-sm">Ethernity DAO Fee (3%)</p>
@@ -599,7 +385,6 @@ const CreateContractPage: React.FC = () => {
                 <Wallet className="text-indigo-600" size={24} />
                 Wallet Balance
               </h3>
-              
               {!isConnected ? (
                 <div className="space-y-4">
                   <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 flex items-start gap-3">
@@ -631,17 +416,18 @@ const CreateContractPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600 text-sm">Required Amount:</span>
                       <span className="font-bold text-indigo-700 text-lg">
-                        {formatCurrency(initialDepositValue)}
+                        {formatCurrency(totalDepositAmount)}
                       </span>
                     </div>
                   </div>
-
                   {hasEnoughBalance ? (
                     <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start gap-3">
                       <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
                       <div>
-                        <p className="font-semibold text-green-900 mb-1">Balance OK</p>
-                        <p className="text-sm text-green-800">You have enough USDC to create your Personal Retirement Fund</p>
+                        <p className="font-semibold text-green-900 mb-1">Sufficient Balance!</p>
+                        <p className="text-sm text-green-800">
+                          You have enough USDC to create your retirement fund
+                        </p>
                       </div>
                     </div>
                   ) : (
@@ -654,7 +440,7 @@ const CreateContractPage: React.FC = () => {
                           <strong>
                             {formatCurrency(
                               bigintToNumber(
-                                initialDepositAmount - (usdcBalance || 0n),
+                                totalDepositBigInt - (usdcBalance || 0n),
                                 6
                               )
                             )}
@@ -667,16 +453,15 @@ const CreateContractPage: React.FC = () => {
                 </div>
               )}
             </div>
-
-            {/* Action Buttons */}
             <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-3xl shadow-2xl p-6 sm:p-8 text-white">
               <h2 className="text-2xl sm:text-3xl font-black mb-4">
-                {isConnected ? 'Ready to Create' : 'Connect Your Wallet'}
+                Ready to Create Your Fund?
               </h2>
               <p className="text-sm sm:text-base mb-6 opacity-90">
-                {isConnected
-                  ? 'Your smart contract will be created on Arbitrum Sepolia'
-                  : 'Connect your wallet to create your retirement fund'}
+                {canProceed 
+                  ? 'Your wallet has sufficient balance. Proceed to create your contract!'
+                  : 'Connect your wallet and ensure you have enough USDC'
+                }
               </p>
 
               <div className="space-y-4">
@@ -691,28 +476,17 @@ const CreateContractPage: React.FC = () => {
                 ) : (
                   <button
                     onClick={handleCreateContract}
-                    disabled={!canCreate}
+                    disabled={!canProceed}
                     className="w-full bg-white text-indigo-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-black text-lg transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-3"
                   >
-                    {isPending || isConfirming ? (
-                      <>
-                        <Loader className="animate-spin" size={24} />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Shield size={24} />
-                        Create My Fund
-                        <ArrowRight size={24} />
-                      </>
-                    )}
+                    Create Contract
+                    <ArrowRight size={24} />
                   </button>
                 )}
 
                 <button
                   onClick={() => navigate('/calculator')}
-                  disabled={isPending || isConfirming}
-                  className="w-full bg-white/20 hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
+                  className="w-full bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
                 >
                   <ArrowLeft size={20} />
                   Back to Calculator
@@ -727,16 +501,15 @@ const CreateContractPage: React.FC = () => {
           <div className="flex items-start gap-4">
             <Info className="text-blue-600 flex-shrink-0 mt-1" size={24} />
             <div>
-              <h4 className="font-bold text-blue-900 mb-2">Important Information</h4>
+              <h4 className="font-bold text-blue-900 mb-2">What's Next?</h4>
               <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Click "Create Contract" to proceed to the confirmation page</li>
+                <li>• You'll review all details and confirm the transaction</li>
                 <li>• Your fund will be created as a smart contract on Arbitrum Sepolia</li>
-                <li>• You'll need to approve 2 transactions: (1) Approve USDC, (2) Create Fund</li>
+                <li>• You'll need to approve the transaction in your wallet</li>
                 <li>• 3% fee applies to initial deposit AND all monthly deposits</li>
                 <li>• 97% of each deposit is returned to you for DeFi investment</li>
                 <li>• You retain full control of your funds through the smart contract</li>
-                <li>• The timelock ensures funds are secured until retirement age</li>
-                <li>• All amounts are in USDC (stablecoin) to avoid ETH volatility</li>
-                <li>• Your desired monthly income ({formatCurrency(desiredMonthlyValue)}) is saved as your retirement goal</li>
               </ul>
             </div>
           </div>
