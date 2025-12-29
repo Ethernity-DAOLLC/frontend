@@ -22,6 +22,7 @@ import {
   Clock,
   Info,
 } from 'lucide-react';
+
 const formatCurrency = (num: string | number | null | undefined): string => {
   const value = Number(num);
   if (isNaN(value)) return '$0.00';
@@ -37,6 +38,7 @@ const formatYears = (years: number | null | undefined): string => {
   const safeYears = years || 0;
   return safeYears === 1 ? '1 year' : `${safeYears} years`;
 };
+
 const bigintToNumber = (value: bigint | undefined, decimals: number = 6): number => {
   if (!value) return 0;
   return Number(value) / Math.pow(10, decimals);
@@ -53,10 +55,11 @@ const CreateContractPage: React.FC = () => {
   const { isConnected, openModal } = useWallet();
   const [error, setError] = useState<string>('');
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
+  const usdcAddress = CONTRACT_ADDRESSES[chainId]?.usdc;
   const { 
     balance: usdcBalance, 
     refetchBalance,
-  } = useUSDC(factoryAddress);
+  } = useUSDC(usdcAddress);
 
   useEffect(() => {
     if (!planData) {
@@ -66,10 +69,11 @@ const CreateContractPage: React.FC = () => {
   }, [planData, navigate]);
 
   useEffect(() => {
-    if (isConnected) {
+    if (isConnected && refetchBalance) {
       refetchBalance();
     }
   }, [isConnected, refetchBalance]);
+
   if (!planData) {
     return null;
   }
@@ -133,6 +137,7 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
+
   let totalDepositBigInt: bigint;
   try {
     totalDepositBigInt = parseUSDC(totalDepositAmount.toFixed(2));
@@ -163,7 +168,9 @@ const CreateContractPage: React.FC = () => {
 
   const handleConnectWallet = () => {
     try {
-      openModal();
+      if (openModal) {
+        openModal();
+      }
     } catch (err) {
       console.error('❌ Error opening wallet modal:', err);
       setError('Failed to open wallet connection. Please try again.');
@@ -173,10 +180,11 @@ const CreateContractPage: React.FC = () => {
   const handleCreateContract = () => {
     if (!isConnected) {
       setError('Please connect your wallet first');
-      openModal();
+      if (openModal) {
+        openModal();
+      }
       return;
     }
-
     if (!hasEnoughBalance) {
       setError('Insufficient USDC balance. Please deposit more funds.');
       return;
@@ -233,7 +241,6 @@ const CreateContractPage: React.FC = () => {
             </div>
           </div>
         )}
-
         <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
           {/* Plan Details */}
           <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 sm:p-8 border border-purple-100">
@@ -241,7 +248,6 @@ const CreateContractPage: React.FC = () => {
               <Sparkles className="text-purple-600" />
               Your Plan Details
             </h2>
-
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-6 border-2 border-emerald-200">
                 <p className="text-gray-600 text-sm mb-1 flex items-center gap-2">
@@ -262,7 +268,6 @@ const CreateContractPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
@@ -273,7 +278,6 @@ const CreateContractPage: React.FC = () => {
                     {formatCurrency(monthlyDepositValue)}
                   </p>
                 </div>
-
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
                     <Calendar size={14} />
@@ -320,7 +324,6 @@ const CreateContractPage: React.FC = () => {
                     {formatYears(yearsPayments)}
                   </p>
                 </div>
-
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
                     <Percent size={14} />
@@ -381,10 +384,15 @@ const CreateContractPage: React.FC = () => {
 
             {/* Balance Check */}
             <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 border border-purple-100">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Wallet className="text-indigo-600" size={24} />
-                Wallet Balance
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <Wallet className="text-indigo-600" size={24} />
+                  Wallet Balance
+                </h3>
+                <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full font-semibold">
+                  Test Mode
+                </span>
+              </div>
               {!isConnected ? (
                 <div className="space-y-4">
                   <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 flex items-start gap-3">
@@ -404,6 +412,19 @@ const CreateContractPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
+                    <p className="text-xs text-blue-800">
+                      <strong>ℹ️ Test Mode:</strong> Using Mock USDC for testing. Need test tokens?{' '}
+                      <a 
+                        href={`https://sepolia.arbiscan.io/address/${usdcAddress}#writeContract`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline font-semibold hover:text-blue-900"
+                      >
+                        Mint here
+                      </a>
+                    </p>
+                  </div>
                   <div className="bg-gray-50 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-600 text-sm">Your USDC Balance:</span>
@@ -453,6 +474,7 @@ const CreateContractPage: React.FC = () => {
                 </div>
               )}
             </div>
+
             <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-3xl shadow-2xl p-6 sm:p-8 text-white">
               <h2 className="text-2xl sm:text-3xl font-black mb-4">
                 Ready to Create Your Fund?
@@ -502,6 +524,20 @@ const CreateContractPage: React.FC = () => {
             <Info className="text-blue-600 flex-shrink-0 mt-1" size={24} />
             <div>
               <h4 className="font-bold text-blue-900 mb-2">What's Next?</h4>
+              <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 mb-3">
+                <p className="text-sm text-amber-900 font-semibold mb-1">🧪 Test Environment</p>
+                <p className="text-xs text-amber-800">
+                  This app uses Mock USDC on Arbitrum Sepolia for testing. Get free test tokens from the{' '}
+                  <a 
+                    href={`https://sepolia.arbiscan.io/address/${usdcAddress}#writeContract`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-bold hover:text-amber-900"
+                  >
+                    Mock USDC contract
+                  </a>
+                </p>
+              </div>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>• Click "Create Contract" to proceed to the confirmation page</li>
                 <li>• You'll review all details and confirm the transaction</li>
@@ -518,4 +554,5 @@ const CreateContractPage: React.FC = () => {
     </div>
   );
 };
+
 export default CreateContractPage;
