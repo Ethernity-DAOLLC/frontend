@@ -1,61 +1,141 @@
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { Mail, User, MessageSquare, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { buildApiUrl } from '@/lib/api';
+import type { ValidationResult } from '@/lib/validators';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const validateEmail = (email: string): ValidationResult => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+  if (!email.trim()) {
+    return { isValid: false, error: 'Email is required' };
+  }
+  
+  if (!emailRegex.test(email)) {
+    return { isValid: false, error: 'Invalid email address' };
+  }
+  
+  return { isValid: true };
+};
+
+const validateName = (name: string): ValidationResult => {
+  if (!name.trim()) {
+    return { isValid: false, error: 'Name is required' };
+  }
+  
+  if (name.trim().length < 2) {
+    return { isValid: false, error: 'Name must be at least 2 characters' };
+  }
+  
+  if (name.trim().length > 100) {
+    return { isValid: false, error: 'Name must be less than 100 characters' };
+  }
+  
+  return { isValid: true };
+};
+
+const validateSubject = (subject: string): ValidationResult => {
+  if (!subject.trim()) {
+    return { isValid: false, error: 'Subject is required' };
+  }
+  
+  if (subject.trim().length < 5) {
+    return { isValid: false, error: 'Subject must be at least 5 characters' };
+  }
+  
+  if (subject.trim().length > 200) {
+    return { isValid: false, error: 'Subject must be less than 200 characters' };
+  }
+  
+  return { isValid: true };
+};
+
+const validateMessage = (message: string): ValidationResult => {
+  if (!message.trim()) {
+    return { isValid: false, error: 'Message is required' };
+  }
+  
+  if (message.trim().length < 10) {
+    return { isValid: false, error: 'Message must be at least 10 characters' };
+  }
+  
+  if (message.trim().length > 5000) {
+    return { isValid: false, error: 'Message must be less than 5000 characters' };
+  }
+  
+  return { isValid: true };
+};
+
+interface FormData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+interface FieldErrors {
+  [key: string]: string;
+}
+
+interface ContactRequest {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  wallet_address: string | null;
+}
+
+interface ContactResponse {
+  message: string;
+  id?: number;
+}
 
 export default function ContactPage() {
   const { address } = useAccount();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     subject: '',
     message: '',
   });
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
-
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const validateForm = (): boolean => {
-    const errors: {[key: string]: string} = {};
-
-    if (!formData.name.trim()) {
-      errors.name = 'Name is required';
-    } else if (formData.name.trim().length < 2) {
-      errors.name = 'Name must be at least 2 characters';
+    const errors: FieldErrors = {};
+    const nameValidation = validateName(formData.name);
+    if (!nameValidation.isValid) {
+      errors.name = nameValidation.error!;
     }
-
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
-      errors.email = 'Invalid email address';
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      errors.email = emailValidation.error!;
     }
-
-    if (!formData.subject.trim()) {
-      errors.subject = 'Subject is required';
-    } else if (formData.subject.trim().length < 5) {
-      errors.subject = 'Subject must be at least 5 characters';
+    const subjectValidation = validateSubject(formData.subject);
+    if (!subjectValidation.isValid) {
+      errors.subject = subjectValidation.error!;
     }
-
-    if (!formData.message.trim()) {
-      errors.message = 'Message is required';
-    } else if (formData.message.trim().length < 10) {
-      errors.message = 'Message must be at least 10 characters';
+    const messageValidation = validateMessage(formData.message);
+    if (!messageValidation.isValid) {
+      errors.message = messageValidation.error!;
     }
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
-
+  const handleInputChange = (field: keyof FormData, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    if (fieldErrors[field]) {
+      setFieldErrors({ ...fieldErrors, [field]: '' });
+    }
+    if (error) {
+      setError('');
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) {
       setError('Please correct the errors in the form');
       return;
@@ -65,51 +145,127 @@ export default function ContactPage() {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/api/v1/contact/`, {
+      const requestData: ContactRequest = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+        wallet_address: address || null,
+      };
+
+      const response = await fetch(buildApiUrl('/api/v1/contact/'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message,
-          wallet_address: address || null,
-        }),
+        body: JSON.stringify(requestData),
       });
 
-      const data = await response.json();
+      const data: ContactResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Something went wrong while sending the message');
+        throw new Error(
+          (data as any).detail || 
+          'Something went wrong while sending the message'
+        );
       }
-
       setSuccess(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
       setFieldErrors({});
-      
       setTimeout(() => setSuccess(false), 5000);
+      
     } catch (err: any) {
-      setError(err.message || 'Error sending message. Please try again.');
+      const errorMessage = err.message || 'Error sending message. Please try again.';
+      setError(errorMessage);
       console.error('Contact form error:', err);
     } finally {
       setLoading(false);
     }
   };
+  const FormField = ({
+    label,
+    name,
+    type = 'text',
+    value,
+    onChange,
+    icon: Icon,
+    multiline = false,
+    rows = 6,
+    placeholder,
+    required = true,
+  }: {
+    label: string;
+    name: keyof FormData;
+    type?: string;
+    value: string;
+    onChange: (value: string) => void;
+    icon: React.ComponentType<{ className?: string; size?: number }>;
+    multiline?: boolean;
+    rows?: number;
+    placeholder?: string;
+    required?: boolean;
+  }) => {
+    const hasError = !!fieldErrors[name];
+    const errorId = `${name}-error`;
+    const baseClasses = `w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition ${
+      hasError
+        ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
+        : 'border-gray-300 focus:ring-purple-300 focus:border-purple-500'
+    }`;
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
-    
-    if (fieldErrors[field]) {
-      setFieldErrors({ ...fieldErrors, [field]: '' });
-    }
-    
-    if (error) {
-      setError('');
-    }
+    return (
+      <div>
+        <label 
+          htmlFor={name}
+          className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2"
+        >
+          <Icon size={20} />
+          {label} {required && '*'}
+        </label>
+        
+        {multiline ? (
+          <textarea
+            id={name}
+            name={name}
+            required={required}
+            rows={rows}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={`${baseClasses} resize-none`}
+            placeholder={placeholder}
+            aria-describedby={hasError ? errorId : undefined}
+            aria-invalid={hasError}
+          />
+        ) : (
+          <input
+            id={name}
+            name={name}
+            type={type}
+            required={required}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={baseClasses}
+            placeholder={placeholder}
+            aria-describedby={hasError ? errorId : undefined}
+            aria-invalid={hasError}
+          />
+        )}
+        
+        {hasError && (
+          <p id={errorId} className="mt-1 text-sm text-red-600 flex items-center gap-1">
+            <AlertCircle size={14} />
+            {fieldErrors[name]}
+          </p>
+        )}
+        
+        {name === 'message' && !hasError && (
+          <p className="mt-1 text-xs text-gray-500">
+            {formData.message.length} / 5000 characters
+          </p>
+        )}
+      </div>
+    );
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-8 sm:py-12 px-4">
       <div className="max-w-2xl mx-auto">
@@ -141,122 +297,66 @@ export default function ContactPage() {
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 sm:p-6 mb-6 shadow-lg">
             <div className="flex items-start gap-3">
               <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold text-red-800 mb-1">Error</h3>
                 <p className="text-red-700 text-sm">{error}</p>
               </div>
+              <button
+                onClick={() => setError('')}
+                className="text-red-600 hover:text-red-800 font-bold text-xl leading-none"
+                aria-label="Close error message"
+              >
+                ×
+              </button>
             </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 border border-purple-100">
-          <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-              <User className="w-5 h-5" />
-              Name *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition ${
-                fieldErrors.name
-                  ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-purple-300 focus:border-purple-500'
-              }`}
-              placeholder="Your full name"
-              aria-describedby={fieldErrors.name ? "name-error" : undefined}
-            />
-            {fieldErrors.name && (
-              <p id="name-error" className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle size={14} />
-                {fieldErrors.name}
-              </p>
-            )}
-          </div>
+        {/* Form */}
+        <form 
+          onSubmit={handleSubmit} 
+          className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 border border-purple-100"
+          noValidate
+        >
+          <FormField
+            label="Name"
+            name="name"
+            value={formData.name}
+            onChange={(value) => handleInputChange('name', value)}
+            icon={User}
+            placeholder="Your full name"
+          />
 
-          <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-              <Mail className="w-5 h-5" />
-              Email *
-            </label>
-            <input
-              type="email"
-              required
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition ${
-                fieldErrors.email
-                  ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-purple-300 focus:border-purple-500'
-              }`}
-              placeholder="your@email.com"
-              aria-describedby={fieldErrors.email ? "email-error" : undefined}
-            />
-            {fieldErrors.email && (
-              <p id="email-error" className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle size={14} />
-                {fieldErrors.email}
-              </p>
-            )}
-          </div>
+          <FormField
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={(value) => handleInputChange('email', value)}
+            icon={Mail}
+            placeholder="your@email.com"
+          />
 
-          <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-              <MessageSquare className="w-5 h-5" />
-              Subject *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.subject}
-              onChange={(e) => handleInputChange('subject', e.target.value)}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition ${
-                fieldErrors.subject
-                  ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-purple-300 focus:border-purple-500'
-              }`}
-              placeholder="What is your message about?"
-              aria-describedby={fieldErrors.subject ? "subject-error" : undefined}
-            />
-            {fieldErrors.subject && (
-              <p id="subject-error" className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle size={14} />
-                {fieldErrors.subject}
-              </p>
-            )}
-          </div>
+          <FormField
+            label="Subject"
+            name="subject"
+            value={formData.subject}
+            onChange={(value) => handleInputChange('subject', value)}
+            icon={MessageSquare}
+            placeholder="What is your message about?"
+          />
 
-          <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-              <MessageSquare className="w-5 h-5" />
-              Message *
-            </label>
-            <textarea
-              required
-              rows={6}
-              value={formData.message}
-              onChange={(e) => handleInputChange('message', e.target.value)}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition resize-none ${
-                fieldErrors.message
-                  ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-purple-300 focus:border-purple-500'
-              }`}
-              placeholder="Write your message here..."
-              aria-describedby={fieldErrors.message ? "message-error" : undefined}
-            />
-            {fieldErrors.message && (
-              <p id="message-error" className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle size={14} />
-                {fieldErrors.message}
-              </p>
-            )}
-            <p className="mt-1 text-xs text-gray-500">
-              Minimum 10 characters
-            </p>
-          </div>
+          <FormField
+            label="Message"
+            name="message"
+            value={formData.message}
+            onChange={(value) => handleInputChange('message', value)}
+            icon={MessageSquare}
+            multiline
+            placeholder="Write your message here..."
+          />
 
+          {/* Wallet Info */}
           {address && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <div className="flex items-start gap-2">
@@ -273,6 +373,7 @@ export default function ContactPage() {
             </div>
           )}
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
@@ -296,11 +397,15 @@ export default function ContactPage() {
           </p>
         </form>
 
+        {/* Additional Info */}
         <div className="mt-8 bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
           <h3 className="font-semibold text-gray-900 mb-4 text-center">Other Ways to Contact</h3>
           <div className="space-y-3 text-center text-sm text-gray-600">
             <p>
-              <strong>Email:</strong> <a href="mailto:contact@ethernity.io" className="text-purple-600 hover:underline">contact@ethernity.io</a>
+              <strong>Email:</strong>{' '}
+              <a href="mailto:contact@ethernity.io" className="text-purple-600 hover:underline">
+                contact@ethernity.io
+              </a>
             </p>
             <p>
               <strong>Response time:</strong> 24-48 business hours
