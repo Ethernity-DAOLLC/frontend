@@ -194,7 +194,7 @@ export default function ContactPage() {
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
               <MessageSquare className="w-5 h-5" />
-              Subject
+              Subject *
             </label>
             <input
               type="text"
