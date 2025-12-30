@@ -6,15 +6,12 @@ import type { ValidationResult } from '@/lib/validators';
 
 const validateEmail = (email: string): ValidationResult => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
   if (!email.trim()) {
     return { isValid: false, error: 'Email is required' };
   }
-  
   if (!emailRegex.test(email)) {
     return { isValid: false, error: 'Invalid email address' };
   }
-  
   return { isValid: true };
 };
 
@@ -22,11 +19,9 @@ const validateName = (name: string): ValidationResult => {
   if (!name.trim()) {
     return { isValid: false, error: 'Name is required' };
   }
-  
   if (name.trim().length < 2) {
     return { isValid: false, error: 'Name must be at least 2 characters' };
   }
-  
   if (name.trim().length > 100) {
     return { isValid: false, error: 'Name must be less than 100 characters' };
   }
@@ -37,11 +32,9 @@ const validateSubject = (subject: string): ValidationResult => {
   if (!subject.trim()) {
     return { isValid: false, error: 'Subject is required' };
   }
-  
   if (subject.trim().length < 5) {
     return { isValid: false, error: 'Subject must be at least 5 characters' };
   }
-  
   if (subject.trim().length > 200) {
     return { isValid: false, error: 'Subject must be less than 200 characters' };
   }
@@ -52,11 +45,9 @@ const validateMessage = (message: string): ValidationResult => {
   if (!message.trim()) {
     return { isValid: false, error: 'Message is required' };
   }
-  
   if (message.trim().length < 10) {
     return { isValid: false, error: 'Message must be at least 10 characters' };
   }
-  
   if (message.trim().length > 5000) {
     return { isValid: false, error: 'Message must be less than 5000 characters' };
   }
@@ -86,6 +77,7 @@ interface ContactResponse {
   message: string;
   id?: number;
 }
+
 export default function ContactPage() {
   const { address } = useAccount();
   const [formData, setFormData] = useState<FormData>({
@@ -109,7 +101,6 @@ export default function ContactPage() {
       errors.email = emailValidation.error!;
     }
 
-    // Validar subject
     const subjectValidation = validateSubject(formData.subject);
     if (!subjectValidation.isValid) {
       errors.subject = subjectValidation.error!;
@@ -118,23 +109,12 @@ export default function ContactPage() {
     if (!messageValidation.isValid) {
       errors.message = messageValidation.error!;
     }
-
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (fieldErrors[field]) {
-      setFieldErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-    if (error) {
-      setError('');
-    }
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +122,6 @@ export default function ContactPage() {
       setError('Please correct the errors in the form');
       return;
     }
-
     setLoading(true);
     setError('');
 
@@ -209,7 +188,6 @@ export default function ContactPage() {
   }) => {
     const hasError = !!fieldErrors[name];
     const errorId = `${name}-error`;
-
     const baseClasses = `w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition ${
       hasError
         ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
@@ -296,8 +274,6 @@ export default function ContactPage() {
             </div>
           </div>
         )}
-
-        {/* Error Message */}
         {error && (
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 sm:p-6 mb-6 shadow-lg">
             <div className="flex items-start gap-3">
