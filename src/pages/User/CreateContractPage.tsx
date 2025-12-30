@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useContractWriteWithUSDC } from '@/hooks/usdc';
 import { useAccount, useChainId } from 'wagmi';
