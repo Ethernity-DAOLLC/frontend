@@ -30,7 +30,6 @@ const validateName = (name: string): ValidationResult => {
   if (name.trim().length > 100) {
     return { isValid: false, error: 'Name must be less than 100 characters' };
   }
-  
   return { isValid: true };
 };
 
@@ -46,7 +45,6 @@ const validateSubject = (subject: string): ValidationResult => {
   if (subject.trim().length > 200) {
     return { isValid: false, error: 'Subject must be less than 200 characters' };
   }
-  
   return { isValid: true };
 };
 
@@ -62,7 +60,6 @@ const validateMessage = (message: string): ValidationResult => {
   if (message.trim().length > 5000) {
     return { isValid: false, error: 'Message must be less than 5000 characters' };
   }
-  
   return { isValid: true };
 };
 
@@ -89,7 +86,6 @@ interface ContactResponse {
   message: string;
   id?: number;
 }
-
 export default function ContactPage() {
   const { address } = useAccount();
   const [formData, setFormData] = useState<FormData>({
@@ -98,7 +94,6 @@ export default function ContactPage() {
     subject: '',
     message: '',
   });
-
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -113,6 +108,8 @@ export default function ContactPage() {
     if (!emailValidation.isValid) {
       errors.email = emailValidation.error!;
     }
+
+    // Validar subject
     const subjectValidation = validateSubject(formData.subject);
     if (!subjectValidation.isValid) {
       errors.subject = subjectValidation.error!;
@@ -125,10 +122,15 @@ export default function ContactPage() {
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
+
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData({ ...formData, [field]: value });
+    setFormData(prev => ({ ...prev, [field]: value }));
     if (fieldErrors[field]) {
-      setFieldErrors({ ...fieldErrors, [field]: '' });
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
     if (error) {
       setError('');
@@ -207,6 +209,7 @@ export default function ContactPage() {
   }) => {
     const hasError = !!fieldErrors[name];
     const errorId = `${name}-error`;
+
     const baseClasses = `w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition ${
       hasError
         ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
@@ -279,6 +282,7 @@ export default function ContactPage() {
           </p>
         </div>
 
+        {/* Success Message */}
         {success && (
           <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 sm:p-6 mb-6 shadow-lg animate-fade-in">
             <div className="flex items-start gap-3">
@@ -293,6 +297,7 @@ export default function ContactPage() {
           </div>
         )}
 
+        {/* Error Message */}
         {error && (
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 sm:p-6 mb-6 shadow-lg">
             <div className="flex items-start gap-3">
