@@ -15,7 +15,7 @@ interface FaucetButtonProps {
   className?: string;
 }
 
-const FAUCET_URL = 'https://usdc-faucet-production.up.railway.app';
+const FAUCET_URL = 'https://usdc-faucet.onrender.com';
 const TESTNET_CHAIN_ID = 421614; 
 
 export function FaucetButton({
