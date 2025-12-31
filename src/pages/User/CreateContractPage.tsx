@@ -31,7 +31,7 @@ const CreateContractPage: React.FC = () => {
   const { planData, clearPlanData } = useRetirementPlan();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
-
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     if (!planData || !isConnected || !authConnected) {
@@ -39,36 +39,15 @@ const CreateContractPage: React.FC = () => {
       return;
     }
     setFormData(planData);
+    setIsReady(true); 
   }, [planData, isConnected, authConnected, navigate]);
-
-  if (chainId !== EXPECTED_CHAIN_ID) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-12 text-center max-w-lg border border-red-200">
-          <AlertCircle className="w-24 h-24 text-red-600 mx-auto mb-6 animate-pulse" />
-          <h1 className="text-4xl font-black text-red-700 mb-4">Red Incorrecta</h1>
-          <p className="text-xl text-gray-700 mb-8">
-            Por favor cambia a <strong>Arbitrum Sepolia</strong> para crear tu fondo.
-          </p>
-          <button
-            onClick={() => navigate('/calculator')}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-5 px-10 rounded-2xl text-xl transition"
-          >
-            Volver a la Calculadora
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!formData) return null;
 
   const parseUSDC = (value: string | number) => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     return BigInt(Math.round(num * 1_000_000));
   };
 
-  const args = [
+  const args = formData ? [
     parseUSDC(formData.initialDeposit),
     parseUSDC(formData.monthlyDeposit),
     BigInt(formData.currentAge),
@@ -77,25 +56,52 @@ const CreateContractPage: React.FC = () => {
     BigInt(formData.yearsPayments),
     BigInt(Math.round(formData.interestRate * 100)), 
     BigInt(formData.timelockYears),
-  ];
+  ] : [];
 
   const { executeAll, isLoading, isApproving, isSuccess, error, txHash } = useContractWriteWithUSDC({
     contractAddress: FACTORY_ADDRESS,
     abi: PersonalFundFactoryABI,
     functionName: 'createPersonalFund',
     args,
-    usdcAmount: formData.initialDeposit,
-    enabled: !!address && !isEditing,
+    usdcAmount: formData?.initialDeposit || '0',
+    enabled: isReady && !!address && !isEditing && !!formData,
     onTransactionSuccess: () => {
       clearPlanData();
       setTimeout(() => navigate('/dashboard'), 4000);
     },
   });
-
+  if (chainId !== EXPECTED_CHAIN_ID) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-12 text-center max-w-lg border border-red-200">
+          <AlertCircle className="w-24 h-24 text-red-600 mx-auto mb-6 animate-pulse" />
+          <h1 className="text-4xl font-black text-red-700 mb-4">Wrong Network</h1>
+          <p className="text-xl text-gray-700 mb-8">
+            Please switch to <strong>Arbitrum Sepolia</strong> to create your fund.
+          </p>
+          <button
+            onClick={() => navigate('/calculator')}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-5 px-10 rounded-2xl text-xl transition"
+          >
+            Back to Calculator
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (!isReady || !formData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin mx-auto mb-6 text-indigo-600" size={64} />
+          <p className="text-2xl font-bold text-gray-700">Loading your plan...</p>
+        </div>
+      </div>
+    );
+  }
   const formatNumber = (num: string | number) => {
     return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
   };
-
   const totalFee = Number(formData.initialDeposit) * 0.03;
   const netToFund = Number(formData.initialDeposit) * 0.97;
 
@@ -108,7 +114,7 @@ const CreateContractPage: React.FC = () => {
           className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition"
         >
           <ArrowLeft size={22} />
-          Volver a la Calculadora
+          Back to Calculator
         </button>
 
         <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-purple-100 overflow-hidden">
@@ -116,9 +122,9 @@ const CreateContractPage: React.FC = () => {
           <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-10 text-white text-center">
             <h1 className="text-5xl font-black mb-4 flex items-center justify-center gap-5">
               <Sparkles className="w-14 h-14 animate-pulse" />
-              Crear Tu Fondo de Retiro
+              Create Your Retirement Fund
             </h1>
-            <p className="text-xl opacity-90">Contrato inteligente personalizado en blockchain</p>
+            <p className="text-xl opacity-90">Personalized smart contract on blockchain</p>
           </div>
 
           <div className="p-10">
@@ -126,26 +132,26 @@ const CreateContractPage: React.FC = () => {
               {/* Parámetros */}
               <div>
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-3xl font-bold text-gray-800">Parámetros del Fondo</h2>
+                  <h2 className="text-3xl font-bold text-gray-800">Fund Parameters</h2>
                   <button
                     onClick={() => setIsEditing(!isEditing)}
                     className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold"
                   >
                     <Edit3 size={20} />
-                    {isEditing ? 'Cancelar' : 'Editar'}
+                    {isEditing ? 'Cancel' : 'Edit'}
                   </button>
                 </div>
 
                 <div className="space-y-5 text-lg bg-gray-50 rounded-2xl p-6">
                   {[
-                    { label: 'Depósito Inicial', value: `$${formatNumber(formData.initialDeposit)}` },
-                    { label: 'Ahorro Mensual', value: `$${formatNumber(formData.monthlyDeposit)}` },
-                    { label: 'Edad Actual', value: `${formData.currentAge} años` },
-                    { label: 'Edad de Retiro', value: `${formData.retirementAge} años` },
-                    { label: 'Ingreso Mensual Deseado', value: `$${formatNumber(formData.desiredMonthlyIncome)}` },
-                    { label: 'Años Recibiendo Ingresos', value: `${formData.yearsPayments} años` },
-                    { label: 'Tasa de Rendimiento', value: `${formData.interestRate}% anual` },
-                    { label: 'Timelock de Seguridad', value: `${formData.timelockYears} años` },
+                    { label: 'Initial Deposit', value: `$${formatNumber(formData.initialDeposit)}` },
+                    { label: 'Monthly Savings', value: `$${formatNumber(formData.monthlyDeposit)}` },
+                    { label: 'Current Age', value: `${formData.currentAge} years` },
+                    { label: 'Retirement Age', value: `${formData.retirementAge} years` },
+                    { label: 'Desired Monthly Income', value: `$${formatNumber(formData.desiredMonthlyIncome)}` },
+                    { label: 'Years Receiving Income', value: `${formData.yearsPayments} years` },
+                    { label: 'Return Rate', value: `${formData.interestRate}% annual` },
+                    { label: 'Security Timelock', value: `${formData.timelockYears} years` },
                   ].map((item) => (
                     <div key={item.label} className="flex justify-between py-3 border-b border-gray-200 last:border-0">
                       <span className="text-gray-600 font-medium">{item.label}:</span>
@@ -158,20 +164,20 @@ const CreateContractPage: React.FC = () => {
               {/* Resumen financiero */}
               <div className="space-y-6">
                 <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-3xl p-8 border-2 border-emerald-200">
-                  <h3 className="text-2xl font-bold text-emerald-800 mb-6">Resumen del Depósito Inicial</h3>
+                  <h3 className="text-2xl font-bold text-emerald-800 mb-6">Initial Deposit Summary</h3>
                   <div className="space-y-5 text-lg">
                     <div className="flex justify-between">
-                      <span className="text-gray-700">Total a depositar hoy:</span>
+                      <span className="text-gray-700">Total deposit today:</span>
                       <strong className="text-3xl font-black text-emerald-700">
                         ${formatNumber(formData.initialDeposit)}
                       </strong>
                     </div>
                     <div className="flex justify-between text-orange-600">
-                      <span>Fee Ethernity DAO (3%):</span>
+                      <span>Ethernity DAO Fee (3%):</span>
                       <strong>${formatNumber(totalFee)}</strong>
                     </div>
                     <div className="flex justify-between text-emerald-700 text-2xl font-bold pt-4 border-t-2 border-emerald-200">
-                      <span>Neto a tu fondo (97%):</span>
+                      <span>Net to your fund (97%):</span>
                       <strong>${formatNumber(netToFund)}</strong>
                     </div>
                   </div>
@@ -181,8 +187,8 @@ const CreateContractPage: React.FC = () => {
                 {isSuccess && (
                   <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl p-8 text-center">
                     <CheckCircle size={64} className="mx-auto mb-4" />
-                    <h3 className="text-3xl font-black mb-2">¡Fondo Creado Exitosamente!</h3>
-                    <p className="text-lg opacity-90">Redirigiendo al Dashboard en 4 segundos...</p>
+                    <h3 className="text-3xl font-black mb-2">Fund Created Successfully!</h3>
+                    <p className="text-lg opacity-90">Redirecting to Dashboard in 4 seconds...</p>
                     {txHash && (
                       <a
                         href={`https://sepolia.arbiscan.io/tx/${txHash}`}
@@ -190,7 +196,7 @@ const CreateContractPage: React.FC = () => {
                         rel="noopener noreferrer"
                         className="underline mt-4 inline-block"
                       >
-                        Ver transacción
+                        View transaction
                       </a>
                     )}
                   </div>
@@ -214,17 +220,17 @@ const CreateContractPage: React.FC = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="animate-spin" size={56} />
-                    {isApproving ? 'Aprobando USDC...' : 'Creando tu fondo...'}
+                    {isApproving ? 'Approving USDC...' : 'Creating your fund...'}
                   </>
                 ) : isSuccess ? (
                   <>
                     <CheckCircle size={56} />
-                    ¡Fondo Creado!
+                    Fund Created!
                   </>
                 ) : (
                   <>
                     <Wallet size={56} />
-                    Crear Mi Contrato en Blockchain
+                    Create My Contract on Blockchain
                   </>
                 )}
               </button>
