@@ -12,11 +12,9 @@ interface UseUSDCTransactionProps {
   functionName: string;
   args?: any[];
   usdcAmount: string;
-
   onApprovalSuccess?: () => void;
   onTransactionSuccess?: (txHash: `0x${string}`) => void;
   onError?: (error: Error) => void;
-
   enabled?: boolean;
   autoExecuteAfterApproval?: boolean;
 }
@@ -26,22 +24,18 @@ interface UseUSDCTransactionReturn {
   requiresApproval: boolean;
   currentAllowance?: bigint;
   error: Error | null;
-
   executeApproval: () => Promise<void>;
   executeTransaction: () => Promise<void>;
   executeAll: () => Promise<void>;
   refetchAllowance: () => void;
   reset: () => void;
-
   isApproving: boolean;
   isApprovingConfirming: boolean;
   approvalSuccess: boolean;
   approvalHash?: `0x${string}`;
-
   isExecuting: boolean;
   isConfirming: boolean;
   txHash?: `0x${string}`;
-
   isLoading: boolean;
   isSuccess: boolean;
   isError: boolean;
@@ -63,7 +57,6 @@ export function useUSDCTransaction({
   const { address } = useAccount();
   const [step, setStep] = useState<TransactionStep>('idle');
   const [error, setError] = useState<Error | null>(null);
-
   const {
     data: currentAllowance,
     isLoading: isCheckingAllowance,
@@ -126,7 +119,6 @@ export function useUSDCTransaction({
       throw err;
     }
   }, [requiresApproval, approval, onError]);
-
   const executeTransaction = useCallback(async () => {
     if (requiresApproval && step !== 'approved') {
       const err = new Error('Must approve USDC first');
@@ -136,16 +128,13 @@ export function useUSDCTransaction({
       onError?.(err);
       throw err;
     }
-
     console.log('🚀 Executing contract transaction...', {
       contractAddress,
       functionName,
       args,
     });
-
     setStep('executing');
     setError(null);
-
     try {
       writeContract({
         address: contractAddress,
@@ -185,21 +174,18 @@ export function useUSDCTransaction({
       onError?.(error);
     }
   }, [requiresApproval, executeApproval, executeTransaction, onError]);
-
   const reset = useCallback(() => {
     setStep('idle');
     setError(null);
     approval.reset();
     resetWrite();
   }, [approval, resetWrite]);
-
   useEffect(() => {
     if (autoExecuteAfterApproval && step === 'approved' && approval.isSuccess) {
       console.log('✅ Approval confirmed, executing transaction...');
       executeTransaction();
     }
   }, [autoExecuteAfterApproval, step, approval.isSuccess, executeTransaction]);
-
   useEffect(() => {
     if (isTxSuccess && txHash) {
       console.log('✅ Transaction confirmed!', txHash);
@@ -217,7 +203,6 @@ export function useUSDCTransaction({
       onError?.(error);
     }
   }, [writeError, onError]);
-
   useEffect(() => {
     if (txError) {
       console.error('❌ Transaction confirmation error:', txError);
@@ -227,7 +212,6 @@ export function useUSDCTransaction({
       onError?.(error);
     }
   }, [txError, onError]);
-
   const progress = (() => {
     switch (step) {
       case 'idle': return 0;
@@ -241,29 +225,23 @@ export function useUSDCTransaction({
       default: return 0;
     }
   })();
-
   return {
-
     step,
     requiresApproval,
     currentAllowance,
     error,
-
     executeApproval,
     executeTransaction,
     executeAll,
     refetchAllowance,
     reset,
-
     isApproving: approval.isApproving || step === 'approving',
     isApprovingConfirming: approval.isConfirming,
     approvalSuccess: approval.isSuccess,
     approvalHash: approval.hash,
-
     isExecuting: isWritePending || step === 'executing',
     isConfirming: isTxConfirming || step === 'confirming',
     txHash,
-
     isLoading:
       isCheckingAllowance ||
       approval.isApproving ||
@@ -271,7 +249,6 @@ export function useUSDCTransaction({
       isWritePending ||
       isTxConfirming ||
       ['checking', 'approving', 'executing', 'confirming'].includes(step),
-
     isSuccess: step === 'success' && isTxSuccess,
     isError: step === 'error' || !!error,
     progress,

@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useContractWriteWithUSDC } from '@/hooks/usdc';
 import { useAccount, useChainId } from 'wagmi';
-import { Loader2, CheckCircle, AlertCircle, ArrowLeft, Wallet, Sparkles, Edit3 } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, ArrowLeft, Wallet, Sparkles, Edit3, Droplets } from 'lucide-react';
 
 const FACTORY_ADDRESS = import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`;
 const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS as `0x${string}`;
@@ -39,7 +39,7 @@ const CreateContractPage: React.FC = () => {
       return;
     }
     setFormData(planData);
-    setIsReady(true); 
+    setIsReady(true);
   }, [planData, isConnected, authConnected, navigate]);
 
   const parseUSDC = (value: string | number) => {
@@ -54,11 +54,11 @@ const CreateContractPage: React.FC = () => {
     BigInt(formData.retirementAge),
     parseUSDC(formData.desiredMonthlyIncome),
     BigInt(formData.yearsPayments),
-    BigInt(Math.round(formData.interestRate * 100)), 
+    BigInt(Math.round(formData.interestRate * 100)),
     BigInt(formData.timelockYears),
   ] : [];
 
-  const { executeAll, isLoading, isApproving, isSuccess, error, txHash } = useContractWriteWithUSDC({
+  const { executeAll, isLoading, isApproving, isSuccess, error, txHash, validationError } = useContractWriteWithUSDC({
     contractAddress: FACTORY_ADDRESS,
     abi: PersonalFundFactoryABI,
     functionName: 'createPersonalFund',
@@ -70,6 +70,7 @@ const CreateContractPage: React.FC = () => {
       setTimeout(() => navigate('/dashboard'), 4000);
     },
   });
+
   if (chainId !== EXPECTED_CHAIN_ID) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
@@ -89,6 +90,7 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
+
   if (!isReady || !formData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
@@ -108,7 +110,6 @@ const CreateContractPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 px-4">
       <div className="max-w-5xl mx-auto">
-        {/* Botón volver */}
         <button
           onClick={() => navigate('/calculator')}
           className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition"
@@ -117,8 +118,36 @@ const CreateContractPage: React.FC = () => {
           Back to Calculator
         </button>
 
+        {/* Validation Error Alert */}
+        {validationError && (
+          <div className="mb-6 bg-red-50 border-2 border-red-300 rounded-2xl p-6 animate-in fade-in duration-300">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-red-900 mb-2">Pre-flight Check Failed</h3>
+                <p className="text-red-700 text-lg mb-4">{validationError}</p>
+                <div className="bg-red-100 rounded-xl p-4">
+                  <h4 className="font-semibold text-red-900 mb-2">💡 How to fix:</h4>
+                  <ol className="list-decimal list-inside space-y-2 text-red-800">
+                    <li>Go back to the Calculator page</li>
+                    <li>Use the "Request Test Tokens" button</li>
+                    <li>Wait for the transaction to complete</li>
+                    <li>Return here and try again</li>
+                  </ol>
+                </div>
+                <button
+                  onClick={() => navigate('/calculator')}
+                  className="mt-4 flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition"
+                >
+                  <Droplets size={20} />
+                  Get Test Tokens
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-purple-100 overflow-hidden">
-          {/* Header */}
           <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-10 text-white text-center">
             <h1 className="text-5xl font-black mb-4 flex items-center justify-center gap-5">
               <Sparkles className="w-14 h-14 animate-pulse" />
@@ -129,7 +158,6 @@ const CreateContractPage: React.FC = () => {
 
           <div className="p-10">
             <div className="grid lg:grid-cols-2 gap-10">
-              {/* Parámetros */}
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-3xl font-bold text-gray-800">Fund Parameters</h2>
@@ -161,7 +189,6 @@ const CreateContractPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Resumen financiero */}
               <div className="space-y-6">
                 <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-3xl p-8 border-2 border-emerald-200">
                   <h3 className="text-2xl font-bold text-emerald-800 mb-6">Initial Deposit Summary</h3>
@@ -183,7 +210,6 @@ const CreateContractPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Estado de transacción */}
                 {isSuccess && (
                   <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl p-8 text-center">
                     <CheckCircle size={64} className="mx-auto mb-4" />
@@ -202,7 +228,7 @@ const CreateContractPage: React.FC = () => {
                   </div>
                 )}
 
-                {error && (
+                {error && !validationError && (
                   <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
                     <p className="text-red-700 font-bold">Error: {(error as any)?.shortMessage || error?.message}</p>
                   </div>
@@ -210,11 +236,10 @@ const CreateContractPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Botón principal */}
             <div className="mt-12 text-center">
               <button
                 onClick={() => executeAll()}
-                disabled={isLoading || isSuccess || isEditing}
+                disabled={isLoading || isSuccess || isEditing || !!validationError}
                 className="bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-black text-3xl px-20 py-8 rounded-3xl shadow-2xl transition-all transform hover:scale-105 disabled:scale-100 flex items-center justify-center gap-6 mx-auto"
               >
                 {isLoading ? (
@@ -226,6 +251,11 @@ const CreateContractPage: React.FC = () => {
                   <>
                     <CheckCircle size={56} />
                     Fund Created!
+                  </>
+                ) : validationError ? (
+                  <>
+                    <AlertCircle size={56} />
+                    Get Test Tokens First
                   </>
                 ) : (
                   <>

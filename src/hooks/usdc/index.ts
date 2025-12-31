@@ -11,15 +11,12 @@ export {
   formatUSDCDisplay,
   parseUSDC,
   usdcToNumber,
-
   isValidUSDCAmount,
   needsApproval,
   hasEnoughBalance,
-
   compareUSDC,
   minUSDC,
   maxUSDC,
-
   addUSDC,
   subtractUSDC,
   multiplyUSDC,
@@ -29,7 +26,6 @@ export {
 } from './usdcUtils';
 
 export type { USDCPreset } from './usdcUtils';
-
 export {
   useUSDCBalance,
   useUSDCAllowance,
@@ -43,5 +39,6 @@ export {
 export { useUSDCApproval } from './useUSDCApproval';
 export { useUSDCTransaction } from './useUSDCTransaction';
 export { useUSDCBalance as useUSDC } from './useUSDC';
+export { useContractWriteWithUSDC } from './useContractWriteWithUSDC';
 export { useUSDCTransaction as useUSDCApprovalAndTransaction } from './useUSDCTransaction';
-export { useUSDCTransaction as useContractWriteWithUSDC } from './useUSDCTransaction';
+export { useUSDCTransaction as useContractWriteWithUSDC_Legacy } from './useUSDCTransaction';
