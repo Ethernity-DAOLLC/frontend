@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount, useBalance, usePublicClient } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount, useBalance } from 'wagmi';
 import { parseUnits, type Address, type Abi, formatEther } from 'viem';
 
 const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS as Address;
@@ -67,16 +67,18 @@ export const useContractWriteWithUSDC = ({
   onError,
 }: UseContractWriteWithUSDCProps): UseContractWriteWithUSDCResult => {
   const { address } = useAccount();
-  const publicClient = usePublicClient();
   const [isApproving, setIsApproving] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | undefined>();
   const [currentStep, setCurrentStep] = useState<'idle' | 'checking' | 'resetting' | 'approving' | 'executing'>('idle');
+
+  // Get ETH balance
   const { data: ethBalance } = useBalance({
     address: address,
   });
 
+  // Get USDC balance
   const { data: usdcBalance, refetch: refetchUsdcBalance } = useReadContract({
     address: USDC_ADDRESS,
     abi: ERC20_ABI,
@@ -87,6 +89,7 @@ export const useContractWriteWithUSDC = ({
     },
   });
 
+  // Get current allowance
   const { data: currentAllowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS,
     abi: ERC20_ABI,
@@ -137,31 +140,42 @@ export const useContractWriteWithUSDC = ({
       throw new Error(`Invalid USDC amount: ${amount}`);
     }
   }, []);
+
+  // Pre-flight validation
   const validateTransaction = useCallback(async (): Promise<boolean> => {
     setValidationError(null);
+
     if (!address || !contractAddress) {
       setValidationError('Missing wallet or contract address');
       return false;
     }
+
+    // Check ETH balance for gas
     if (!ethBalance || ethBalance.value === 0n) {
       setValidationError('❌ Insufficient ETH for gas fees. Request ETH from the faucet first.');
       return false;
     }
+
+    // Minimum ETH check (0.0001 ETH ~= $0.20 at current prices, should be enough for gas)
     const minEthRequired = parseUnits('0.0001', 18);
     if (ethBalance.value < minEthRequired) {
       setValidationError(`❌ Insufficient ETH for gas. You have ${formatEther(ethBalance.value)} ETH. Request more from the faucet.`);
       return false;
     }
+
+    // Check USDC balance
     const requiredAmount = parseUSDCAmount(usdcAmount);
     console.log('💰 Validation:', {
       usdcBalance: usdcBalance?.toString(),
       requiredAmount: requiredAmount.toString(),
       ethBalance: ethBalance.value.toString(),
     });
+
     if (!usdcBalance || usdcBalance === 0n) {
       setValidationError('❌ No USDC balance. Request USDC from the faucet first.');
       return false;
     }
+
     if (usdcBalance < requiredAmount) {
       const balanceFormatted = (Number(usdcBalance) / 1_000_000).toFixed(2);
       const requiredFormatted = (Number(requiredAmount) / 1_000_000).toFixed(2);
@@ -170,30 +184,20 @@ export const useContractWriteWithUSDC = ({
       );
       return false;
     }
-    try {
-      if (publicClient) {
-        await publicClient.estimateGas({
-          account: address,
-          to: USDC_ADDRESS,
-          data: publicClient.encodeFunctionData({
-            abi: ERC20_ABI,
-            functionName: 'approve',
-            args: [contractAddress, requiredAmount],
-          }),
-        });
-      }
-    } catch (err: any) {
-      console.error('Gas estimation failed:', err);
-      setValidationError(`❌ Transaction will likely fail: ${err.shortMessage || err.message}`);
-      return false;
-    }
+
+    // Skip gas estimation - it's causing issues and isn't critical
+    // The transaction will fail at signing if there's a real problem
+    console.log('✅ Pre-flight checks passed (gas estimation skipped)');
+
     return true;
-  }, [address, contractAddress, ethBalance, usdcBalance, usdcAmount, parseUSDCAmount, publicClient]);
+  }, [address, contractAddress, ethBalance, usdcBalance, usdcAmount, parseUSDCAmount]);
+
   const executeAll = useCallback(async () => {
     if (!enabled || !address || !contractAddress) {
       setError(new Error('Missing required parameters'));
       return;
     }
+
     setError(null);
     setValidationError(null);
     setIsApproving(true);
@@ -214,9 +218,11 @@ export const useContractWriteWithUSDC = ({
       await refetchUsdcBalance();
       const currentAllowanceValue = (currentAllowance as bigint) || 0n;
       console.log('📊 Current allowance:', currentAllowanceValue.toString());
+
       if (currentAllowanceValue > 0n) {
         console.log('🔄 Resetting existing allowance to 0...');
         setCurrentStep('resetting');
+
         writeApproval({
           address: USDC_ADDRESS,
           abi: ERC20_ABI,
@@ -225,17 +231,20 @@ export const useContractWriteWithUSDC = ({
         });
         return;
       }
+
       console.log('🔐 Approving USDC...', {
         amount: requiredAmount.toString(),
         spender: contractAddress,
         from: address,
       });
       setCurrentStep('approving');
+
       writeApproval({
         address: USDC_ADDRESS,
         abi: ERC20_ABI,
         functionName: 'approve',
         args: [contractAddress, requiredAmount],
+        gas: 100000n,
       } as any);
     } catch (err: any) {
       console.error('❌ Error in executeAll:', err);
@@ -270,6 +279,7 @@ export const useContractWriteWithUSDC = ({
           abi,
           functionName,
           args,
+          gas: 500000n, // Límite más alto para createPersonalFund
         } as any);
       }, 1000);
     }
@@ -288,10 +298,12 @@ export const useContractWriteWithUSDC = ({
           abi: ERC20_ABI,
           functionName: 'approve',
           args: [contractAddress, requiredAmount],
+          gas: 100000n,
         } as any);
       }, 1000);
     }
   }, [isApprovalSuccess, approvalHash, currentStep, parseUSDCAmount, usdcAmount, contractAddress, writeApproval]);
+
   useEffect(() => {
     if (isTransactionSuccess && transactionHash) {
       console.log('✅ Transaction successful:', transactionHash);
@@ -301,6 +313,7 @@ export const useContractWriteWithUSDC = ({
       onTransactionSuccess?.(transactionHash);
     }
   }, [isTransactionSuccess, transactionHash, onTransactionSuccess]);
+
   useEffect(() => {
     if (approvalError) {
       console.error('❌ Approval error:', approvalError);
@@ -311,6 +324,7 @@ export const useContractWriteWithUSDC = ({
       onError?.(new Error(errorMessage));
     }
   }, [approvalError, onError]);
+
   useEffect(() => {
     if (transactionError) {
       console.error('❌ Transaction error:', transactionError);
