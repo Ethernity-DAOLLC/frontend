@@ -3,7 +3,6 @@ import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAcc
 import { parseUnits, type Address, type Abi, formatEther } from 'viem';
 
 const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS as Address;
-
 const ERC20_ABI = [
   {
     name: 'approve',
@@ -251,7 +250,6 @@ export const useContractWriteWithUSDC = ({
         abi: ERC20_ABI,
         functionName: 'approve',
         args: [contractAddress, requiredAmount],
-        gas: 100000n,
       } as any);
     } catch (err: any) {
       console.error('❌ Error in executeAll:', err);
@@ -286,7 +284,6 @@ export const useContractWriteWithUSDC = ({
           abi,
           functionName,
           args,
-          gas: 500000n,
         } as any);
       }, 1000);
     }
@@ -305,7 +302,6 @@ export const useContractWriteWithUSDC = ({
           abi: ERC20_ABI,
           functionName: 'approve',
           args: [contractAddress, requiredAmount],
-          gas: 100000n,
         } as any);
       }, 1000);
     }
