@@ -10,7 +10,6 @@ interface ProtectedRouteProps {
   requireAuth?: boolean;
   requireFund?: boolean;
 }
-
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAdmin = false,
@@ -43,14 +42,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           <div className="w-24 h-24 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-8">
             <Wallet className="w-12 h-12 text-white" />
           </div>
-
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
             Conecta tu Wallet
           </h1>
           <p className="text-gray-600 mb-10 leading-relaxed">
             Necesitas conectar tu wallet para acceder a esta sección y crear tu fondo de retiro personalizado.
           </p>
-
           <button
             onClick={connect}
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-5 px-8 rounded-2xl transition-all transform hover:scale-105 shadow-xl flex items-center justify-center gap-3 mb-6"
@@ -58,7 +55,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             <Wallet size={24} />
             Conectar Wallet
           </button>
-
           <button
             onClick={goCalculator}
             className="w-full text-gray-600 hover:text-gray-800 font-medium py-3 flex items-center justify-center gap-2 transition"
@@ -77,7 +73,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           <div className="w-24 h-24 mx-auto bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center mb-8">
             <AlertCircle className="w-12 h-12 text-white" />
           </div>
-
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
             Fondo de Retiro No Encontrado
           </h1>
@@ -87,7 +82,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           <p className="text-sm text-gray-500 mb-10">
             El Dashboard te permitirá gestionar tus depósitos, ver tu progreso y administrar tus inversiones DeFi.
           </p>
-
           <button
             onClick={goCalculator}
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-5 px-8 rounded-2xl transition-all transform hover:scale-105 shadow-xl flex items-center justify-center gap-3 mb-4"
@@ -95,7 +89,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             <Shield size={24} />
             Crear Mi Fondo de Retiro
           </button>
-
           <button
             onClick={goHome}
             className="w-full text-gray-600 hover:text-gray-800 font-medium py-3 flex items-center justify-center gap-2 transition"
@@ -114,7 +107,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           <div className="w-24 h-24 mx-auto bg-gradient-to-br from-red-500 to-orange-600 rounded-full flex items-center justify-center mb-8">
             <Shield className="w-12 h-12 text-white" />
           </div>
-
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
             Acceso Restringido
           </h1>
@@ -124,14 +116,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           <p className="text-sm text-gray-500 mb-10">
             Solo los administradores autorizados pueden gestionar el treasury y las propuestas.
           </p>
-
           <button
             onClick={goDashboard}
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-5 px-8 rounded-2xl transition-all transform hover:scale-105 shadow-xl mb-4"
           >
             Ir al Dashboard de Usuario
           </button>
-
           <button
             onClick={goHome}
             className="w-full text-gray-600 hover:text-gray-800 font-medium py-3 flex items-center justify-center gap-2 transition"
@@ -145,5 +135,4 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
   return <>{children}</>;
 };
-
 export default ProtectedRoute;

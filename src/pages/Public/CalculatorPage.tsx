@@ -257,26 +257,25 @@ const CalculatorPage: React.FC = () => {
       default: return 12;
     }
   };
-  const handleCreateContract = async () => {
-    if (!result) return;
-    if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
-      setError('Contracts not deployed on this network yet. Please switch to Arbitrum Sepolia.');
-      return;
+const handleCreateContract = async () => {
+  if (!result) return;
+  if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
+    setError('Contracts not deployed on this network yet. Please switch to Arbitrum Sepolia.');
+    return;
+  }
+  if (!isConnected) {
+    setIsConnecting(true);
+    try {
+      await openModal();
+    } catch (error) {
+      console.error('Error opening wallet modal:', error);
+      setError('Failed to open wallet modal');
+    } finally {
+      setIsConnecting(false);
     }
-    if (!isConnected) {
-      setIsConnecting(true);
-      try {
-        openModal();
-        setTimeout(() => {
-          setIsConnecting(false);
-        }, 1000);
-      } catch (error) {
-        console.error('Error opening wallet modal:', error);
-        setIsConnecting(false);
-      }
-      return;
-    }
-    proceedToCreateContract();
+    return; 
+  }
+  proceedToCreateContract();
   };
   const proceedToCreateContract = () => {
     if (!result) return;

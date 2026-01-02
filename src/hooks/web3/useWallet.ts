@@ -23,7 +23,6 @@ export function useWallet(): WalletState {
   const { chainId: rawChainId } = useAppKitNetwork()
   const { chain } = useAccount()
   const { disconnect } = useDisconnect()
-
   const safeAddress = address && address.startsWith('0x') && address.length === 42
     ? (address as Address)
     : undefined
