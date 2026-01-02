@@ -38,6 +38,7 @@ const CreateContractPage: React.FC = () => {
     setFormData(planData);
   }, [planData, isConnected, authConnected, navigate]);
 
+  // Verificación de red incorrecta
   if (chainId !== EXPECTED_CHAIN_ID) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
@@ -57,6 +58,8 @@ const CreateContractPage: React.FC = () => {
       </div>
     );
   }
+
+  // Si no hay formData, no renderizar nada
   if (!formData) return null;
 
   const parseUSDC = (value: string | number) => {
@@ -74,6 +77,8 @@ const CreateContractPage: React.FC = () => {
     BigInt(Math.round(formData.interestRate * 100)), 
     BigInt(formData.timelockYears),
   ];
+
+  // Hook useUSDCTransaction - CORREGIDO: Ahora está dentro del componente después de las verificaciones
   const {
     executeAll,
     isLoading,
@@ -101,11 +106,14 @@ const CreateContractPage: React.FC = () => {
       console.error('❌ Transaction error:', err);
     },
   });
+
   const formatNumber = (num: string | number) => {
     return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
   };
+
   const totalFee = Number(formData.initialDeposit) * 0.03;
   const netToFund = Number(formData.initialDeposit) * 0.97;
+
   const getStatusMessage = () => {
     switch (step) {
       case 'checking':
@@ -183,6 +191,8 @@ const CreateContractPage: React.FC = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Resumen y Estado */}
               <div className="space-y-6">
                 <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-3xl p-8 border-2 border-emerald-200">
                   <h3 className="text-2xl font-bold text-emerald-800 mb-6">Resumen del Depósito Inicial</h3>
@@ -229,6 +239,8 @@ const CreateContractPage: React.FC = () => {
                     )}
                   </div>
                 )}
+
+                {/* Mensaje de éxito */}
                 {isSuccess && (
                   <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl p-8 text-center">
                     <CheckCircle size={64} className="mx-auto mb-4" />
@@ -246,6 +258,8 @@ const CreateContractPage: React.FC = () => {
                     )}
                   </div>
                 )}
+
+                {/* Mensaje de error */}
                 {error && (
                   <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
                     <div className="flex items-start gap-3">
