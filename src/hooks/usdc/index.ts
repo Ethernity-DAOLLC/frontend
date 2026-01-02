@@ -3,7 +3,6 @@ export {
   USDC_MIN_AMOUNT,
   USDC_MAX_AMOUNT,
   USDC_PRESETS,
-
   getUSDCAddress,
   useUSDCAddress,
   formatUSDC,
@@ -39,6 +38,3 @@ export {
 export { useUSDCApproval } from './useUSDCApproval';
 export { useUSDCTransaction } from './useUSDCTransaction';
 export { useUSDCBalance as useUSDC } from './useUSDC';
-export { useContractWriteWithUSDC } from './useContractWriteWithUSDC';
-export { useUSDCTransaction as useUSDCApprovalAndTransaction } from './useUSDCTransaction';
-export { useUSDCTransaction as useContractWriteWithUSDC_Legacy } from './useUSDCTransaction';

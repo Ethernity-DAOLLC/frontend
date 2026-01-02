@@ -4,7 +4,6 @@ import {
   AlertCircle, CheckCircle, RefreshCw, Shield
 } from 'lucide-react';
 import { useEthernityDAO } from '@/hooks';
-import { useContractWriteWithUSDC } from '@/hooks/usdc';
 import { formatUSDC } from '@/hooks/usdc';
 import { useAccount } from 'wagmi';
 
