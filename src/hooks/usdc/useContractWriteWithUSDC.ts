@@ -73,12 +73,18 @@ export const useContractWriteWithUSDC = ({
   const [txHash, setTxHash] = useState<string | undefined>();
   const [currentStep, setCurrentStep] = useState<'idle' | 'checking' | 'resetting' | 'approving' | 'executing'>('idle');
 
-  // Get ETH balance
+  // ⚠️ CRÍTICO: Los hooks SIEMPRE deben llamarse en el mismo orden
+  // NO pueden estar dentro de condicionales
+  
+  // Get ETH balance - SIEMPRE se llama
   const { data: ethBalance } = useBalance({
     address: address,
+    query: {
+      enabled: !!address && enabled, // La condición va en el query
+    }
   });
 
-  // Get USDC balance
+  // Get USDC balance - SIEMPRE se llama
   const { data: usdcBalance, refetch: refetchUsdcBalance } = useReadContract({
     address: USDC_ADDRESS,
     abi: ERC20_ABI,
@@ -89,7 +95,7 @@ export const useContractWriteWithUSDC = ({
     },
   });
 
-  // Get current allowance
+  // Get current allowance - SIEMPRE se llama
   const { data: currentAllowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS,
     abi: ERC20_ABI,
@@ -100,13 +106,14 @@ export const useContractWriteWithUSDC = ({
     },
   });
 
+  // Write contracts - SIEMPRE se llaman
   const {
     writeContract: writeApproval,
     data: approvalHash,
     isPending: isApprovalPending,
     error: approvalError,
     reset: resetApproval,
-  } = useWriteContract() as any;
+  } = useWriteContract();
 
   const {
     isLoading: isApprovalConfirming,
@@ -121,7 +128,7 @@ export const useContractWriteWithUSDC = ({
     isPending: isTransactionPending,
     error: transactionError,
     reset: resetTransaction,
-  } = useWriteContract() as any;
+  } = useWriteContract();
 
   const {
     isLoading: isTransactionConfirming,
@@ -152,14 +159,14 @@ export const useContractWriteWithUSDC = ({
 
     // Check ETH balance for gas
     if (!ethBalance || ethBalance.value === 0n) {
-      setValidationError('❌ Insufficient ETH for gas fees. Request ETH from the faucet first.');
+      setValidationError('⚠️ Insufficient ETH for gas fees. Request ETH from the faucet first.');
       return false;
     }
 
     // Minimum ETH check (0.0001 ETH ~= $0.20 at current prices, should be enough for gas)
     const minEthRequired = parseUnits('0.0001', 18);
     if (ethBalance.value < minEthRequired) {
-      setValidationError(`❌ Insufficient ETH for gas. You have ${formatEther(ethBalance.value)} ETH. Request more from the faucet.`);
+      setValidationError(`⚠️ Insufficient ETH for gas. You have ${formatEther(ethBalance.value)} ETH. Request more from the faucet.`);
       return false;
     }
 
@@ -172,7 +179,7 @@ export const useContractWriteWithUSDC = ({
     });
 
     if (!usdcBalance || usdcBalance === 0n) {
-      setValidationError('❌ No USDC balance. Request USDC from the faucet first.');
+      setValidationError('⚠️ No USDC balance. Request USDC from the faucet first.');
       return false;
     }
 
@@ -180,15 +187,12 @@ export const useContractWriteWithUSDC = ({
       const balanceFormatted = (Number(usdcBalance) / 1_000_000).toFixed(2);
       const requiredFormatted = (Number(requiredAmount) / 1_000_000).toFixed(2);
       setValidationError(
-        `❌ Insufficient USDC. You have ${balanceFormatted} USDC but need ${requiredFormatted} USDC. Request more from the faucet.`
+        `⚠️ Insufficient USDC. You have ${balanceFormatted} USDC but need ${requiredFormatted} USDC. Request more from the faucet.`
       );
       return false;
     }
 
-    // Skip gas estimation - it's causing issues and isn't critical
-    // The transaction will fail at signing if there's a real problem
-    console.log('✅ Pre-flight checks passed (gas estimation skipped)');
-
+    console.log('✅ Pre-flight checks passed');
     return true;
   }, [address, contractAddress, ethBalance, usdcBalance, usdcAmount, parseUSDCAmount]);
 
@@ -212,10 +216,13 @@ export const useContractWriteWithUSDC = ({
         setCurrentStep('idle');
         return;
       }
+      
       const requiredAmount = parseUSDCAmount(usdcAmount);
       console.log('📊 Required approval amount:', requiredAmount.toString());
+      
       await refetchAllowance();
       await refetchUsdcBalance();
+      
       const currentAllowanceValue = (currentAllowance as bigint) || 0n;
       console.log('📊 Current allowance:', currentAllowanceValue.toString());
 
@@ -232,7 +239,7 @@ export const useContractWriteWithUSDC = ({
         return;
       }
 
-      console.log('🔐 Approving USDC...', {
+      console.log('✅ Approving USDC...', {
         amount: requiredAmount.toString(),
         spender: contractAddress,
         from: address,
@@ -279,7 +286,7 @@ export const useContractWriteWithUSDC = ({
           abi,
           functionName,
           args,
-          gas: 500000n, // Límite más alto para createPersonalFund
+          gas: 500000n,
         } as any);
       }, 1000);
     }
