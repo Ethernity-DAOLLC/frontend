@@ -2,13 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useRetirementPlan } from '@/context/RetirementContext';
-import { useContractWriteWithUSDC } from '@/hooks/usdc';
+import { useUSDCTransaction } from '@/hooks/usdc';
 import { useAccount, useChainId } from 'wagmi';
 import { Loader2, CheckCircle, AlertCircle, ArrowLeft, Wallet, Sparkles, Edit3 } from 'lucide-react';
 import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
 
 const FACTORY_ADDRESS = import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`;
-const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS as `0x${string}`;
 const EXPECTED_CHAIN_ID = 421614;
 
 interface FormData {
@@ -64,6 +63,7 @@ const CreateContractPage: React.FC = () => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     return BigInt(Math.round(num * 1_000_000));
   };
+
   const args = [
     parseUSDC(formData.initialDeposit),
     parseUSDC(formData.monthlyDeposit),
@@ -74,25 +74,59 @@ const CreateContractPage: React.FC = () => {
     BigInt(Math.round(formData.interestRate * 100)), 
     BigInt(formData.timelockYears),
   ];
-
-  const { executeAll, isLoading, isApproving, isSuccess, error, txHash, validationError } = useContractWriteWithUSDC({
+  const {
+    executeAll,
+    isLoading,
+    isApproving,
+    isSuccess,
+    error,
+    txHash,
+    step,
+    progress,
+    requiresApproval,
+  } = useUSDCTransaction({
     contractAddress: FACTORY_ADDRESS,
-    abi: PersonalFundFactoryABI,
+    abi: PersonalFundFactoryABI as any,
     functionName: 'createPersonalFund',
     args,
     usdcAmount: formData.initialDeposit,
     enabled: !!address && !isEditing,
+    autoExecuteAfterApproval: true,
     onTransactionSuccess: () => {
+      console.log('✅ Transaction successful, redirecting...');
       clearPlanData();
       setTimeout(() => navigate('/dashboard'), 4000);
     },
+    onError: (err) => {
+      console.error('❌ Transaction error:', err);
+    },
   });
-
   const formatNumber = (num: string | number) => {
     return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
   };
   const totalFee = Number(formData.initialDeposit) * 0.03;
   const netToFund = Number(formData.initialDeposit) * 0.97;
+  const getStatusMessage = () => {
+    switch (step) {
+      case 'checking':
+        return 'Verificando balances...';
+      case 'approving':
+        return 'Aprobando USDC...';
+      case 'approved':
+        return 'USDC aprobado ✓';
+      case 'executing':
+        return 'Creando tu fondo...';
+      case 'confirming':
+        return 'Confirmando transacción...';
+      case 'success':
+        return '¡Fondo creado exitosamente!';
+      case 'error':
+        return 'Error en la transacción';
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 px-4">
       <div className="max-w-5xl mx-auto">
@@ -104,6 +138,7 @@ const CreateContractPage: React.FC = () => {
           <ArrowLeft size={22} />
           Volver a la Calculadora
         </button>
+
         <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-purple-100 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-10 text-white text-center">
@@ -113,6 +148,7 @@ const CreateContractPage: React.FC = () => {
             </h1>
             <p className="text-xl opacity-90">Contrato inteligente personalizado en blockchain</p>
           </div>
+
           <div className="p-10">
             <div className="grid lg:grid-cols-2 gap-10">
               {/* Parámetros */}
@@ -122,11 +158,13 @@ const CreateContractPage: React.FC = () => {
                   <button
                     onClick={() => setIsEditing(!isEditing)}
                     className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold"
+                    disabled={isLoading}
                   >
                     <Edit3 size={20} />
                     {isEditing ? 'Cancelar' : 'Editar'}
                   </button>
                 </div>
+
                 <div className="space-y-5 text-lg bg-gray-50 rounded-2xl p-6">
                   {[
                     { label: 'Depósito Inicial', value: `$${formatNumber(formData.initialDeposit)}` },
@@ -145,8 +183,6 @@ const CreateContractPage: React.FC = () => {
                   ))}
                 </div>
               </div>
-
-              {/* Resumen financiero */}
               <div className="space-y-6">
                 <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-3xl p-8 border-2 border-emerald-200">
                   <h3 className="text-2xl font-bold text-emerald-800 mb-6">Resumen del Depósito Inicial</h3>
@@ -168,14 +204,31 @@ const CreateContractPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Errores de validación */}
-                {validationError && (
-                  <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6">
-                    <p className="text-amber-800 font-bold">{validationError}</p>
+                {/* Barra de progreso */}
+                {isLoading && (
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-blue-800 font-semibold">{getStatusMessage()}</span>
+                      <span className="text-blue-600 font-bold">{progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div 
+                        className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    {requiresApproval && step === 'approving' && (
+                      <p className="text-sm text-blue-700 mt-3">
+                        Paso 1/2: Aprobando USDC para el contrato
+                      </p>
+                    )}
+                    {step === 'executing' && (
+                      <p className="text-sm text-blue-700 mt-3">
+                        Paso 2/2: Creando tu contrato de retiro
+                      </p>
+                    )}
                   </div>
                 )}
-
-                {/* Estado de transacción */}
                 {isSuccess && (
                   <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl p-8 text-center">
                     <CheckCircle size={64} className="mx-auto mb-4" />
@@ -186,17 +239,22 @@ const CreateContractPage: React.FC = () => {
                         href={`https://sepolia.arbiscan.io/tx/${txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="underline mt-4 inline-block"
+                        className="underline mt-4 inline-block hover:text-green-100"
                       >
-                        Ver transacción
+                        Ver transacción en Arbiscan
                       </a>
                     )}
                   </div>
                 )}
-
                 {error && (
                   <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
-                    <p className="text-red-700 font-bold">Error: {(error as any)?.shortMessage || error?.message}</p>
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
+                      <div className="flex-1">
+                        <h4 className="font-bold text-red-800 mb-1">Error en la transacción</h4>
+                        <p className="text-red-700 text-sm">{error.message}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -212,7 +270,7 @@ const CreateContractPage: React.FC = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="animate-spin" size={56} />
-                    {isApproving ? 'Aprobando USDC...' : 'Creando tu fondo...'}
+                    {getStatusMessage()}
                   </>
                 ) : isSuccess ? (
                   <>
@@ -226,6 +284,12 @@ const CreateContractPage: React.FC = () => {
                   </>
                 )}
               </button>
+
+              {!isLoading && !isSuccess && requiresApproval && (
+                <p className="mt-4 text-gray-600">
+                  Se requerirán 2 transacciones: aprobación de USDC y creación del fondo
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -233,4 +297,5 @@ const CreateContractPage: React.FC = () => {
     </div>
   );
 };
+
 export default CreateContractPage;
