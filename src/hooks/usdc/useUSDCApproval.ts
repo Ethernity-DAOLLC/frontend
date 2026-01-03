@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useAccount, usePublicClient } from 'wagmi';
 import { erc20Abi } from 'viem';
 import { parseUSDC, useUSDCAddress } from './usdcUtils';
 
@@ -33,6 +33,7 @@ export function useUSDCApproval({
 }: UseUSDCApprovalProps): UseUSDCApprovalReturn {
   const { address } = useAccount();
   const usdcAddress = useUSDCAddress();
+  const publicClient = usePublicClient();
   const [error, setError] = useState<Error | null>(null);
 
   const {
@@ -82,6 +83,7 @@ export function useUSDCApproval({
       amount,
       spender: spender.slice(0, 10) + '...',
       from: address.slice(0, 10) + '...',
+      usdcAddress: usdcAddress.slice(0, 10) + '...',
     });
 
     setError(null);
@@ -90,20 +92,82 @@ export function useUSDCApproval({
       const amountWei = parseUSDC(amount);
       console.log('💰 Amount in wei:', amountWei.toString());
 
+      // ✅ FIX CRÍTICO: Simular la transacción primero para detectar el error real
+      if (publicClient) {
+        try {
+          console.log('🧪 Simulating approve transaction...');
+          await publicClient.simulateContract({
+            address: usdcAddress,
+            abi: erc20Abi,
+            functionName: 'approve',
+            args: [spender, amountWei],
+            account: address,
+          });
+          console.log('✅ Simulation successful');
+        } catch (simulationError: any) {
+          console.error('❌ Simulation failed:', simulationError);
+          
+          // Extraer el error real del contrato
+          let errorMessage = 'Transaction simulation failed';
+          
+          if (simulationError.message?.includes('insufficient funds')) {
+            errorMessage = 'Insufficient ETH for gas fees. Please add ETH to your wallet.';
+          } else if (simulationError.message?.includes('Cannot approve zero address')) {
+            errorMessage = 'Invalid spender address (zero address)';
+          } else if (simulationError.shortMessage) {
+            errorMessage = `Contract error: ${simulationError.shortMessage}`;
+          } else {
+            errorMessage = `Simulation failed: ${simulationError.message || 'Unknown error'}`;
+          }
+          
+          const err = new Error(errorMessage);
+          setError(err);
+          onError?.(err);
+          throw err;
+        }
+      }
+
+      // ✅ Si la simulación pasó, proceder con la transacción real
+      // IMPORTANTE: NO especificar gas manualmente, dejar que wagmi lo estime
       writeContract({
         address: usdcAddress,
         abi: erc20Abi,
         functionName: 'approve',
         args: [spender, amountWei],
-      } as any);
+      });
+      
     } catch (err) {
       console.error('❌ Approval error:', err);
       const error = err as Error;
-      setError(error);
-      onError?.(error);
-      throw err;
+      
+      // Solo procesar si no es un error de simulación ya manejado
+      if (!error.message?.includes('simulation failed')) {
+        let enhancedMessage = error.message;
+        
+        if (error.message?.includes('Internal JSON-RPC error')) {
+          enhancedMessage = 
+            'RPC Error. Possible causes:\n\n' +
+            '1. Insufficient ETH for gas (most common)\n' +
+            '2. RPC node timeout or overload\n' +
+            '3. Network congestion\n\n' +
+            'Solutions:\n' +
+            '• Check your ETH balance\n' +
+            '• Wait 30 seconds and try again\n' +
+            '• Refresh the page';
+        } else if (error.message?.includes('insufficient funds')) {
+          enhancedMessage = 'Insufficient ETH for gas fees. Get ETH from faucet.';
+        } else if (error.message?.includes('User rejected')) {
+          enhancedMessage = 'Transaction rejected by user';
+        }
+        
+        const enhancedError = new Error(enhancedMessage);
+        setError(enhancedError);
+        onError?.(enhancedError);
+      }
+      
+      throw error;
     }
-  }, [address, usdcAddress, amount, spender, writeContract, onError]);
+  }, [address, usdcAddress, amount, spender, writeContract, publicClient, onError]);
 
   const approveMax = useCallback(async (): Promise<void> => {
     if (!address) {
@@ -136,20 +200,56 @@ export function useUSDCApproval({
     setError(null);
 
     try {
+      // ✅ Simular primero
+      if (publicClient) {
+        try {
+          await publicClient.simulateContract({
+            address: usdcAddress,
+            abi: erc20Abi,
+            functionName: 'approve',
+            args: [spender, MAX_UINT256],
+            account: address,
+          });
+        } catch (simulationError: any) {
+          console.error('❌ Max approval simulation failed:', simulationError);
+          
+          let errorMessage = 'Transaction simulation failed';
+          if (simulationError.message?.includes('insufficient funds')) {
+            errorMessage = 'Insufficient ETH for gas fees';
+          }
+          
+          const err = new Error(errorMessage);
+          setError(err);
+          onError?.(err);
+          throw err;
+        }
+      }
+
       writeContract({
         address: usdcAddress,
         abi: erc20Abi,
         functionName: 'approve',
         args: [spender, MAX_UINT256],
-      } as any);
+      });
+      
     } catch (err) {
       console.error('❌ Approval error:', err);
       const error = err as Error;
-      setError(error);
-      onError?.(error);
-      throw err;
+      
+      if (!error.message?.includes('simulation failed')) {
+        let enhancedMessage = error.message;
+        if (error.message?.includes('Internal JSON-RPC error')) {
+          enhancedMessage = 'RPC Error. Check ETH balance and try again.';
+        }
+        
+        const enhancedError = new Error(enhancedMessage);
+        setError(enhancedError);
+        onError?.(enhancedError);
+      }
+      
+      throw error;
     }
-  }, [address, usdcAddress, spender, writeContract, onError]);
+  }, [address, usdcAddress, spender, writeContract, publicClient, onError]);
 
   const reset = useCallback(() => {
     setError(null);
@@ -173,8 +273,25 @@ export function useUSDCApproval({
     if (writeError) {
       console.error('❌ Write error:', writeError);
       const error = writeError as Error;
-      setError(error);
-      onError?.(error);
+      
+      let enhancedMessage = error.message;
+      
+      if (error.message?.includes('Internal JSON-RPC error')) {
+        enhancedMessage = 
+          '🔴 RPC Error\n\n' +
+          'Most common cause: Insufficient ETH for gas\n\n' +
+          'Quick fixes:\n' +
+          '1. Check your ETH balance\n' +
+          '2. Get ETH from: faucet.quicknode.com/arbitrum/sepolia\n' +
+          '3. Wait 30s and retry\n\n' +
+          `Technical: ${error.message}`;
+      } else if (error.message?.includes('User rejected')) {
+        enhancedMessage = 'Transaction cancelled by user';
+      }
+      
+      const enhancedError = new Error(enhancedMessage);
+      setError(enhancedError);
+      onError?.(enhancedError);
     }
   }, [writeError, onError]);
 
