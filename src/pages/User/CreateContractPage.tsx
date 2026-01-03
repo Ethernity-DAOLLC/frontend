@@ -8,7 +8,7 @@ import { Loader2, CheckCircle, AlertCircle, ArrowLeft, Wallet, Sparkles, Edit3 }
 import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
 
 const FACTORY_ADDRESS = import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`;
-const EXPECTED_CHAIN_ID = 421614;
+const EXPECTED_CHAIN_ID = 421614; // Arbitrum Sepolia
 
 interface FormData {
   initialDeposit: string;
@@ -27,47 +27,39 @@ const CreateContractPage: React.FC = () => {
   const chainId = useChainId();
   const { isConnected: authConnected } = useAuth();
   const { planData, clearPlanData } = useRetirementPlan();
+  
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // ========================================
+  // PASO 1: Inicialización de datos
+  // ========================================
   useEffect(() => {
     if (!planData || !isConnected || !authConnected) {
       navigate('/calculator', { replace: true });
       return;
     }
     setFormData(planData);
+    setIsInitialized(true);
   }, [planData, isConnected, authConnected, navigate]);
 
-  // Verificación de red incorrecta
-  if (chainId !== EXPECTED_CHAIN_ID) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-12 text-center max-w-lg border border-red-200">
-          <AlertCircle className="w-24 h-24 text-red-600 mx-auto mb-6 animate-pulse" />
-          <h1 className="text-4xl font-black text-red-700 mb-4">Red Incorrecta</h1>
-          <p className="text-xl text-gray-700 mb-8">
-            Por favor cambia a <strong>Arbitrum Sepolia</strong> para crear tu fondo.
-          </p>
-          <button
-            onClick={() => navigate('/calculator')}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-5 px-10 rounded-2xl text-xl transition"
-          >
-            Volver a la Calculadora
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Si no hay formData, no renderizar nada
-  if (!formData) return null;
-
+  // ========================================
+  // HELPERS
+  // ========================================
   const parseUSDC = (value: string | number) => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     return BigInt(Math.round(num * 1_000_000));
   };
 
-  const args = [
+  const formatNumber = (num: string | number) => {
+    return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
+  };
+
+  // ========================================
+  // PASO 2: Preparar argumentos (solo si formData existe)
+  // ========================================
+  const args = formData ? [
     parseUSDC(formData.initialDeposit),
     parseUSDC(formData.monthlyDeposit),
     BigInt(formData.currentAge),
@@ -76,9 +68,12 @@ const CreateContractPage: React.FC = () => {
     BigInt(formData.yearsPayments),
     BigInt(Math.round(formData.interestRate * 100)), 
     BigInt(formData.timelockYears),
-  ];
+  ] : [];
 
-  // Hook useUSDCTransaction - CORREGIDO: Ahora está dentro del componente después de las verificaciones
+  // ========================================
+  // PASO 3: Hook useUSDCTransaction
+  // CRÍTICO: Debe llamarse SIEMPRE, no condicionalmente
+  // ========================================
   const {
     executeAll,
     isLoading,
@@ -94,8 +89,8 @@ const CreateContractPage: React.FC = () => {
     abi: PersonalFundFactoryABI as any,
     functionName: 'createPersonalFund',
     args,
-    usdcAmount: formData.initialDeposit,
-    enabled: !!address && !isEditing,
+    usdcAmount: formData?.initialDeposit || '0',
+    enabled: !!address && !!formData && !isEditing && isInitialized,
     autoExecuteAfterApproval: true,
     onTransactionSuccess: () => {
       console.log('✅ Transaction successful, redirecting...');
@@ -107,13 +102,15 @@ const CreateContractPage: React.FC = () => {
     },
   });
 
-  const formatNumber = (num: string | number) => {
-    return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
-  };
+  // ========================================
+  // PASO 4: Cálculos derivados (solo si formData existe)
+  // ========================================
+  const totalFee = formData ? Number(formData.initialDeposit) * 0.03 : 0;
+  const netToFund = formData ? Number(formData.initialDeposit) * 0.97 : 0;
 
-  const totalFee = Number(formData.initialDeposit) * 0.03;
-  const netToFund = Number(formData.initialDeposit) * 0.97;
-
+  // ========================================
+  // PASO 5: Estado del proceso
+  // ========================================
   const getStatusMessage = () => {
     switch (step) {
       case 'checking':
@@ -135,6 +132,73 @@ const CreateContractPage: React.FC = () => {
     }
   };
 
+  // ========================================
+  // RENDERIZADO CONDICIONAL
+  // ========================================
+
+  // 1. Verificar Factory Address
+  if (!FACTORY_ADDRESS || FACTORY_ADDRESS === '0x0000000000000000000000000000000000000000') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-12 text-center max-w-lg border border-red-200">
+          <AlertCircle className="w-24 h-24 text-red-600 mx-auto mb-6" />
+          <h1 className="text-4xl font-black text-red-700 mb-4">Configuración Faltante</h1>
+          <p className="text-xl text-gray-700 mb-8">
+            La dirección del contrato Factory no está configurada. Por favor contacta al administrador.
+          </p>
+          <button
+            onClick={() => navigate('/calculator')}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-5 px-10 rounded-2xl text-xl transition"
+          >
+            Volver a la Calculadora
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Verificar red incorrecta
+  if (chainId !== EXPECTED_CHAIN_ID) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-12 text-center max-w-lg border border-red-200">
+          <AlertCircle className="w-24 h-24 text-red-600 mx-auto mb-6 animate-pulse" />
+          <h1 className="text-4xl font-black text-red-700 mb-4">Red Incorrecta</h1>
+          <p className="text-xl text-gray-700 mb-4">
+            Por favor cambia a <strong>Arbitrum Sepolia</strong> para crear tu fondo.
+          </p>
+          <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm text-left">
+            <p className="text-gray-600 mb-1">Red actual:</p>
+            <p className="font-mono font-bold text-gray-800">Chain ID: {chainId}</p>
+            <p className="text-gray-600 mt-3 mb-1">Red requerida:</p>
+            <p className="font-mono font-bold text-emerald-600">Arbitrum Sepolia (421614)</p>
+          </div>
+          <button
+            onClick={() => navigate('/calculator')}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-5 px-10 rounded-2xl text-xl transition"
+          >
+            Volver a la Calculadora
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Loading state mientras inicializa
+  if (!isInitialized || !formData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-16 h-16 text-indigo-600 mx-auto mb-4 animate-spin" />
+          <p className="text-xl text-gray-700">Cargando datos del plan...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ========================================
+  // RENDERIZADO PRINCIPAL
+  // ========================================
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 px-4">
       <div className="max-w-5xl mx-auto">
@@ -142,6 +206,7 @@ const CreateContractPage: React.FC = () => {
         <button
           onClick={() => navigate('/calculator')}
           className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition"
+          disabled={isLoading}
         >
           <ArrowLeft size={22} />
           Volver a la Calculadora
