@@ -14,12 +14,6 @@ import { formatUSDC, formatUSDCWithSymbol } from '@/hooks/usdc/usdcUtils';
 const FACTORY_ADDRESS = import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`;
 const EXPECTED_CHAIN_ID = 421614;
 
-console.log('🏭 Factory Address Sources:', {
-  fromEnv: import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS,
-  FACTORY_ADDRESS,
-  willBeUsedAsSpender: FACTORY_ADDRESS,
-});
-
 interface FormData {
   initialDeposit: string;
   monthlyDeposit: string;
@@ -30,6 +24,12 @@ interface FormData {
   interestRate: number;
   timelockYears: number;
 }
+
+console.log('🏭 Factory Address Sources:', {
+  fromEnv: import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS,
+  FACTORY_ADDRESS,
+  willBeUsedAsSpender: FACTORY_ADDRESS,
+});
 
 const CreateContractPage: React.FC = () => {
   const navigate = useNavigate();
