@@ -14,6 +14,12 @@ import { formatUSDC, formatUSDCWithSymbol } from '@/hooks/usdc/usdcUtils';
 const FACTORY_ADDRESS = import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`;
 const EXPECTED_CHAIN_ID = 421614;
 
+console.log('🏭 Factory Address Sources:', {
+  fromEnv: import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS,
+  FACTORY_ADDRESS,
+  willBeUsedAsSpender: FACTORY_ADDRESS,
+});
+
 interface FormData {
   initialDeposit: string;
   monthlyDeposit: string;
@@ -122,7 +128,6 @@ const CreateContractPage: React.FC = () => {
     }
   };
 
-  // Validaciones
   if (!FACTORY_ADDRESS || FACTORY_ADDRESS === '0x0000000000000000000000000000000000000000') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
@@ -275,7 +280,6 @@ const CreateContractPage: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    
                     <div className="bg-white rounded-xl p-4">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Cantidad Requerida:</span>

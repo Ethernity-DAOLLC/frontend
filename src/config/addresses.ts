@@ -7,6 +7,7 @@ export interface ContractAddresses {
   protocolRegistry?: `0x${string}`
   userPreferences?: `0x${string}`
   dateTime?: `0x${string}`
+  personalFund?: `0x${string}`
 }
 
 const OFFICIAL_USDC: Record<number, `0x${string}`> = {
@@ -37,18 +38,18 @@ const getUSDCAddress = (chainId: number): `0x${string}` => {
 }
 
 export const ZERO_ADDRESS: `0x${string}` = '0x0000000000000000000000000000000000000000'
-
 export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
 
   421614: {
-    personalFundFactory: '0xCC29838D66b4aFFB1A4127Cd7DBc60648BcC93d6',
+    personalFundFactory: '0xB9aA4C6D4Fea35A0198B2688F1dd74248e7925E0',
     usdc: getUSDCAddress(421614),
-    treasury: '0x2F1948D9FA3BB1942f51ebBdA265B1185c3c52dC',
-    governance: '0x6206f8B2729EF9c7dBC651DeE4dF08A44A720A3E',
-    token: '0x3D7cfDB2a190B0F8bDf753Af19f3f3D13eca0020',
-    protocolRegistry: '0xBc6004CA4A0c6CdD1046CBB2598F7C0B20CA6bd8',
-    userPreferences: '0x860AB33F149A3dD89cDa6DE77Fd6d40f2AA7a633',
-    dateTime: '0x493b4ba152970a04981EC9ccB4794F747b64Af57',
+    treasury: '0x87f101b0a932873ab74a6f1e884868360482b635',
+    governance: '0x587bEB18B030238f2d76E2C03f32C2D6A59750c0',
+    token: '0xa1490159d9bd9f02AE3C94fb36D272ef37AE8050',
+    protocolRegistry: '0x70dF6dAcC7f93B74108AA0c518B229c80CFDe369',
+    userPreferences: '0xA46FdA9B99ECD8FBDAc78795F9A8Ae64cf42f66C',
+    dateTime: '0xA8402a9C71632A446c5ab53086b24b4E6Fd62D6b',
+    personalFund: '0x71299F722B6FFC4599f2eD1f4deeE07bf8213b46',
   },
 
   // 🟡 POLYGON AMOY - READY TO DEPLOY
@@ -61,6 +62,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     protocolRegistry: ZERO_ADDRESS, 
     userPreferences: ZERO_ADDRESS,  
     dateTime: ZERO_ADDRESS,
+
   },
 
   // 🔴 BASE SEPOLIA - PENDING

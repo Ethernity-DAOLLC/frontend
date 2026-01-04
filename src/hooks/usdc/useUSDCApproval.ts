@@ -91,8 +91,6 @@ export function useUSDCApproval({
     try {
       const amountWei = parseUSDC(amount);
       console.log('💰 Amount in wei:', amountWei.toString());
-
-      // ✅ FIX CRÍTICO: Simular la transacción primero para detectar el error real
       if (publicClient) {
         try {
           console.log('🧪 Simulating approve transaction...');
@@ -106,8 +104,6 @@ export function useUSDCApproval({
           console.log('✅ Simulation successful');
         } catch (simulationError: any) {
           console.error('❌ Simulation failed:', simulationError);
-          
-          // Extraer el error real del contrato
           let errorMessage = 'Transaction simulation failed';
           
           if (simulationError.message?.includes('insufficient funds')) {
@@ -119,16 +115,12 @@ export function useUSDCApproval({
           } else {
             errorMessage = `Simulation failed: ${simulationError.message || 'Unknown error'}`;
           }
-          
           const err = new Error(errorMessage);
           setError(err);
           onError?.(err);
           throw err;
         }
       }
-
-      // ✅ Si la simulación pasó, proceder con la transacción real
-      // IMPORTANTE: NO especificar gas manualmente, dejar que wagmi lo estime
       writeContract({
         address: usdcAddress,
         abi: erc20Abi,
@@ -139,11 +131,9 @@ export function useUSDCApproval({
     } catch (err) {
       console.error('❌ Approval error:', err);
       const error = err as Error;
-      
-      // Solo procesar si no es un error de simulación ya manejado
+
       if (!error.message?.includes('simulation failed')) {
         let enhancedMessage = error.message;
-        
         if (error.message?.includes('Internal JSON-RPC error')) {
           enhancedMessage = 
             'RPC Error. Possible causes:\n\n' +
@@ -159,7 +149,6 @@ export function useUSDCApproval({
         } else if (error.message?.includes('User rejected')) {
           enhancedMessage = 'Transaction rejected by user';
         }
-        
         const enhancedError = new Error(enhancedMessage);
         setError(enhancedError);
         onError?.(enhancedError);
@@ -196,11 +185,9 @@ export function useUSDCApproval({
       spender: spender.slice(0, 10) + '...',
       from: address.slice(0, 10) + '...',
     });
-
     setError(null);
 
     try {
-      // ✅ Simular primero
       if (publicClient) {
         try {
           await publicClient.simulateContract({
@@ -224,14 +211,13 @@ export function useUSDCApproval({
           throw err;
         }
       }
-
       writeContract({
         address: usdcAddress,
         abi: erc20Abi,
         functionName: 'approve',
         args: [spender, MAX_UINT256],
       });
-      
+
     } catch (err) {
       console.error('❌ Approval error:', err);
       const error = err as Error;
@@ -241,12 +227,10 @@ export function useUSDCApproval({
         if (error.message?.includes('Internal JSON-RPC error')) {
           enhancedMessage = 'RPC Error. Check ETH balance and try again.';
         }
-        
         const enhancedError = new Error(enhancedMessage);
         setError(enhancedError);
         onError?.(enhancedError);
       }
-      
       throw error;
     }
   }, [address, usdcAddress, spender, writeContract, publicClient, onError]);
@@ -263,7 +247,6 @@ export function useUSDCApproval({
         amount,
         spender: spender.slice(0, 10) + '...',
       });
-
       setError(null);
       onSuccess?.(hash);
     }
@@ -288,7 +271,6 @@ export function useUSDCApproval({
       } else if (error.message?.includes('User rejected')) {
         enhancedMessage = 'Transaction cancelled by user';
       }
-      
       const enhancedError = new Error(enhancedMessage);
       setError(enhancedError);
       onError?.(enhancedError);
@@ -308,12 +290,10 @@ export function useUSDCApproval({
     approve,
     approveMax,
     reset,
-
     isApproving: isWritePending,
     isConfirming,
     isSuccess,
     isError: !!error || !!writeError || !!txError,
-
     hash,
     error: error || (writeError as Error) || (txError as Error) || null,
   };
