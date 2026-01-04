@@ -9,10 +9,16 @@ import {
   Sparkles, Edit3, AlertTriangle, ExternalLink, Droplets 
 } from 'lucide-react';
 import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
-import { formatUSDC, formatUSDCWithSymbol } from '@/hooks/usdc/usdcUtils';
+import { formatUSDC, parseUSDC } from '@/hooks/usdc/usdcUtils';
+import { getContractAddress } from '@/config/addresses';
 
-const FACTORY_ADDRESS = import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS as `0x${string}`;
 const EXPECTED_CHAIN_ID = 421614;
+
+// ✅ SOLUCIÓN: Obtener la dirección dinámicamente según la chain
+// En lugar de usar import.meta.env directamente
+function useFactoryAddress(chainId: number): `0x${string}` | undefined {
+  return getContractAddress(chainId, 'personalFundFactory');
+}
 
 interface FormData {
   initialDeposit: string;
@@ -35,6 +41,29 @@ const CreateContractPage: React.FC = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // ✅ Obtener Factory Address dinámicamente
+  const FACTORY_ADDRESS = useFactoryAddress(chainId);
+
+  // 🔍 DEBUG: Imprimir todas las fuentes de la dirección
+  useEffect(() => {
+    console.log('🏭 Factory Address Debug:', {
+      fromEnv: import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS,
+      fromAddressesTs: FACTORY_ADDRESS,
+      chainId,
+      willBeUsedAsSpender: FACTORY_ADDRESS,
+    });
+
+    if (!FACTORY_ADDRESS) {
+      console.error('❌ Factory address is undefined!');
+    } else if (FACTORY_ADDRESS === '0x45DdC7b0B7b9D6A0e6039f2f5Ad32c89D1C33808') {
+      console.error('❌ Factory address is still the OLD one!');
+    } else if (FACTORY_ADDRESS === '0xB9aA4C6D4Fea35A0198B2688F1dd74248e7925E0') {
+      console.log('✅ Factory address is correct from .env.local');
+    } else {
+      console.log('ℹ️ Factory address from addresses.ts:', FACTORY_ADDRESS);
+    }
+  }, [FACTORY_ADDRESS, chainId]);
+
   useEffect(() => {
     if (!planData || !isConnected || !authConnected) {
       navigate('/calculator', { replace: true });
@@ -43,11 +72,6 @@ const CreateContractPage: React.FC = () => {
     setFormData(planData);
     setIsInitialized(true);
   }, [planData, isConnected, authConnected, navigate]);
-
-  const parseUSDC = (value: string | number) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    return BigInt(Math.round(num * 1_000_000));
-  };
 
   const args = formData ? [
     parseUSDC(formData.initialDeposit),
@@ -74,12 +98,12 @@ const CreateContractPage: React.FC = () => {
     hasEnoughBalance,
     currentAllowance,
   } = useUSDCTransaction({
-    contractAddress: FACTORY_ADDRESS,
+    contractAddress: FACTORY_ADDRESS!,
     abi: PersonalFundFactoryABI as any,
     functionName: 'createPersonalFund',
     args,
     usdcAmount: formData?.initialDeposit || '0',
-    enabled: !!address && !!formData && !isEditing && isInitialized,
+    enabled: !!address && !!formData && !isEditing && isInitialized && !!FACTORY_ADDRESS,
     autoExecuteAfterApproval: true,
     onTransactionSuccess: () => {
       console.log('✅ Transaction successful, redirecting...');
@@ -101,6 +125,7 @@ const CreateContractPage: React.FC = () => {
   const balanceShortfall = formData 
     ? parseFloat(formData.initialDeposit) - parseFloat(userBalanceFormatted)
     : 0;
+
   const getStatusMessage = () => {
     switch (step) {
       case 'checking':
@@ -122,15 +147,22 @@ const CreateContractPage: React.FC = () => {
     }
   };
 
+  // ✅ Validación mejorada de FACTORY_ADDRESS
   if (!FACTORY_ADDRESS || FACTORY_ADDRESS === '0x0000000000000000000000000000000000000000') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-3xl shadow-2xl p-12 text-center max-w-lg border border-red-200">
           <AlertCircle className="w-24 h-24 text-red-600 mx-auto mb-6" />
           <h1 className="text-4xl font-black text-red-700 mb-4">Configuración Faltante</h1>
-          <p className="text-xl text-gray-700 mb-8">
-            La dirección del contrato Factory no está configurada.
+          <p className="text-xl text-gray-700 mb-4">
+            La dirección del contrato Factory no está configurada correctamente.
           </p>
+          <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm text-left">
+            <p className="text-gray-600 mb-2">Verifica en addresses.ts:</p>
+            <p className="font-mono text-xs text-red-600 break-all">
+              CONTRACT_ADDRESSES[421614].personalFundFactory
+            </p>
+          </div>
           <button
             onClick={() => navigate('/calculator')}
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-5 px-10 rounded-2xl text-xl transition"
@@ -182,6 +214,20 @@ const CreateContractPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 px-4">
       <div className="max-w-5xl mx-auto">
+        {/* 🔍 DEBUG BOX - ELIMINAR DESPUÉS */}
+        <div className="mb-4 bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4">
+          <h3 className="font-bold text-yellow-900 mb-2">🔍 Debug Info (eliminar después)</h3>
+          <div className="text-xs font-mono space-y-1">
+            <p className="text-gray-700">
+              <strong>Factory (usado como spender):</strong>
+            </p>
+            <p className="text-blue-600 break-all">{FACTORY_ADDRESS}</p>
+            <p className="text-gray-700 mt-2">
+              <strong>¿Es la dirección vieja?</strong> {FACTORY_ADDRESS === '0x45DdC7b0B7b9D6A0e6039f2f5Ad32c89D1C33808' ? '❌ SÍ' : '✅ NO'}
+            </p>
+          </div>
+        </div>
+
         <button
           onClick={() => navigate('/calculator')}
           className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition"
@@ -274,6 +320,7 @@ const CreateContractPage: React.FC = () => {
                         </span>
                       </div>
                     </div>
+                    
                     <div className="bg-white rounded-xl p-4">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Cantidad Requerida:</span>
@@ -330,10 +377,10 @@ const CreateContractPage: React.FC = () => {
                               Aprobación Requerida
                             </p>
                             <p className="text-xs text-amber-800">
-                              Allowance: {formatUSDC(currentAllowance || 0n)}
+                              Allowance actual: {formatUSDC(currentAllowance || 0n)} USDC
                             </p>
                             <p className="text-xs text-amber-700 mt-1">
-                              Se necesitarán 2 transacciones.
+                              Se necesitarán 2 transacciones (aprobar + crear).
                             </p>
                           </div>
                         </div>
@@ -383,7 +430,7 @@ const CreateContractPage: React.FC = () => {
                     )}
                     {step === 'executing' && (
                       <p className="text-sm text-blue-700 mt-3">
-                        Paso 2/2: Creando contrato
+                        Paso {requiresApproval ? '2/2' : '1/1'}: Creando contrato
                       </p>
                     )}
                   </div>
@@ -400,9 +447,9 @@ const CreateContractPage: React.FC = () => {
                         href={`https://sepolia.arbiscan.io/tx/${txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="underline mt-4 inline-block"
+                        className="underline mt-4 inline-block hover:opacity-80"
                       >
-                        Ver en Arbiscan
+                        Ver en Arbiscan ↗
                       </a>
                     )}
                   </div>
@@ -413,9 +460,20 @@ const CreateContractPage: React.FC = () => {
                   <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
                     <div className="flex items-start gap-3">
                       <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
-                      <div>
-                        <h4 className="font-bold text-red-800 mb-1">Error</h4>
-                        <p className="text-red-700 text-sm whitespace-pre-line">{error.message}</p>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-red-800 mb-2">Error en la transacción</h4>
+                        <p className="text-red-700 text-sm whitespace-pre-line mb-3">{error.message}</p>
+                        
+                        {/* Botón para verificar dirección */}
+                        <a
+                          href={`https://sepolia.arbiscan.io/address/${FACTORY_ADDRESS}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                        >
+                          <ExternalLink size={14} />
+                          Verificar Factory en Arbiscan
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -470,7 +528,7 @@ const CreateContractPage: React.FC = () => {
               )}
               {hasEnoughBalance && requiresApproval && !isLoading && !isSuccess && (
                 <p className="mt-4 text-gray-600">
-                  2 transacciones: aprobación + creación
+                  Se necesitarán 2 transacciones: aprobación + creación
                 </p>
               )}
             </div>
@@ -480,4 +538,5 @@ const CreateContractPage: React.FC = () => {
     </div>
   );
 };
+
 export default CreateContractPage;
