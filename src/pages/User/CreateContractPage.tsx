@@ -14,8 +14,6 @@ import { getContractAddress } from '@/config/addresses';
 
 const EXPECTED_CHAIN_ID = 421614;
 
-// ✅ SOLUCIÓN: Obtener la dirección dinámicamente según la chain
-// En lugar de usar import.meta.env directamente
 function useFactoryAddress(chainId: number): `0x${string}` | undefined {
   return getContractAddress(chainId, 'personalFundFactory');
 }
@@ -40,11 +38,8 @@ const CreateContractPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
-
-  // ✅ Obtener Factory Address dinámicamente
   const FACTORY_ADDRESS = useFactoryAddress(chainId);
 
-  // 🔍 DEBUG: Imprimir todas las fuentes de la dirección
   useEffect(() => {
     console.log('🏭 Factory Address Debug:', {
       fromEnv: import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS,
@@ -147,7 +142,6 @@ const CreateContractPage: React.FC = () => {
     }
   };
 
-  // ✅ Validación mejorada de FACTORY_ADDRESS
   if (!FACTORY_ADDRESS || FACTORY_ADDRESS === '0x0000000000000000000000000000000000000000') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
