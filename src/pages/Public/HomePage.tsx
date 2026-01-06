@@ -53,9 +53,9 @@ const HomePage: React.FC = () => {
   const handleSurveySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validar que todos los campos estén completos
+    // Validate all fields are complete
     if (!surveyData.age) {
-      setError('Por favor selecciona tu rango de edad');
+      setError('Please select your age range');
       return;
     }
     
@@ -69,7 +69,7 @@ const HomePage: React.FC = () => {
     ].every(rating => rating !== 0);
     
     if (!allRatingsSet) {
-      setError('Por favor responde todas las preguntas');
+      setError('Please answer all questions');
       return;
     }
 
@@ -99,7 +99,7 @@ const HomePage: React.FC = () => {
       setShowFollowUp(true);
       
     } catch (err: any) {
-      setError(err.message || 'Error al enviar la encuesta. Por favor intenta nuevamente.');
+      setError(err.message || 'Error submitting survey. Please try again.');
       console.error('Survey error:', err);
     } finally {
       setLoading(false);
@@ -110,12 +110,12 @@ const HomePage: React.FC = () => {
     e.preventDefault();
     
     if (!followUpData.wantsMoreInfo) {
-      setError('Por favor indica si deseas recibir más información');
+      setError('Please indicate if you want to receive more information');
       return;
     }
     
     if (followUpData.wantsMoreInfo === 'yes' && !followUpData.email) {
-      setError('Por favor ingresa tu email para recibir información');
+      setError('Please enter your email to receive information');
       return;
     }
 
@@ -138,7 +138,7 @@ const HomePage: React.FC = () => {
       setFinalSuccess(true);
       setShowFollowUp(false);
       
-      // Reset todo después de 5 segundos
+      // Reset everything after 5 seconds
       setTimeout(() => {
         setFinalSuccess(false);
         setSuccess(false);
@@ -158,7 +158,7 @@ const HomePage: React.FC = () => {
       }, 5000);
       
     } catch (err: any) {
-      setError(err.message || 'Error al enviar. Por favor intenta nuevamente.');
+      setError(err.message || 'Error submitting. Please try again.');
       console.error('Follow-up error:', err);
     } finally {
       setLoading(false);
@@ -167,11 +167,11 @@ const HomePage: React.FC = () => {
 
   const RatingButtons = ({ value, onChange, name }: { value: number; onChange: (val: number) => void; name: string }) => {
     const ratings = [
-      { val: -2, icon: ThumbsDown, label: 'Muy en desacuerdo', color: 'red' },
-      { val: -1, icon: ThumbsDown, label: 'En desacuerdo', color: 'orange' },
+      { val: -2, icon: ThumbsDown, label: 'Strongly Disagree', color: 'red' },
+      { val: -1, icon: ThumbsDown, label: 'Disagree', color: 'orange' },
       { val: 0, icon: Meh, label: 'Neutral', color: 'gray' },
-      { val: 1, icon: ThumbsUp, label: 'De acuerdo', color: 'blue' },
-      { val: 2, icon: ThumbsUp, label: 'Muy de acuerdo', color: 'green' }
+      { val: 1, icon: ThumbsUp, label: 'Agree', color: 'blue' },
+      { val: 2, icon: ThumbsUp, label: 'Strongly Agree', color: 'green' }
     ];
 
     return (
@@ -206,10 +206,10 @@ const HomePage: React.FC = () => {
       <section className="bg-gradient-to-b from-gray-800 to-green-800 text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl font-bold mb-6">
-            Financial Freedom in your hands
+            Financial Freedom in Your Hands
           </h1>
           <p className="text-xl mb-8 text-gray-200">
-            Secure Your tomorrow with the decision you make today
+            Secure Your Tomorrow with the Decision You Make Today
           </p>
           <button
             onClick={handleGetStarted}
@@ -229,10 +229,10 @@ const HomePage: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-4xl font-bold text-gray-800 mb-4">
-              Ayúdanos a conocerte mejor
+              Help Us Get to Know You Better
             </h2>
             <p className="text-lg text-gray-600">
-              Tu opinión es valiosa. Responde estas preguntas y ayúdanos a crear el mejor sistema de retiro para ti.
+              Your opinion is valuable. Answer these questions and help us create the best retirement system for you.
             </p>
           </div>
 
@@ -241,11 +241,11 @@ const HomePage: React.FC = () => {
               <div className="flex items-start gap-3">
                 <CheckCircle className="text-green-600 flex-shrink-0 mt-1" size={24} />
                 <div>
-                  <h3 className="font-semibold text-green-800 mb-1">¡Muchas gracias por tu tiempo!</h3>
+                  <h3 className="font-semibold text-green-800 mb-1">Thank you so much for your time!</h3>
                   <p className="text-green-700 text-sm">
                     {followUpData.wantsMoreInfo === 'yes' 
-                      ? 'Te contactaremos pronto con más información sobre Ethernity DAO.' 
-                      : 'Tus respuestas nos ayudarán a mejorar nuestro servicio.'}
+                      ? 'We will contact you soon with more information about Ethernity DAO.' 
+                      : 'Your responses will help us improve our service.'}
                   </p>
                 </div>
               </div>
@@ -266,10 +266,10 @@ const HomePage: React.FC = () => {
 
           {!success && !showFollowUp && (
             <form onSubmit={handleSurveySubmit} className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
-              {/* Pregunta 1: Edad */}
+              {/* Question 1: Age */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  1. ¿Cuál es tu rango de edad? *
+                  1. What is your age range? *
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {['18-24', '25-34', '35-44', '45-54', '55-64', '65+'].map((option) => (
@@ -283,16 +283,16 @@ const HomePage: React.FC = () => {
                           : 'border-gray-300 hover:border-gray-400 text-gray-600'
                       }`}
                     >
-                      {option} años
+                      {option} years
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Pregunta 2: Confianza en sistemas tradicionales */}
+              {/* Question 2: Trust in traditional systems */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
-                  2. Confío en los Sistemas Tradicionales de Pensiones/Retiro *
+                  2. I Trust Traditional Pension/Retirement Systems *
                 </label>
                 <RatingButtons
                   value={surveyData.trustTraditional}
@@ -301,10 +301,10 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
-              {/* Pregunta 3: Familiaridad con Blockchain */}
+              {/* Question 3: Blockchain familiarity */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
-                  3. Estoy familiarizado con Blockchain/Criptomonedas *
+                  3. I Am Familiar with Blockchain/Cryptocurrencies *
                 </label>
                 <RatingButtons
                   value={surveyData.blockchainFamiliarity}
@@ -313,10 +313,10 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
-              {/* Pregunta 4: Preocupación sobre el retiro */}
+              {/* Question 4: Retirement concern */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
-                  4. Me preocupa no tener suficiente dinero para mi retiro *
+                  4. I Am Worried About Not Having Enough Money for Retirement *
                 </label>
                 <RatingButtons
                   value={surveyData.retirementConcern}
@@ -325,10 +325,10 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
-              {/* Pregunta 5: Plan de retiro actual */}
+              {/* Question 5: Current retirement plan */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
-                  5. Actualmente tengo un plan de retiro activo *
+                  5. I Currently Have an Active Retirement Plan *
                 </label>
                 <RatingButtons
                   value={surveyData.hasRetirementPlan}
@@ -337,10 +337,10 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
-              {/* Pregunta 6: Valora transparencia */}
+              {/* Question 6: Values transparency */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
-                  6. Valoro la transparencia y control sobre mis inversiones de retiro *
+                  6. I Value Transparency and Control Over My Retirement Investments *
                 </label>
                 <RatingButtons
                   value={surveyData.valuesInRetirement}
@@ -349,10 +349,10 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
-              {/* Pregunta 7: Interés en blockchain */}
+              {/* Question 7: Interest in blockchain */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
-                  7. Me interesaría crear mi Propio Fondo de Retiro con Transparencia Blockchain *
+                  7. I Would Be Interested in Creating My Own Retirement Fund with Blockchain Transparency *
                 </label>
                 <RatingButtons
                   value={surveyData.interestedInBlockchain}
@@ -369,18 +369,18 @@ const HomePage: React.FC = () => {
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Enviando...
+                    Submitting...
                   </>
                 ) : (
                   <>
                     <CheckCircle size={20} />
-                    Enviar Encuesta
+                    Submit Survey
                   </>
                 )}
               </button>
 
               <p className="text-xs text-gray-500 text-center">
-                * Todas las preguntas son obligatorias. Tus respuestas son anónimas.
+                * All questions are required. Your responses are anonymous.
               </p>
             </form>
           )}
@@ -392,19 +392,19 @@ const HomePage: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="text-green-600 flex-shrink-0 mt-1" size={24} />
                   <div>
-                    <h3 className="font-semibold text-green-800 mb-1">¡Encuesta enviada con éxito!</h3>
+                    <h3 className="font-semibold text-green-800 mb-1">Survey submitted successfully!</h3>
                     <p className="text-green-700 text-sm">
-                      Gracias por tu tiempo. Dos preguntas más y habremos terminado.
+                      Thank you for your time. Two more questions and we are done.
                     </p>
                   </div>
                 </div>
               </div>
 
               <form onSubmit={handleFollowUpSubmit} className="space-y-6">
-                {/* Pregunta A */}
+                {/* Question A */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-4">
-                    ¿Te gustaría recibir más información acerca de Ethernity DAO? *
+                    Would you like to receive more information about Ethernity DAO? *
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     <button
@@ -416,7 +416,7 @@ const HomePage: React.FC = () => {
                           : 'border-gray-300 hover:border-gray-400 text-gray-600'
                       }`}
                     >
-                      ✅ Sí, me interesa
+                      ✅ Yes, I am interested
                     </button>
                     <button
                       type="button"
@@ -427,7 +427,7 @@ const HomePage: React.FC = () => {
                           : 'border-gray-300 hover:border-gray-400 text-gray-600'
                       }`}
                     >
-                      No por ahora
+                      Not right now
                     </button>
                   </div>
                 </div>
@@ -436,7 +436,7 @@ const HomePage: React.FC = () => {
                 {followUpData.wantsMoreInfo === 'yes' && (
                   <div className="animate-fade-in">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      ¿Cuál es tu email? *
+                      What is your email? *
                     </label>
                     <input
                       type="email"
@@ -444,7 +444,7 @@ const HomePage: React.FC = () => {
                       value={followUpData.email}
                       onChange={(e) => setFollowUpData({ ...followUpData, email: e.target.value })}
                       className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-green-300 focus:border-green-500 transition"
-                      placeholder="tu@email.com"
+                      placeholder="your@email.com"
                     />
                   </div>
                 )}
@@ -457,12 +457,12 @@ const HomePage: React.FC = () => {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Enviando...
+                      Submitting...
                     </>
                   ) : (
                     <>
                       <CheckCircle size={20} />
-                      Finalizar
+                      Finish
                     </>
                   )}
                 </button>
