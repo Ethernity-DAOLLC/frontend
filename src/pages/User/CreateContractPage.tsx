@@ -50,9 +50,9 @@ const CreateContractPage: React.FC = () => {
 
     if (!FACTORY_ADDRESS) {
       console.error('❌ Factory address is undefined!');
-    } else if (FACTORY_ADDRESS === '0x45DdC7b0B7b9D6A0e6039f2f5Ad32c89D1C33808') {
+    } else if (FACTORY_ADDRESS === '0xe02D1A836A2145c4A87d6f3efAFe546F789823c5') {
       console.error('❌ Factory address is still the OLD one!');
-    } else if (FACTORY_ADDRESS === '0xB9aA4C6D4Fea35A0198B2688F1dd74248e7925E0') {
+    } else if (FACTORY_ADDRESS === '0xe02D1A836A2145c4A87d6f3efAFe546F789823c5') {
       console.log('✅ Factory address is correct from .env.local');
     } else {
       console.log('ℹ️ Factory address from addresses.ts:', FACTORY_ADDRESS);
@@ -217,7 +217,7 @@ const CreateContractPage: React.FC = () => {
             </p>
             <p className="text-blue-600 break-all">{FACTORY_ADDRESS}</p>
             <p className="text-gray-700 mt-2">
-              <strong>¿Es la dirección vieja?</strong> {FACTORY_ADDRESS === '0x45DdC7b0B7b9D6A0e6039f2f5Ad32c89D1C33808' ? '❌ SÍ' : '✅ NO'}
+              <strong>¿Es la dirección vieja?</strong> {FACTORY_ADDRESS === '0xe02D1A836A2145c4A87d6f3efAFe546F789823c5' ? '❌ SÍ' : '✅ NO'}
             </p>
           </div>
         </div>

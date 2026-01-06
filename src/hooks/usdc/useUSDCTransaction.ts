@@ -187,6 +187,7 @@ export function useUSDCTransaction({
         functionName,
         args,
         value: 0n,
+        gas: 3000000n,
       } as any);
       
       setStep('confirming');

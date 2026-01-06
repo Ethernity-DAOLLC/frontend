@@ -126,7 +126,8 @@ export function useUSDCApproval({
         abi: erc20Abi,
         functionName: 'approve',
         args: [spender, amountWei],
-      });
+        gas: 500000n,
+      } as any);
       
     } catch (err) {
       console.error('❌ Approval error:', err);
@@ -216,7 +217,8 @@ export function useUSDCApproval({
         abi: erc20Abi,
         functionName: 'approve',
         args: [spender, MAX_UINT256],
-      });
+        gas: 500000n,
+      } as any);
 
     } catch (err) {
       console.error('❌ Approval error:', err);
