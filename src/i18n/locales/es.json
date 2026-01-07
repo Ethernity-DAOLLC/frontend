@@ -1,0 +1,93 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "calculator": "Calculadora",
+    "about": "Acerca de"
+  },
+  "hero": {
+    "title": "Libertad Financiera en tus Manos",
+    "subtitle": "Asegura tu Mañana con la Decisión que Tomas Hoy",
+    "ctaConnected": "Ir a la Calculadora",
+    "ctaDisconnected": "Conectar Billetera y Comenzar"
+  },
+  "survey": {
+    "title": "Ayúdanos a Conocerte Mejor",
+    "subtitle": "Tu opinión es valiosa. Responde estas preguntas y ayúdanos a crear el mejor sistema de jubilación para ti.",
+    "question1": "¿Cuál es tu rango de edad?",
+    "question2": "Confío en los Sistemas Tradicionales de Pensiones/Jubilación",
+    "question3": "Estoy Familiarizado con Blockchain/Criptomonedas",
+    "question4": "Me Preocupa No Tener Suficiente Dinero para la Jubilación",
+    "question5": "Actualmente Tengo un Plan de Jubilación Activo",
+    "question6": "Valoro la Transparencia y el Control sobre mis Inversiones de Jubilación",
+    "question7": "Estaría Interesado en Crear mi Propio Fondo de Jubilación con Transparencia Blockchain",
+    "ageOptions": {
+      "18-24": "18-24 años",
+      "25-34": "25-34 años",
+      "35-44": "35-44 años",
+      "45-54": "45-54 años",
+      "55-64": "55-64 años",
+      "65+": "65+ años"
+    },
+    "rating": {
+      "stronglyDisagree": "Totalmente en Desacuerdo",
+      "disagree": "En Desacuerdo",
+      "neutral": "Neutral",
+      "agree": "De Acuerdo",
+      "stronglyAgree": "Totalmente de Acuerdo"
+    },
+    "submit": "Enviar Encuesta",
+    "submitting": "Enviando...",
+    "required": "Todas las preguntas son obligatorias. Tus respuestas son anónimas.",
+    "errorTitle": "Error",
+    "selectAge": "Por favor selecciona tu rango de edad",
+    "answerAll": "Por favor responde todas las preguntas"
+  },
+  "followUp": {
+    "successTitle": "¡Encuesta enviada exitosamente!",
+    "successMessage": "Gracias por tu tiempo. Dos preguntas más y terminamos.",
+    "question1": "¿Te gustaría recibir más información sobre Ethernity DAO?",
+    "yesInterested": "Sí, estoy interesado",
+    "notNow": "Ahora no",
+    "question2": "¿Cuál es tu email?",
+    "emailPlaceholder": "tu@email.com",
+    "finish": "Finalizar",
+    "thankYou": "¡Muchas gracias por tu tiempo!",
+    "willContact": "Te contactaremos pronto con más información sobre Ethernity DAO.",
+    "helpImprove": "Tus respuestas nos ayudarán a mejorar nuestro servicio.",
+    "pleaseIndicate": "Por favor indica si deseas recibir más información",
+    "enterEmail": "Por favor ingresa tu email para recibir información"
+  },
+  "features": {
+    "title": "¿Por Qué Elegirnos?",
+    "security": {
+      "title": "Seguridad Zero-Knowledge",
+      "description": "Tus datos permanecen privados. Usamos encriptación avanzada para asegurar que tus detalles financieros nunca sean expuestos."
+    },
+    "education": {
+      "title": "Educación Financiera",
+      "description": "Conoce a nuestros socios y las mejores plataformas de e-learning. Obtén cursos financieros expertos para optimizar tus inversiones."
+    },
+    "fees": {
+      "title": "Tarifas Transparentes",
+      "description": "Sin costos ocultos. Tarifas claras y bajas para maximizar tus ahorros de jubilación."
+    }
+  },
+  "about": {
+    "title": "Acerca de Ethernity",
+    "description": "Nos dedicamos a ayudarte a construir un futuro financiero seguro. Con enfoque en privacidad, seguridad y gestión experta, nuestros fondos de jubilación están diseñados para darte tranquilidad. Tus datos están protegidos con principios zero-knowledge, asegurando que tu información permanezca solo tuya."
+  },
+  "wallet": {
+    "connectedWallet": "Billetera Conectada",
+    "balance": "Saldo",
+    "network": "Red",
+    "switchTo": "Cambiar a",
+    "correctNetwork": "Red Correcta.",
+    "connectedTo": "Conectado a",
+    "wrongNetwork": "Red Incorrecta.",
+    "viewFullAccount": "Ver Cuenta Completa",
+    "disconnect": "Desconectar Billetera",
+    "needTestEth": "¿Necesitas ETH de prueba? Obtener del faucet",
+    "yourWallet": "Tu Billetera",
+    "language": "Idioma"
+  }
+}

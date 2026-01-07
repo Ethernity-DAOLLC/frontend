@@ -13,6 +13,7 @@ export const appConfig = {
     nativeCurrency: 'ETH',
     explorer: 'https://sepolia.arbiscan.io',
     blockTime: 0.25,
+    isTestnet:true,
   },
 
   urls: {

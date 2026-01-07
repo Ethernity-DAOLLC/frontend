@@ -4,6 +4,7 @@ import { WagmiProvider } from 'wagmi'
 import { QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import './index.css'
+import './i18n/config'
 import { wagmiConfig, queryClient } from './config/web3'
 import { RetirementProvider } from './context/RetirementContext'
 

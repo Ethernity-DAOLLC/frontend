@@ -1,0 +1,94 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "calculator": "Rechner",
+    "about": "Über uns"
+  },
+  "hero": {
+    "title": "Finanzielle Freiheit in Ihren Händen",
+    "subtitle": "Sichern Sie Ihr Morgen mit der Entscheidung, die Sie heute treffen",
+    "ctaConnected": "Zum Rechner",
+    "ctaDisconnected": "Wallet verbinden & Loslegen"
+  },
+  "survey": {
+    "title": "Helfen Sie uns, Sie besser kennenzulernen",
+    "subtitle": "Ihre Meinung ist wertvoll. Beantworten Sie diese Fragen und helfen Sie uns, das beste Rentensystem für Sie zu schaffen.",
+    "question1": "Wie alt sind Sie?",
+    "question2": "Ich vertraue traditionellen Renten-/Altersvorsorgessystemen",
+    "question3": "Ich bin mit Blockchain/Kryptowährungen vertraut",
+    "question4": "Ich mache mir Sorgen, nicht genug Geld für den Ruhestand zu haben",
+    "question5": "Ich habe derzeit einen aktiven Altersvorsorgeplan",
+    "question6": "Ich schätze Transparenz und Kontrolle über meine Altersvorsorgeinvestitionen",
+    "question7": "Ich wäre daran interessiert, meinen eigenen Altersvorsorgefonds mit Blockchain-Transparenz zu erstellen",
+    "ageOptions": {
+      "18-24": "18-24 Jahre",
+      "25-34": "25-34 Jahre",
+      "35-44": "35-44 Jahre",
+      "45-54": "45-54 Jahre",
+      "55-64": "55-64 Jahre",
+      "65+": "65+ Jahre"
+    },
+    "rating": {
+      "stronglyDisagree": "Stimme überhaupt nicht zu",
+      "disagree": "Stimme nicht zu",
+      "neutral": "Neutral",
+      "agree": "Stimme zu",
+      "stronglyAgree": "Stimme voll zu"
+    },
+    "submit": "Umfrage absenden",
+    "submitting": "Wird gesendet...",
+    "required": "Alle Fragen sind erforderlich. Ihre Antworten sind anonymous.",
+    "errorTitle": "Fehler",
+    "selectAge": "Bitte wählen Sie Ihre Altersgruppe",
+    "answerAll": "Bitte beantworten Sie alle Fragen"
+  },
+  "followUp": {
+    "successTitle": "Umfrage erfolgreich eingereicht!",
+    "successMessage": "Vielen Dank für Ihre Zeit. Noch zwei Fragen und wir sind fertig.",
+    "question1": "Möchten Sie weitere Informationen über Ethernity DAO erhalten?",
+    "yesInterested": "Ja, ich bin interessiert",
+    "notNow": "Jetzt nicht",
+    "question2": "Wie lautet Ihre E-Mail?",
+    "emailPlaceholder": "ihre@email.com",
+    "finish": "Fertig",
+    "thankYou": "Vielen Dank für Ihre Zeit!",
+    "willContact": "Wir werden Sie bald mit weiteren Informationen über Ethernity DAO kontaktieren.",
+    "helpImprove": "Ihre Antworten helfen uns, unseren Service zu verbessern.",
+    "pleaseIndicate": "Bitte geben Sie an, ob Sie weitere Informationen erhalten möchten",
+    "enterEmail": "Bitte geben Sie Ihre E-Mail ein, um Informationen zu erhalten"
+  },
+  "features": {
+    "title": "Warum uns wählen?",
+    "security": {
+      "title": "Zero-Knowledge-Sicherheit",
+      "description": "Ihre Daten bleiben privat. Wir verwenden fortschrittliche Verschlüsselung, um sicherzustellen, dass Ihre finanziellen Details niemals offengelegt werden."
+    },
+    "education": {
+      "title": "Finanzbildung",
+      "description": "Treffen Sie unsere Partner und die besten E-Learning-Plattformen. Erhalten Sie Expertenkurse zur Optimierung Ihrer Investitionen."
+    },
+    "fees": {
+      "title": "Transparente Gebühren",
+      "description": "Keine versteckten Kosten. Klare, niedrige Gebühren zur Maximierung Ihrer Altersvorsorge."
+    }
+  },
+  "about": {
+    "title": "Über Ethernity",
+    "description": "Wir widmen uns dem Aufbau einer sicheren finanziellen Zukunft für Sie. Mit Fokus auf Privatsphäre, Sicherheit und Expertenmanagement sind unsere Altersvorsorgefonds darauf ausgelegt, Ihnen Seelenfrieden zu geben. Ihre Daten sind mit Zero-Knowledge-Prinzipien geschützt, um sicherzustellen, dass Ihre Informationen nur Ihnen gehören."
+  },
+  "wallet": {
+    "connectedWallet": "Verbundene Wallet",
+    "balance": "Guthaben",
+    "network": "Netzwerk",
+    "switchTo": "Wechseln zu",
+    "correctNetwork": "Korrektes Netzwerk.",
+    "connectedTo": "Verbunden mit",
+    "wrongNetwork": "Falsches Netzwerk.",
+    "viewFullAccount": "Vollständiges Konto anzeigen",
+    "disconnect": "Wallet trennen",
+    "needTestEth": "Test-ETH benötigt? Vom Faucet erhalten",
+    "yourWallet": "Deine Wallet",
+    "language": "Sprache"
+  }
+
+}

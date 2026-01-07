@@ -1,0 +1,93 @@
+{
+  "nav": {
+    "home": "Home",
+    "calculator": "Calcolatore",
+    "about": "Chi siamo"
+  },
+  "hero": {
+    "title": "Libertà Finanziaria nelle Tue Mani",
+    "subtitle": "Assicura il Tuo Domani con la Decisione che Prendi Oggi",
+    "ctaConnected": "Vai al Calcolatore",
+    "ctaDisconnected": "Connetti Wallet e Inizia"
+  },
+  "survey": {
+    "title": "Aiutaci a Conoscerti Meglio",
+    "subtitle": "La tua opinione è preziosa. Rispondi a queste domande e aiutaci a creare il miglior sistema pensionistico per te.",
+    "question1": "Qual è la tua fascia d'età?",
+    "question2": "Mi Fido dei Sistemi Pensionistici Tradizionali",
+    "question3": "Ho Familiarità con Blockchain/Criptovalute",
+    "question4": "Sono Preoccupato di Non Avere Abbastanza Soldi per la Pensione",
+    "question5": "Attualmente Ho un Piano Pensionistico Attivo",
+    "question6": "Apprezzo la Trasparenza e il Controllo sui Miei Investimenti Pensionistici",
+    "question7": "Sarei Interessato a Creare il Mio Fondo Pensione con Trasparenza Blockchain",
+    "ageOptions": {
+      "18-24": "18-24 anni",
+      "25-34": "25-34 anni",
+      "35-44": "35-44 anni",
+      "45-54": "45-54 anni",
+      "55-64": "55-64 anni",
+      "65+": "65+ anni"
+    },
+    "rating": {
+      "stronglyDisagree": "Fortemente in Disaccordo",
+      "disagree": "In Disaccordo",
+      "neutral": "Neutrale",
+      "agree": "D'accordo",
+      "stronglyAgree": "Fortemente d'Accordo"
+    },
+    "submit": "Invia Sondaggio",
+    "submitting": "Invio in corso...",
+    "required": "Tutte le domande sono obbligatorie. Le tue risposte sono anonime.",
+    "errorTitle": "Errore",
+    "selectAge": "Seleziona la tua fascia d'età",
+    "answerAll": "Rispondi a tutte le domande"
+  },
+  "followUp": {
+    "successTitle": "Sondaggio inviato con successo!",
+    "successMessage": "Grazie per il tuo tempo. Ancora due domande e abbiamo finito.",
+    "question1": "Vorresti ricevere maggiori informazioni su Ethernity DAO?",
+    "yesInterested": "Sì, sono interessato",
+    "notNow": "Non ora",
+    "question2": "Qual è la tua email?",
+    "emailPlaceholder": "tua@email.com",
+    "finish": "Fine",
+    "thankYou": "Grazie mille per il tuo tempo!",
+    "willContact": "Ti contatteremo presto con maggiori informazioni su Ethernity DAO.",
+    "helpImprove": "Le tue risposte ci aiuteranno a migliorare il nostro servizio.",
+    "pleaseIndicate": "Indica se desideri ricevere maggiori informazioni",
+    "enterEmail": "Inserisci la tua email per ricevere informazioni"
+  },
+  "features": {
+    "title": "Perché Sceglierci?",
+    "security": {
+      "title": "Sicurezza Zero-Knowledge",
+      "description": "I tuoi dati rimangono privati. Utilizziamo crittografia avanzata per garantire che i tuoi dettagli finanziari non vengano mai esposti."
+    },
+    "education": {
+      "title": "Educazione Finanziaria",
+      "description": "Incontra i nostri partner e le migliori piattaforme di e-learning. Ottieni corsi finanziari esperti per ottimizzare i tuoi investimenti."
+    },
+    "fees": {
+      "title": "Commissioni Trasparenti",
+      "description": "Nessun costo nascosto. Commissioni chiare e basse per massimizzare i tuoi risparmi pensionistici."
+    }
+  },
+  "about": {
+    "title": "Chi è Ethernity",
+    "description": "Siamo dedicati ad aiutarti a costruire un futuro finanziario sicuro. Con focus su privacy, sicurezza e gestione esperta, i nostri fondi pensione sono progettati per darti tranquillità. I tuoi dati sono protetti con principi zero-knowledge, garantendo che le tue informazioni rimangano solo tue."
+  },
+  "wallet": {
+    "connectedWallet": "Portafoglio Connesso",
+    "balance": "Saldo",
+    "network": "Rete",
+    "switchTo": "Passa a",
+    "correctNetwork": "Rete Corretta.",
+    "connectedTo": "Connesso a",
+    "wrongNetwork": "Rete Sbagliata.",
+    "viewFullAccount": "Visualizza Account Completo",
+    "disconnect": "Disconnetti Portafoglio",
+    "needTestEth": "Serve ETH di test? Ottienilo dal faucet",
+    "yourWallet": "Il Tuo Portafoglio",
+    "language": "Lingua"
+  }
+}

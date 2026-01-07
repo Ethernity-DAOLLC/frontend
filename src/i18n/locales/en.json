@@ -1,0 +1,243 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "optional": "Optional",
+    "required": "Required"
+  },
+
+  "nav": {
+    "home": "Home",
+    "calculator": "Calculator",
+    "dashboard": "Dashboard",
+    "contact": "Contact",
+    "about": "About",
+    "connectWallet": "Connect Wallet",
+    "disconnect": "Disconnect"
+  },
+
+  "wallet": {
+    "connectedWallet": "Connected Wallet",
+    "balance": "Balance",
+    "network": "Network",
+    "switchTo": "Switch to",
+    "correctNetwork": "Correct Network.",
+    "connectedTo": "Connected to",
+    "wrongNetwork": "Wrong Network.",
+    "viewFullAccount": "View Full Account",
+    "disconnect": "Disconnect Wallet",
+    "needTestEth": "Need test ETH? Get from faucet",
+    "yourWallet": "Your Wallet",
+    "language": "Language"
+  },
+
+  "hero": {
+    "title": "Financial Freedom in Your Hands",
+    "subtitle": "Secure Your Tomorrow with the Decision You Make Today",
+    "ctaConnected": "Go to Calculator",
+    "ctaDisconnected": "Connect Wallet & Get Started"
+  },
+
+  "survey": {
+    "title": "Help Us Get to Know You Better",
+    "subtitle": "Your opinion is valuable. Answer these questions and help us create the best retirement system for you.",
+    "question1": "What is your age range?",
+    "question2": "I Trust Traditional Pension/Retirement Systems",
+    "question3": "I Am Familiar with Blockchain/Cryptocurrencies",
+    "question4": "I Am Worried About Not Having Enough Money for Retirement",
+    "question5": "I Currently Have an Active Retirement Plan",
+    "question6": "I Value Transparency and Control Over My Retirement Investments",
+    "question7": "I Would Be Interested in Creating My Own Retirement Fund with Blockchain Transparency",
+    "ageOptions": {
+      "18-24": "18-24 years",
+      "25-34": "25-34 years",
+      "35-44": "35-44 years",
+      "45-54": "45-54 years",
+      "55-64": "55-64 years",
+      "65+": "65+ years"
+    },
+    "rating": {
+      "stronglyDisagree": "Strongly Disagree",
+      "disagree": "Disagree",
+      "neutral": "Neutral",
+      "agree": "Agree",
+      "stronglyAgree": "Strongly Agree"
+    },
+    "submit": "Submit Survey",
+    "submitting": "Submitting...",
+    "required": "All questions are required. Your responses are anonymous.",
+    "errorTitle": "Error",
+    "selectAge": "Please select your age range",
+    "answerAll": "Please answer all questions"
+  },
+
+  "followUp": {
+    "successTitle": "Survey submitted successfully!",
+    "successMessage": "Thank you for your time. Two more questions and we are done.",
+    "question1": "Would you like to receive more information about Ethernity DAO?",
+    "yesInterested": "Yes, I am interested",
+    "notNow": "Not right now",
+    "question2": "What is your email?",
+    "emailPlaceholder": "your@email.com",
+    "finish": "Finish",
+    "thankYou": "Thank you so much for your time!",
+    "willContact": "We will contact you soon with more information about Ethernity DAO.",
+    "helpImprove": "Your responses will help us improve our service.",
+    "pleaseIndicate": "Please indicate if you want to receive more information",
+    "enterEmail": "Please enter your email to receive information"
+  },
+
+  "features": {
+    "title": "Why Choose Us?",
+    "security": {
+      "title": "Zero-Knowledge Security",
+      "description": "Your data stays private. We use advanced encryption to ensure your financial details are never exposed."
+    },
+    "education": {
+      "title": "Finance Education",
+      "description": "Meet our partners and the best e-learning platforms. Get expert financial courses to optimize your investments."
+    },
+    "fees": {
+      "title": "Transparent Fees",
+      "description": "No hidden costs. Clear, low fees to maximize your retirement savings."
+    }
+  },
+
+  "about": {
+    "title": "About Ethernity",
+    "description": "We are dedicated to helping you build a secure financial future. With a focus on privacy, security, and expert management, our retirement funds are designed to give you peace of mind. Your data is protected with zero-knowledge principles, ensuring your information remains yours alone."
+  },
+
+  "calculator": {
+    "title": "Retirement Calculator",
+    "subtitle": "Plan your financial future with our advanced calculator",
+    "currentAge": "Current Age",
+    "retirementAge": "Retirement Age",
+    "monthlyContribution": "Monthly Contribution",
+    "expectedReturn": "Expected Annual Return",
+    "inflationRate": "Inflation Rate",
+    "calculate": "Calculate",
+    "reset": "Reset",
+    "results": {
+      "title": "Your Retirement Projection",
+      "totalSavings": "Total Savings at Retirement",
+      "monthlyIncome": "Estimated Monthly Income",
+      "yearsOfRetirement": "Years of Retirement Funded",
+      "purchasing Power": "Purchasing Power (adjusted for inflation)"
+    },
+    "validation": {
+      "ageRequired": "Please enter your current age",
+      "retirementAgeRequired": "Please enter your retirement age",
+      "retirementAgeTooLow": "Retirement age must be greater than current age",
+      "contributionRequired": "Please enter a monthly contribution"
+    }
+  },
+
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Get in touch with our team. We're here to help.",
+    "name": "Full Name",
+    "email": "Email Address",
+    "subject": "Subject",
+    "message": "Message",
+    "send": "Send Message",
+    "sending": "Sending...",
+    "success": "Message sent successfully! We'll get back to you soon.",
+    "error": "Error sending message. Please try again.",
+    "validation": {
+      "nameRequired": "Please enter your name",
+      "emailRequired": "Please enter your email",
+      "emailInvalid": "Please enter a valid email address",
+      "messageRequired": "Please enter a message"
+    }
+  },
+
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "myContracts": "My Contracts",
+    "createNew": "Create New Contract",
+    "viewAll": "View All",
+    "stats": {
+      "totalBalance": "Total Balance",
+      "activeContracts": "Active Contracts",
+      "pendingActions": "Pending Actions",
+      "monthlyReturn": "Monthly Return"
+    },
+    "recentActivity": "Recent Activity",
+    "noContracts": "You don't have any contracts yet",
+    "getStarted": "Get started by creating your first retirement contract"
+  },
+
+  "createContract": {
+    "title": "Create Retirement Contract",
+    "subtitle": "Set up your personalized retirement savings plan",
+    "steps": {
+      "details": "Contract Details",
+      "investment": "Investment Options",
+      "review": "Review & Sign"
+    },
+    "contractType": "Contract Type",
+    "duration": "Duration (years)",
+    "contribution": "Monthly Contribution",
+    "initialDeposit": "Initial Deposit",
+    "riskLevel": "Risk Level",
+    "riskLevels": {
+      "low": "Low Risk - Conservative",
+      "medium": "Medium Risk - Balanced",
+      "high": "High Risk - Aggressive"
+    },
+    "beneficiary": "Beneficiary (Optional)",
+    "emergencyWithdrawal": "Allow Emergency Withdrawal",
+    "autoReinvest": "Auto-Reinvest Returns",
+    "review": "Review Contract",
+    "sign": "Sign Contract",
+    "signing": "Signing...",
+    "terms": "I agree to the terms and conditions",
+    "success": "Contract created successfully!",
+    "error": "Error creating contract. Please try again."
+  },
+
+  "contractCreated": {
+    "title": "Contract Created Successfully!",
+    "subtitle": "Your retirement contract is now active",
+    "contractId": "Contract ID",
+    "nextSteps": "Next Steps",
+    "step1": "Your contract is now active on the blockchain",
+    "step2": "You can view and manage it from your dashboard",
+    "step3": "Set up automatic monthly contributions",
+    "goToDashboard": "Go to Dashboard",
+    "viewContract": "View Contract Details"
+  },
+
+  "footer": {
+    "copyright": "© 2025 Ethernity DAO. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "documentation": "Documentation",
+    "support": "Support",
+    "community": "Community",
+    "followUs": "Follow Us"
+  },
+
+  "errors": {
+    "walletNotConnected": "Please connect your wallet",
+    "networkError": "Network error. Please try again.",
+    "transactionFailed": "Transaction failed",
+    "insufficientFunds": "Insufficient funds",
+    "userRejected": "Transaction rejected by user",
+    "somethingWrong": "Something went wrong. Please try again."
+  }
+}
