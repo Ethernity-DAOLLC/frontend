@@ -5,12 +5,10 @@ import { useWallet } from '@/hooks/web3/useWallet';
 import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { isConnected, disconnect, openModal } = useWallet();
   const { t } = useTranslation();
-
   const [surveyData, setSurveyData] = useState({
     age: '',
     trustTraditional: null,
@@ -48,10 +46,8 @@ const HomePage: React.FC = () => {
       openModal();
     }
   };
-
   const handleSurveySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!surveyData.age) {
       setError(t('survey.selectAge'));
       return;
@@ -70,10 +66,8 @@ const HomePage: React.FC = () => {
       setError(t('survey.answerAll'));
       return;
     }
-
     setLoading(true);
     setError('');
-
     try {
       const response = await fetch(`${API_URL}/survey/surveys`, {
         method: 'POST',
@@ -110,17 +104,14 @@ const HomePage: React.FC = () => {
 
   const handleFollowUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!followUpData.wantsMoreInfo) {
       setError(t('followUp.pleaseIndicate'));
       return;
     }
-    
     if (followUpData.wantsMoreInfo === 'yes' && !followUpData.email) {
       setError(t('followUp.enterEmail'));
       return;
     }
-
     setLoading(true);
     setError('');
 
@@ -145,7 +136,6 @@ const HomePage: React.FC = () => {
       console.log('Follow-up submitted:', data);
       setFinalSuccess(true);
       setShowFollowUp(false);
-      
       setTimeout(() => {
         setFinalSuccess(false);
         setSuccess(false);
@@ -227,7 +217,6 @@ const HomePage: React.FC = () => {
           </button>
         </div>
       </section>
-      {/* Survey Section */}
       <section className="py-16 px-4 bg-gradient-to-br from-blue-50 to-green-50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
@@ -267,6 +256,7 @@ const HomePage: React.FC = () => {
           )}
           {!success && !showFollowUp && (
             <form onSubmit={handleSurveySubmit} className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
+              {/* Question 1: Age */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
                   1. {t('survey.question1')} *
@@ -288,6 +278,7 @@ const HomePage: React.FC = () => {
                   ))}
                 </div>
               </div>
+              {/* Question 2 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   2. {t('survey.question2')} *
@@ -298,6 +289,7 @@ const HomePage: React.FC = () => {
                   name="trustTraditional"
                 />
               </div>
+              {/* Question 3 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   3. {t('survey.question3')} *
@@ -308,6 +300,7 @@ const HomePage: React.FC = () => {
                   name="blockchainFamiliarity"
                 />
               </div>
+              {/* Question 4 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   4. {t('survey.question4')} *
@@ -318,6 +311,7 @@ const HomePage: React.FC = () => {
                   name="retirementConcern"
                 />
               </div>
+              {/* Question 5 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   5. {t('survey.question5')} *
@@ -328,6 +322,7 @@ const HomePage: React.FC = () => {
                   name="hasRetirementPlan"
                 />
               </div>
+              {/* Question 6 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   6. {t('survey.question6')} *
@@ -338,6 +333,7 @@ const HomePage: React.FC = () => {
                   name="valuesInRetirement"
                 />
               </div>
+              {/* Question 7 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   7. {t('survey.question7')} *

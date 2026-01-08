@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { FaucetAPIClient, FaucetRequest, FaucetResponse, HistoryItem } from '@/lib/faucet-client';
+import { FaucetAPIClient, FaucetRequest, FaucetResponse, HistoryItem } from '@/services/faucet/faucet-client';
 
 export function useFaucet(backendUrl?: string) {
   const [loading, setLoading] = useState(false);
@@ -10,7 +10,6 @@ export function useFaucet(backendUrl?: string) {
   const requestTokens = useCallback(async (data: FaucetRequest): Promise<FaucetResponse> => {
     setLoading(true);
     setError(null);
-
     try {
       const response = await client.requestTokens(data);
       return response;
@@ -22,11 +21,10 @@ export function useFaucet(backendUrl?: string) {
       setLoading(false);
     }
   }, []);
-
+  
   const getHistory = useCallback(async (walletAddress: string): Promise<HistoryItem[]> => {
     setLoading(true);
     setError(null);
-
     try {
       const history = await client.getHistory(walletAddress);
       return history;
