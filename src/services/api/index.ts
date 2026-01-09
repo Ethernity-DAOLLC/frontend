@@ -1,26 +1,35 @@
-import { buildApiUrl } from '@/lib/api';
-import { apiClient } from '@/services/api/base.client';
-
-export { 
-  surveyService,
-  contactService, 
-  userService,
-  authService,
-  statsService,
-  apiClient 
-} from '@/services/api';
-
+export { surveyService, default as surveyServiceDefault } from './survey.service';
+export { contactService, default as contactServiceDefault } from './contact.service';
+export { userService, default as userServiceDefault } from './user.service';
+export { authService, default as authServiceDefault } from './auth.service';
+export { statsService, default as statsServiceDefault } from './stats.service';
+export { apiClient } from './base.client';
 export type {
   SurveyCreate,
   SurveyResponse,
   FollowUpCreate,
   FollowUpResponse,
+} from './survey.service';
+
+export type {
   ContactCreate,
   ContactResponse,
+  ContactAdmin,
+} from './contact.service';
+
+export type {
   UserCreate,
   UserResponse,
+  UserAdmin,
+} from './user.service';
+
+export type {
   AdminStats,
-} from '@/services/api';
+  UserStats,
+  FaucetStats,
+  ContactStats,
+} from './stats.service';
+import { apiClient } from './base.client';
 
 export interface ApiError {
   message: string;
