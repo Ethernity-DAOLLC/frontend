@@ -3,20 +3,23 @@ import { Shield, GraduationCap, TrendingUp, CheckCircle, AlertCircle, ThumbsUp, 
 import { useNavigate } from "react-router-dom";
 import { useWallet } from '@/hooks/web3/useWallet';
 import { useTranslation } from 'react-i18next';
+import { surveyService } from '@/services/api';
+import { isApiError } from '@/lib/api';
+import type { SurveyCreate, FollowUpCreate } from '@/services/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { isConnected, disconnect, openModal } = useWallet();
   const { t } = useTranslation();
+  
   const [surveyData, setSurveyData] = useState({
     age: '',
-    trustTraditional: null,
-    blockchainFamiliarity: null,
-    retirementConcern: null,
-    hasRetirementPlan: null,
-    valuesInRetirement: null,
-    interestedInBlockchain: null
+    trustTraditional: null as number | null,
+    blockchainFamiliarity: null as number | null,
+    retirementConcern: null as number | null,
+    hasRetirementPlan: null as number | null,
+    valuesInRetirement: null as number | null,
+    interestedInBlockchain: null as number | null
   });
   
   const [showFollowUp, setShowFollowUp] = useState(false);
@@ -29,7 +32,6 @@ const HomePage: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [finalSuccess, setFinalSuccess] = useState(false);
   const [error, setError] = useState('');
-
   useEffect(() => {
     const shouldAutoDisconnect = sessionStorage.getItem('autoDisconnectHome');
     
@@ -38,7 +40,6 @@ const HomePage: React.FC = () => {
       sessionStorage.removeItem('autoDisconnectHome');
     }
   }, [isConnected, disconnect]);
-
   const handleGetStarted = () => {
     if (isConnected) {
       navigate('/calculator');
@@ -46,8 +47,10 @@ const HomePage: React.FC = () => {
       openModal();
     }
   };
+
   const handleSurveySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!surveyData.age) {
       setError(t('survey.selectAge'));
       return;
@@ -68,35 +71,33 @@ const HomePage: React.FC = () => {
     }
     setLoading(true);
     setError('');
-    try {
-      const response = await fetch(`${API_URL}/survey/surveys`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          age: surveyData.age,
-          trust_traditional: surveyData.trustTraditional,
-          blockchain_familiarity: surveyData.blockchainFamiliarity,
-          retirement_concern: surveyData.retirementConcern,
-          has_retirement_plan: surveyData.hasRetirementPlan,
-          values_in_retirement: surveyData.valuesInRetirement,
-          interested_in_blockchain: surveyData.interestedInBlockchain
-        })
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: 'Error submitting survey' }));
-        throw new Error(errorData.detail || 'Error submitting survey');
-      }
-      const data = await response.json();
-      console.log('Survey submitted:', data);
+    try {
+      const surveyPayload: SurveyCreate = {
+        age: surveyData.age,
+        trust_traditional: surveyData.trustTraditional!,
+        blockchain_familiarity: surveyData.blockchainFamiliarity!,
+        retirement_concern: surveyData.retirementConcern!,
+        has_retirement_plan: surveyData.hasRetirementPlan!,
+        values_in_retirement: surveyData.valuesInRetirement!,
+        interested_in_blockchain: surveyData.interestedInBlockchain!
+      };
+      const result = await surveyService.createSurvey(surveyPayload);
+      
+      console.log('✅ Survey submitted:', result);
       setSuccess(true);
       setShowFollowUp(true);
       
-    } catch (err: any) {
-      setError(err.message || 'Error submitting survey. Please try again.');
-      console.error('Survey error:', err);
+    } catch (err) {
+      console.error('❌ Survey error:', err);
+      
+      if (isApiError(err)) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Error submitting survey. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -104,36 +105,28 @@ const HomePage: React.FC = () => {
 
   const handleFollowUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!followUpData.wantsMoreInfo) {
       setError(t('followUp.pleaseIndicate'));
       return;
     }
+    
     if (followUpData.wantsMoreInfo === 'yes' && !followUpData.email) {
       setError(t('followUp.enterEmail'));
       return;
     }
+
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/survey/surveys/follow-up`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          wants_more_info: followUpData.wantsMoreInfo === 'yes',
-          email: followUpData.email || null
-        })
-      });
+      const followUpPayload: FollowUpCreate = {
+        wants_more_info: followUpData.wantsMoreInfo === 'yes',
+        email: followUpData.wantsMoreInfo === 'yes' ? followUpData.email : undefined
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: 'Error submitting follow-up' }));
-        throw new Error(errorData.detail || 'Error submitting follow-up');
-      }
-
-      const data = await response.json();
-      console.log('Follow-up submitted:', data);
+      const result = await surveyService.createFollowUp(followUpPayload);
+      console.log('✅ Follow-up submitted:', result);
       setFinalSuccess(true);
       setShowFollowUp(false);
       setTimeout(() => {
@@ -154,15 +147,30 @@ const HomePage: React.FC = () => {
         });
       }, 5000);
       
-    } catch (err: any) {
-      setError(err.message || 'Error submitting. Please try again.');
-      console.error('Follow-up error:', err);
+    } catch (err) {
+      console.error('❌ Follow-up error:', err);
+      
+      if (isApiError(err)) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Error submitting. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const RatingButtons = ({ value, onChange, name }: { value: number; onChange: (val: number) => void; name: string }) => {
+  const RatingButtons = ({ 
+    value, 
+    onChange, 
+    name 
+  }: { 
+    value: number | null; 
+    onChange: (val: number) => void; 
+    name: string 
+  }) => {
     const ratings = [
       { val: -2, icon: ThumbsDown, label: t('survey.rating.stronglyDisagree'), color: 'red' },
       { val: -1, icon: ThumbsDown, label: t('survey.rating.disagree'), color: 'orange' },
@@ -196,6 +204,7 @@ const HomePage: React.FC = () => {
       </div>
     );
   };
+
   const ageOptions = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
 
   return (
@@ -217,6 +226,8 @@ const HomePage: React.FC = () => {
           </button>
         </div>
       </section>
+
+      {/* Survey Section */}
       <section className="py-16 px-4 bg-gradient-to-br from-blue-50 to-green-50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
@@ -242,7 +253,6 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           )}
-
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6 mb-6 shadow-lg">
               <div className="flex items-start gap-3">
@@ -254,6 +264,8 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Survey Form */}
           {!success && !showFollowUp && (
             <form onSubmit={handleSurveySubmit} className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
               {/* Question 1: Age */}
@@ -278,6 +290,7 @@ const HomePage: React.FC = () => {
                   ))}
                 </div>
               </div>
+
               {/* Question 2 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
@@ -289,6 +302,7 @@ const HomePage: React.FC = () => {
                   name="trustTraditional"
                 />
               </div>
+
               {/* Question 3 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
@@ -300,6 +314,7 @@ const HomePage: React.FC = () => {
                   name="blockchainFamiliarity"
                 />
               </div>
+
               {/* Question 4 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
@@ -311,6 +326,7 @@ const HomePage: React.FC = () => {
                   name="retirementConcern"
                 />
               </div>
+
               {/* Question 5 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
@@ -322,6 +338,7 @@ const HomePage: React.FC = () => {
                   name="hasRetirementPlan"
                 />
               </div>
+
               {/* Question 6 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
@@ -333,6 +350,7 @@ const HomePage: React.FC = () => {
                   name="valuesInRetirement"
                 />
               </div>
+
               {/* Question 7 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
@@ -344,6 +362,7 @@ const HomePage: React.FC = () => {
                   name="interestedInBlockchain"
                 />
               </div>
+
               <button
                 type="submit"
                 disabled={loading}
@@ -361,11 +380,14 @@ const HomePage: React.FC = () => {
                   </>
                 )}
               </button>
+
               <p className="text-xs text-gray-500 text-center">
                 * {t('survey.required')}
               </p>
             </form>
           )}
+
+          {/* Follow-Up Form */}
           {success && showFollowUp && (
             <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
               <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-6">
@@ -495,4 +517,5 @@ const HomePage: React.FC = () => {
     </div>
   );
 };
+
 export default HomePage;
