@@ -18,6 +18,7 @@ export class BaseApiClient {
       ...DEFAULT_HEADERS,
       ...customHeaders,
     };
+
     if (this.authToken) {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.authToken}`;
     }
@@ -25,6 +26,7 @@ export class BaseApiClient {
   }
   private buildQueryString(params?: Record<string, any>): string {
     if (!params) return '';
+
     const filtered = Object.entries(params)
       .filter(([_, value]) => value !== undefined && value !== null)
       .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
@@ -38,6 +40,7 @@ export class BaseApiClient {
   ): Promise<Response> {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
+
     try {
       const response = await fetch(url, {
         ...config,
@@ -47,9 +50,25 @@ export class BaseApiClient {
       return response;
     } catch (error) {
       clearTimeout(id);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new ApiError('Request timeout', 408);
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          console.error('❌ Request timeout:', url);
+          throw new ApiError(
+            `Request timeout - Server took longer than ${timeout}ms to respond. Please check if the backend is running.`,
+            408
+          );
+        }
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          console.error('❌ Network error:', url);
+          throw new ApiError(
+            'Cannot connect to server. Please ensure the backend is running at ' + 
+            (import.meta.env.VITE_API_URL || 'http://localhost:3001'),
+            0
+          );
+        }
       }
+      
       throw error;
     }
   }
@@ -60,12 +79,23 @@ export class BaseApiClient {
     const { params, timeout, ...fetchConfig } = config;
     const url = buildApiUrl(endpoint) + this.buildQueryString(params);
     const headers = this.buildHeaders(config.headers);
+
+    console.log('🌐 API Request:', {
+      method: fetchConfig.method || 'GET',
+      url,
+      hasAuth: !!this.authToken,
+    });
     try {
       const response = await this.fetchWithTimeout(
         url,
         { ...fetchConfig, headers },
         timeout
       );
+      console.log('📡 API Response:', {
+        status: response.status,
+        ok: response.ok,
+        url,
+      });
       if (!response.ok) {
         let errorData;
         try {
@@ -82,14 +112,16 @@ export class BaseApiClient {
       if (response.status === 204) {
         return null as T;
       }
-      return await response.json();
+      const data = await response.json();
+      console.log('✅ API Success:', { url, data });
+      return data;
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
       }
-      console.error('Network error:', error);
+      console.error('❌ Network error:', error);
       throw new ApiError(
-        'Network error. Please check your connection.',
+        'Network error. Please check your connection and ensure the backend is running.',
         0,
         error
       );

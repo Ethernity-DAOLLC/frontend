@@ -1,31 +1,38 @@
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+if (import.meta.env.DEV) {
+  console.log('🔧 API Configuration:');
+  console.log('  Base URL:', API_BASE_URL);
+  console.log('  Mode:', import.meta.env.MODE);
+}
+
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL || 'https://backend-m6vc.onrender.com',
-  VERSION: 'v1',
-  TIMEOUT: 10000,
-  MAX_RETRIES: 3,
+  BASE_URL: API_BASE_URL,
+  TIMEOUT: 30000, 
+  RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000,
+} as const;
+
+export const DEFAULT_HEADERS = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
 } as const;
 export const buildApiUrl = (endpoint: string): string => {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  return `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/${cleanEndpoint}`;
+  const cleanBaseUrl = API_CONFIG.BASE_URL.endsWith('/') 
+    ? API_CONFIG.BASE_URL.slice(0, -1) 
+    : API_CONFIG.BASE_URL;
+  return `${cleanBaseUrl}/api/v1/${cleanEndpoint}`;
 };
 export const API_ENDPOINTS = {
-  SURVEYS: {
-    BASE: '/survey/surveys',
-    FOLLOW_UP: '/survey/surveys/follow-up',
-    STATS: '/survey/surveys/stats',
-    EMAILS: '/survey/surveys/emails',
-    FOLLOW_UPS: '/survey/surveys/follow-ups',
+  AUTH: {
+    ADMIN_LOGIN: '/auth/admin/login',
   },
-  USERS: {
-    BASE: '/users',
-    EMAIL: '/users/email',
-    REGISTER: '/users/register',
-    WALLET: (address: string) => `/users/wallet/${address}`,
-    LOGIN: (address: string) => `/users/login/${address}`,
-    MAILING_LIST: '/users/mailing-list',
-    SEARCH: '/users/search',
-    BY_ID: (id: number) => `/users/${id}`,
+  SURVEYS: {
+    BASE: '/surveys',
+    FOLLOW_UP: '/surveys/follow-up',
+    STATS: '/surveys/stats',
+    FOLLOW_UPS: '/surveys/follow-ups',
+    EMAILS: '/surveys/emails',
   },
   CONTACT: {
     BASE: '/contact',
@@ -35,23 +42,40 @@ export const API_ENDPOINTS = {
     REPLY: (id: number) => `/contact/messages/${id}/reply`,
     STATS: '/contact/stats',
   },
-  AUTH: {
-    ADMIN_LOGIN: '/auth/admin/login',
+  USERS: {
+    BASE: '/users',
+    REGISTER: '/users/register',
+    EMAIL: '/users/email',
+    WALLET: (address: string) => `/users/wallet/${address}`,
+    LOGIN: (address: string) => `/users/${address}/login`,
+    MAILING_LIST: '/users/mailing-list',
+    SEARCH: '/users/search',
+    BY_ID: (id: number) => `/users/${id}`,
   },
   STATS: {
-    ADMIN: '/stats/admin/stats',
+    ADMIN: '/admin/stats',
   },
 } as const;
-export const DEFAULT_HEADERS = {
-  'Content-Type': 'application/json',
-  'Accept': 'application/json',
-} as const;
-export const isDevelopment = import.meta.env.DEV;
-export const isProduction = import.meta.env.PROD;
-if (isDevelopment) {
-  console.log('🔧 API Configuration:', {
-    baseUrl: API_CONFIG.BASE_URL,
-    version: API_CONFIG.VERSION,
-    environment: isDevelopment ? 'development' : 'production',
-  });
+
+export const testApiConnection = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(5000),
+    });
+    if (response.ok) {
+      console.log('✅ API connection successful');
+      return true;
+    } else {
+      console.warn('⚠️ API responded but with error:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Cannot connect to API:', error);
+    console.error('   Make sure backend is running at:', API_CONFIG.BASE_URL);
+    return false;
+  }
+};
+if (import.meta.env.DEV) {
+  testApiConnection();
 }
