@@ -25,7 +25,7 @@ const OFFICIAL_USDC: Record<number, `0x${string}`> = {
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',          // Ethereum
 }
 const MOCK_USDC: Record<number, `0x${string}`> = {
-  421614: '0x052B32d81177b1B86B1A709951A3c056dBF4A69d',
+  421614: '0x58c086c3662f45C76D468063Dc112542732b4562',
 }
 const getUSDCAddress = (chainId: number): `0x${string}` => {
   if (chainId === 421614) {

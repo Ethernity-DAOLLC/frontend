@@ -177,7 +177,6 @@ export const FaucetButton: React.FC<FaucetButtonProps> = ({
           </div>
         </div>
       )}
-
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
