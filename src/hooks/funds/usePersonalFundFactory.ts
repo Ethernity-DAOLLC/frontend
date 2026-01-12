@@ -64,7 +64,7 @@ interface UsePersonalFundFactoryReturn {
 export function usePersonalFundFactory(
   factoryAddress?: `0x${string}`
 ): UsePersonalFundFactoryReturn {
-  const { address: userAddress, connector } = useAccount(); // ← Added connector here
+  const { address: userAddress, connector } = useAccount(); 
   const publicClient = usePublicClient();
   const usdcAddress = useUSDCAddress();
   const [creationStep, setCreationStep] = useState<
@@ -164,8 +164,7 @@ export function usePersonalFundFactory(
       setCreationStep('approving');
       resetWrite();
 
-      const needsApprove = needsApproval(/* usdcAllowance */, requiredAmount);
-
+      const needsApprove = needsApproval(requiredAmount);
       if (needsApprove) {
         try {
           const hash = await writeContract({
@@ -174,7 +173,6 @@ export function usePersonalFundFactory(
             functionName: 'approve',
             args: [factoryAddress, maxUint256],
           });
-          // setApproveHash(hash); // if I still use this state
         } catch (err: any) {
           setError(err.shortMessage || 'Approval transaction failed');
           setCreationStep('error');
@@ -192,7 +190,6 @@ export function usePersonalFundFactory(
       writeContract,
       resetWrite,
       createPersonalFundInternal,
-      // add usdcAllowance, usdcBalance if I have them as dependencies
     ]
   );
 

@@ -107,8 +107,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       console.log('✅ Transaction successful!', receipt);
       setStep('success');
 
-      const fundAddress = '0x...'; // Parse from receipt.logs
-      
+      const fundAddress = '0x...';       
       onSuccess(txHash, fundAddress);
     }
   }, [isTxSuccess, txHash, receipt, step]);

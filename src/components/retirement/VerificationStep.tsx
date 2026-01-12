@@ -243,7 +243,6 @@ export function VerificationStep({ plan, onVerificationComplete }: VerificationS
         )}
       </div>
 
-      {/* Hidden callback - se ejecuta automáticamente cuando pasan todas las verificaciones */}
       {allChecksPass && (
         <div className="hidden">
           {onVerificationComplete(!hasEnoughAllowance)}
