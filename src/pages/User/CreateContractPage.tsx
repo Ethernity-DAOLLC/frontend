@@ -2,15 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useRetirementPlan } from '@/context/RetirementContext';
-import { useUSDCTransaction } from '@/hooks/usdc';
 import { useAccount, useChainId } from 'wagmi';
 import { 
-  Loader2, CheckCircle, AlertCircle, ArrowLeft, Wallet, 
-  Sparkles, Edit3, AlertTriangle, ExternalLink, Droplets 
+  ArrowLeft, ArrowRight, Sparkles, Edit3, AlertCircle, CheckCircle
 } from 'lucide-react';
-import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
-import { formatUSDC, parseUSDC } from '@/hooks/usdc/usdcUtils';
 import { getContractAddress } from '@/config/addresses';
+import { VerificationStep } from '@/components/retirement/VerificationStep';
 
 const EXPECTED_CHAIN_ID = 421614;
 
@@ -19,6 +16,7 @@ function useFactoryAddress(chainId: number): `0x${string}` | undefined {
 }
 
 interface FormData {
+  principal: string;
   initialDeposit: string;
   monthlyDeposit: string;
   currentAge: number;
@@ -34,30 +32,15 @@ const CreateContractPage: React.FC = () => {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { isConnected: authConnected } = useAuth();
-  const { planData, clearPlanData } = useRetirementPlan();
+  const { planData } = useRetirementPlan();
+  
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [verificationPassed, setVerificationPassed] = useState(false);
+  const [needsApproval, setNeedsApproval] = useState(true);
+  
   const FACTORY_ADDRESS = useFactoryAddress(chainId);
-
-  useEffect(() => {
-    console.log('🏭 Factory Address Debug:', {
-      fromEnv: import.meta.env.VITE_PERSONALFUNDFACTORY_ADDRESS,
-      fromAddressesTs: FACTORY_ADDRESS,
-      chainId,
-      willBeUsedAsSpender: FACTORY_ADDRESS,
-    });
-
-    if (!FACTORY_ADDRESS) {
-      console.error('❌ Factory address is undefined!');
-    } else if (FACTORY_ADDRESS === '0xe02D1A836A2145c4A87d6f3efAFe546F789823c5') {
-      console.error('❌ Factory address is still the OLD one!');
-    } else if (FACTORY_ADDRESS === '0xe02D1A836A2145c4A87d6f3efAFe546F789823c5') {
-      console.log('✅ Factory address is correct from .env.local');
-    } else {
-      console.log('ℹ️ Factory address from addresses.ts:', FACTORY_ADDRESS);
-    }
-  }, [FACTORY_ADDRESS, chainId]);
 
   useEffect(() => {
     if (!planData || !isConnected || !authConnected) {
@@ -68,78 +51,27 @@ const CreateContractPage: React.FC = () => {
     setIsInitialized(true);
   }, [planData, isConnected, authConnected, navigate]);
 
-  const args = formData ? [
-    parseUSDC(formData.initialDeposit),
-    parseUSDC(formData.monthlyDeposit),
-    BigInt(formData.currentAge),
-    BigInt(formData.retirementAge),
-    parseUSDC(formData.desiredMonthlyIncome),
-    BigInt(formData.yearsPayments),
-    BigInt(Math.round(formData.interestRate * 100)), 
-    BigInt(formData.timelockYears),
-  ] : [];
-
-  const {
-    executeAll,
-    isLoading,
-    isApproving,
-    isSuccess,
-    error,
-    txHash,
-    step,
-    progress,
-    requiresApproval,
-    userBalance,
-    hasEnoughBalance,
-    currentAllowance,
-  } = useUSDCTransaction({
-    contractAddress: FACTORY_ADDRESS!,
-    abi: PersonalFundFactoryABI as any,
-    functionName: 'createPersonalFund',
-    args,
-    usdcAmount: formData?.initialDeposit || '0',
-    enabled: !!address && !!formData && !isEditing && isInitialized && !!FACTORY_ADDRESS,
-    autoExecuteAfterApproval: true,
-    onTransactionSuccess: () => {
-      console.log('✅ Transaction successful, redirecting...');
-      clearPlanData();
-      setTimeout(() => navigate('/dashboard'), 4000);
-    },
-    onError: (err) => {
-      console.error('❌ Transaction error:', err);
-    },
-  });
-
   const formatNumber = (num: string | number) => {
     return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
   };
 
   const totalFee = formData ? Number(formData.initialDeposit) * 0.03 : 0;
   const netToFund = formData ? Number(formData.initialDeposit) * 0.97 : 0;
-  const userBalanceFormatted = formatUSDC(userBalance);
-  const balanceShortfall = formData 
-    ? parseFloat(formData.initialDeposit) - parseFloat(userBalanceFormatted)
-    : 0;
 
-  const getStatusMessage = () => {
-    switch (step) {
-      case 'checking':
-        return 'Verificando balances...';
-      case 'approving':
-        return 'Aprobando USDC...';
-      case 'approved':
-        return 'USDC aprobado ✓';
-      case 'executing':
-        return 'Creando tu fondo...';
-      case 'confirming':
-        return 'Confirmando transacción...';
-      case 'success':
-        return '¡Fondo creado exitosamente!';
-      case 'error':
-        return 'Error en la transacción';
-      default:
-        return null;
-    }
+  const handleVerificationComplete = (requiresApproval: boolean) => {
+    setVerificationPassed(true);
+    setNeedsApproval(requiresApproval);
+  };
+
+  const handleContinueToConfirmation = () => {
+    if (!formData || !FACTORY_ADDRESS) return;
+    navigate('/contract-created', {
+      state: {
+        planData: formData,
+        factoryAddress: FACTORY_ADDRESS,
+        needsApproval
+      }
+    });
   };
 
   if (!FACTORY_ADDRESS || FACTORY_ADDRESS === '0x0000000000000000000000000000000000000000') {
@@ -151,12 +83,6 @@ const CreateContractPage: React.FC = () => {
           <p className="text-xl text-gray-700 mb-4">
             La dirección del contrato Factory no está configurada correctamente.
           </p>
-          <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm text-left">
-            <p className="text-gray-600 mb-2">Verifica en addresses.ts:</p>
-            <p className="font-mono text-xs text-red-600 break-all">
-              CONTRACT_ADDRESSES[421614].personalFundFactory
-            </p>
-          </div>
           <button
             onClick={() => navigate('/calculator')}
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-5 px-10 rounded-2xl text-xl transition"
@@ -175,7 +101,7 @@ const CreateContractPage: React.FC = () => {
           <AlertCircle className="w-24 h-24 text-red-600 mx-auto mb-6 animate-pulse" />
           <h1 className="text-4xl font-black text-red-700 mb-4">Red Incorrecta</h1>
           <p className="text-xl text-gray-700 mb-4">
-            Por favor cambia a <strong>Arbitrum Sepolia</strong> para crear tu fondo.
+            Por favor cambia a <strong>Arbitrum Sepolia</strong> para continuar.
           </p>
           <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm text-left">
             <p className="text-gray-600 mb-1">Red actual:</p>
@@ -198,7 +124,7 @@ const CreateContractPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-16 h-16 text-indigo-600 mx-auto mb-4 animate-spin" />
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-xl text-gray-700">Cargando datos del plan...</p>
         </div>
       </div>
@@ -208,51 +134,36 @@ const CreateContractPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 px-4">
       <div className="max-w-5xl mx-auto">
-        {/* 🔍 DEBUG BOX - ELIMINAR DESPUÉS */}
-        <div className="mb-4 bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4">
-          <h3 className="font-bold text-yellow-900 mb-2">🔍 Debug Info (eliminar después)</h3>
-          <div className="text-xs font-mono space-y-1">
-            <p className="text-gray-700">
-              <strong>Factory (usado como spender):</strong>
-            </p>
-            <p className="text-blue-600 break-all">{FACTORY_ADDRESS}</p>
-            <p className="text-gray-700 mt-2">
-              <strong>¿Es la dirección vieja?</strong> {FACTORY_ADDRESS === '0xe02D1A836A2145c4A87d6f3efAFe546F789823c5' ? '❌ SÍ' : '✅ NO'}
-            </p>
-          </div>
-        </div>
-
         <button
           onClick={() => navigate('/calculator')}
           className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition"
-          disabled={isLoading}
         >
           <ArrowLeft size={22} />
           Volver a la Calculadora
         </button>
 
         <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-purple-100 overflow-hidden">
+          {/* Header */}
           <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-10 text-white text-center">
             <h1 className="text-5xl font-black mb-4 flex items-center justify-center gap-5">
               <Sparkles className="w-14 h-14 animate-pulse" />
-              Crear Tu Fondo de Retiro
+              Revisión del Plan
             </h1>
-            <p className="text-xl opacity-90">Contrato inteligente personalizado en blockchain</p>
+            <p className="text-xl opacity-90">Verifica que todo esté correcto antes de continuar</p>
           </div>
 
           <div className="p-10">
             <div className="grid lg:grid-cols-2 gap-10">
-              {/* Parámetros */}
+              {/* LEFT: Parámetros del Plan */}
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-3xl font-bold text-gray-800">Parámetros del Fondo</h2>
                   <button
                     onClick={() => setIsEditing(!isEditing)}
                     className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold"
-                    disabled={isLoading}
                   >
                     <Edit3 size={20} />
-                    {isEditing ? 'Cancelar' : 'Editar'}
+                    {isEditing ? 'Guardar' : 'Editar'}
                   </button>
                 </div>
 
@@ -273,118 +184,9 @@ const CreateContractPage: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Resumen y Estado */}
-              <div className="space-y-6">
-                {/* Card de Balance USDC */}
-                <div className={`rounded-3xl p-6 border-2 transition-all ${
-                  hasEnoughBalance 
-                    ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200' 
-                    : 'bg-gradient-to-br from-red-50 to-orange-50 border-red-300'
-                }`}>
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    {hasEnoughBalance ? (
-                      <>
-                        <CheckCircle className="text-green-600" size={24} />
-                        <span className="text-gray-800">Balance USDC Verificado</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertTriangle className="text-red-600" size={24} />
-                        <span className="text-red-800">Balance USDC Insuficiente</span>
-                      </>
-                    )}
-                  </h3>
-                  
-                  <div className="space-y-3">
-                    <div className="bg-white rounded-xl p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-gray-600">Tu Balance Actual:</span>
-                        <span className="text-xs text-gray-500 font-mono">
-                          {address?.slice(0, 6)}...{address?.slice(-4)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className={`text-2xl font-black ${hasEnoughBalance ? 'text-green-600' : 'text-red-600'}`}>
-                          {userBalanceFormatted} USDC
-                        </span>
-                        <span className="text-sm text-gray-600">
-                          ≈ ${parseFloat(userBalanceFormatted).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white rounded-xl p-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Cantidad Requerida:</span>
-                        <strong className="text-xl text-gray-800">
-                          {formatNumber(formData.initialDeposit)} USDC
-                        </strong>
-                      </div>
-                    </div>
-                    
-                    {!hasEnoughBalance && (
-                      <div className="mt-4 bg-red-100 border-2 border-red-300 rounded-xl p-4">
-                        <div className="flex items-start gap-3 mb-3">
-                          <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
-                          <div>
-                            <p className="text-sm font-bold text-red-800 mb-1">
-                              Balance Insuficiente
-                            </p>
-                            <p className="text-sm text-red-700">
-                              Te faltan aproximadamente <strong>{balanceShortfall.toFixed(2)} USDC</strong>
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <button
-                            onClick={() => navigate('/calculator')}
-                            className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-xl transition text-sm"
-                          >
-                            <Droplets size={18} />
-                            Obtener Tokens
-                          </button>
-                          
-                          <a
-                            href="https://faucet.quicknode.com/arbitrum/sepolia"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition text-sm"
-                          >
-                            <ExternalLink size={18} />
-                            Faucet Externo
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {hasEnoughBalance && requiresApproval && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                        <div className="flex items-start gap-2">
-                          <div className="bg-amber-100 rounded-full p-1.5 flex-shrink-0">
-                            <AlertCircle className="text-amber-600" size={16} />
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold text-amber-900 mb-1">
-                              Aprobación Requerida
-                            </p>
-                            <p className="text-xs text-amber-800">
-                              Allowance actual: {formatUSDC(currentAllowance || 0n)} USDC
-                            </p>
-                            <p className="text-xs text-amber-700 mt-1">
-                              Se necesitarán 2 transacciones (aprobar + crear).
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
 
                 {/* Resumen del Depósito */}
-                <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-3xl p-8 border-2 border-emerald-200">
+                <div className="mt-6 bg-gradient-to-br from-emerald-50 to-green-50 rounded-3xl p-8 border-2 border-emerald-200">
                   <h3 className="text-2xl font-bold text-emerald-800 mb-6">Resumen del Depósito</h3>
                   <div className="space-y-5 text-lg">
                     <div className="flex justify-between">
@@ -403,126 +205,71 @@ const CreateContractPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Progress Bar */}
-                {isLoading && (
-                  <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-blue-800 font-semibold">{getStatusMessage()}</span>
-                      <span className="text-blue-600 font-bold">{progress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div 
-                        className="bg-blue-600 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    {requiresApproval && step === 'approving' && (
-                      <p className="text-sm text-blue-700 mt-3">
-                        Paso 1/2: Aprobando USDC
-                      </p>
-                    )}
-                    {step === 'executing' && (
-                      <p className="text-sm text-blue-700 mt-3">
-                        Paso {requiresApproval ? '2/2' : '1/1'}: Creando contrato
-                      </p>
-                    )}
-                  </div>
-                )}
+              {/* RIGHT: Verificación */}
+              <div className="space-y-6">
+                <VerificationStep 
+                  plan={formData} 
+                  onVerificationComplete={handleVerificationComplete}
+                />
 
-                {/* Success */}
-                {isSuccess && (
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl p-8 text-center">
-                    <CheckCircle size={64} className="mx-auto mb-4" />
-                    <h3 className="text-3xl font-black mb-2">¡Fondo Creado!</h3>
-                    <p className="text-lg opacity-90">Redirigiendo al Dashboard...</p>
-                    {txHash && (
-                      <a
-                        href={`https://sepolia.arbiscan.io/tx/${txHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline mt-4 inline-block hover:opacity-80"
-                      >
-                        Ver en Arbiscan ↗
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                {/* Error */}
-                {error && (
-                  <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
-                      <div className="flex-1">
-                        <h4 className="font-bold text-red-800 mb-2">Error en la transacción</h4>
-                        <p className="text-red-700 text-sm whitespace-pre-line mb-3">{error.message}</p>
-                        
-                        {/* Botón para verificar dirección */}
-                        <a
-                          href={`https://sepolia.arbiscan.io/address/${FACTORY_ADDRESS}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 underline"
-                        >
-                          <ExternalLink size={14} />
-                          Verificar Factory en Arbiscan
-                        </a>
+                {verificationPassed && (
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-200">
+                    <div className="flex items-start gap-4 mb-4">
+                      <CheckCircle className="text-blue-600 flex-shrink-0 mt-1" size={32} />
+                      <div>
+                        <h3 className="text-xl font-bold text-blue-800 mb-2">
+                          ✓ Verificación Completada
+                        </h3>
+                        <p className="text-blue-700">
+                          Todos los requisitos han sido cumplidos. Puedes continuar a la confirmación final.
+                        </p>
                       </div>
                     </div>
+
+                    {needsApproval && (
+                      <div className="bg-amber-50 rounded-xl p-4 mt-4">
+                        <p className="text-sm text-amber-800">
+                          ℹ️ Se requerirán <strong>2 transacciones</strong>: aprobación de USDC y creación del contrato.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Main Button */}
-            <div className="mt-12 text-center">
+            {/* Main Action Buttons */}
+            <div className="mt-12 space-y-4">
               <button
-                onClick={() => executeAll()}
-                disabled={isLoading || isSuccess || isEditing || !hasEnoughBalance}
+                onClick={handleContinueToConfirmation}
+                disabled={!verificationPassed || isEditing}
                 className={`
-                  font-black text-3xl px-20 py-8 rounded-3xl shadow-2xl 
-                  transition-all transform flex items-center justify-center gap-6 mx-auto
-                  ${!hasEnoughBalance 
+                  w-full font-black text-3xl px-20 py-8 rounded-3xl shadow-2xl 
+                  transition-all transform flex items-center justify-center gap-6
+                  ${!verificationPassed || isEditing
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                    : isLoading || isSuccess || isEditing
-                      ? 'bg-gray-400 text-white cursor-not-allowed'
-                      : 'bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white hover:scale-105'
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white hover:scale-105'
                   }
                 `}
               >
-                {isLoading ? (
+                {!verificationPassed ? (
                   <>
-                    <Loader2 className="animate-spin" size={56} />
-                    {getStatusMessage()}
-                  </>
-                ) : isSuccess ? (
-                  <>
-                    <CheckCircle size={56} />
-                    ¡Fondo Creado!
-                  </>
-                ) : !hasEnoughBalance ? (
-                  <>
-                    <AlertTriangle size={56} />
-                    Balance Insuficiente
+                    <AlertCircle size={56} />
+                    Completa la Verificación
                   </>
                 ) : (
                   <>
-                    <Wallet size={56} />
-                    Crear Contrato
+                    Continuar a Confirmación
+                    <ArrowRight size={56} />
                   </>
                 )}
               </button>
-              {!hasEnoughBalance && (
-                <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 max-w-2xl mx-auto">
-                  <p className="text-sm text-amber-800 text-center">
-                    💡 Obtén tokens USDC desde la calculadora o un faucet externo
-                  </p>
-                </div>
-              )}
-              {hasEnoughBalance && requiresApproval && !isLoading && !isSuccess && (
-                <p className="mt-4 text-gray-600">
-                  Se necesitarán 2 transacciones: aprobación + creación
+
+              {!verificationPassed && (
+                <p className="text-center text-gray-600 text-sm">
+                  Asegúrate de tener suficiente balance de USDC y gas antes de continuar
                 </p>
               )}
             </div>
