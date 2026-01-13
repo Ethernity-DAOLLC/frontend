@@ -12,8 +12,8 @@ const CalculatorPage = lazy(() => import('./pages/Public/CalculatorPage'));
 const ContactPage = lazy(() => import('./pages/Public/ContactPage'));
 
 const DashboardPage = lazy(() => import('./pages/User/DashboardPage'));
-const CreateContractPage = lazy(() => import('./pages/User/CreateContractPage'));
-const ContractCreatedPage = lazy(() => import('./pages/User/ContractCreatedPage'));
+const CreateContractPage = lazy(() => import('./stand_by_docs/CreateContractPage'));
+const ContractCreatedPage = lazy(() => import('./stand_by_docs/ContractCreatedPage'));
 
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 const ContactMessages = lazy(() => import('./pages/Admin/ContactMessages'));

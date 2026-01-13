@@ -2,13 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { Loader2, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import { parseUnits } from 'viem';
+import { getContractAddress } from '@/config/addresses'
 import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
-import type { RetirementPlan } from '@/types/retirement';
-
-const USDC_ADDRESSES: Record<number, `0x${string}`> = {
-  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d', // Arbitrum Sepolia
-  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',  // Polygon Amoy
-};
+import type { RetirementPlan } from '@/types/retirement_types';
 
 const ERC20_ABI = [
   {
@@ -36,8 +32,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
   const chainId = useChainId();
   const [step, setStep] = useState<TransactionStep>('idle');
   const [error, setError] = useState<string>('');
-  
-  const usdcAddress = USDC_ADDRESSES[chainId];
+  const usdcAddress = getContractAddress(chainId, 'usdc');
   const explorerUrl = chainId === 421614 
     ? 'https://sepolia.arbiscan.io'
     : 'https://amoy.polygonscan.com';

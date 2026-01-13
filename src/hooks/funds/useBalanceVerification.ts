@@ -16,15 +16,10 @@ const USDC_ABI = [
   }
 ] as const;
 
-const USDC_ADDRESSES: Record<number, `0x${string}`> = {
-  421614: '0x58c086c3662f45C76D468063Dc112542732b4562', // Arbitrum Sepolia
-  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',  // Polygon Amoy
-};
-
 export function useBalanceVerification(plan: RetirementPlan | null): BalanceCheck {
   const { address } = useAccount();
   const chainId = useChainId();
-  const usdcAddress = USDC_ADDRESSES[chainId];
+  const usdcAddress = getContractAddress(chainId, 'usdc');
   const factoryAddress = getContractAddress(chainId, 'personalFundFactory');
   const depositAmount = plan ? parseUnits(plan.initialDeposit.toString(), 6) : 0n;
   const feeAmount = (depositAmount * 3n) / 100n; // Fee 3%
