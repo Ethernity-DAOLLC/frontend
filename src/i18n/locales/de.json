@@ -1,15 +1,55 @@
 {
+  "common": {
+    "loading": "Wird geladen...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "back": "Zurück",
+    "next": "Weiter",
+    "submit": "Absenden",
+    "close": "Schließen",
+    "yes": "Ja",
+    "no": "Nein",
+    "optional": "Optional",
+    "required": "Erforderlich"
+  },
+
   "nav": {
     "home": "Startseite",
     "calculator": "Rechner",
-    "about": "Über uns"
+    "dashboard": "Dashboard",
+    "contact": "Kontakt",
+    "about": "Über uns",
+    "connectWallet": "Wallet Verbinden",
+    "disconnect": "Trennen"
   },
+
+  "wallet": {
+    "connectedWallet": "Verbundene Wallet",
+    "balance": "Guthaben",
+    "network": "Netzwerk",
+    "switchTo": "Wechseln zu",
+    "correctNetwork": "Korrektes Netzwerk.",
+    "connectedTo": "Verbunden mit",
+    "wrongNetwork": "Falsches Netzwerk.",
+    "viewFullAccount": "Vollständiges Konto anzeigen",
+    "disconnect": "Wallet trennen",
+    "needTestEth": "Test-ETH benötigt? Vom Faucet erhalten",
+    "yourWallet": "Deine Wallet",
+    "language": "Sprache"
+  },
+
   "hero": {
     "title": "Finanzielle Freiheit in Ihren Händen",
     "subtitle": "Sichern Sie Ihr Morgen mit der Entscheidung, die Sie heute treffen",
     "ctaConnected": "Zum Rechner",
     "ctaDisconnected": "Wallet verbinden & Loslegen"
   },
+
   "survey": {
     "title": "Helfen Sie uns, Sie besser kennenzulernen",
     "subtitle": "Ihre Meinung ist wertvoll. Beantworten Sie diese Fragen und helfen Sie uns, das beste Rentensystem für Sie zu schaffen.",
@@ -42,6 +82,7 @@
     "selectAge": "Bitte wählen Sie Ihre Altersgruppe",
     "answerAll": "Bitte beantworten Sie alle Fragen"
   },
+
   "followUp": {
     "successTitle": "Umfrage erfolgreich eingereicht!",
     "successMessage": "Vielen Dank für Ihre Zeit. Noch zwei Fragen und wir sind fertig.",
@@ -57,6 +98,7 @@
     "pleaseIndicate": "Bitte geben Sie an, ob Sie weitere Informationen erhalten möchten",
     "enterEmail": "Bitte geben Sie Ihre E-Mail ein, um Informationen zu erhalten"
   },
+
   "features": {
     "title": "Warum uns wählen?",
     "security": {
@@ -72,23 +114,130 @@
       "description": "Keine versteckten Kosten. Klare, niedrige Gebühren zur Maximierung Ihrer Altersvorsorge."
     }
   },
+
   "about": {
     "title": "Über Ethernity",
     "description": "Wir widmen uns dem Aufbau einer sicheren finanziellen Zukunft für Sie. Mit Fokus auf Privatsphäre, Sicherheit und Expertenmanagement sind unsere Altersvorsorgefonds darauf ausgelegt, Ihnen Seelenfrieden zu geben. Ihre Daten sind mit Zero-Knowledge-Prinzipien geschützt, um sicherzustellen, dass Ihre Informationen nur Ihnen gehören."
   },
-  "wallet": {
-    "connectedWallet": "Verbundene Wallet",
-    "balance": "Guthaben",
-    "network": "Netzwerk",
-    "switchTo": "Wechseln zu",
-    "correctNetwork": "Korrektes Netzwerk.",
-    "connectedTo": "Verbunden mit",
-    "wrongNetwork": "Falsches Netzwerk.",
-    "viewFullAccount": "Vollständiges Konto anzeigen",
-    "disconnect": "Wallet trennen",
-    "needTestEth": "Test-ETH benötigt? Vom Faucet erhalten",
-    "yourWallet": "Deine Wallet",
-    "language": "Sprache"
-  }
 
+  "calculator": {
+    "title": "Rentenrechner",
+    "subtitle": "Planen Sie Ihre finanzielle Zukunft mit unserem fortschrittlichen Rechner",
+    "currentAge": "Aktuelles Alter",
+    "retirementAge": "Rentenalter",
+    "monthlyContribution": "Monatlicher Beitrag",
+    "expectedReturn": "Erwartete jährliche Rendite",
+    "inflationRate": "Inflationsrate",
+    "calculate": "Berechnen",
+    "reset": "Zurücksetzen",
+    "results": {
+      "title": "Ihre Rentenprognose",
+      "totalSavings": "Gesamtersparnis bei Renteneintritt",
+      "monthlyIncome": "Geschätztes monatliches Einkommen",
+      "yearsOfRetirement": "Finanzierte Rentenjahre",
+      "purchasingPower": "Kaufkraft (inflationsbereinigt)"
+    },
+    "validation": {
+      "ageRequired": "Bitte geben Sie Ihr aktuelles Alter ein",
+      "retirementAgeRequired": "Bitte geben Sie Ihr Rentenalter ein",
+      "retirementAgeTooLow": "Das Rentenalter muss höher als das aktuelle Alter sein",
+      "contributionRequired": "Bitte geben Sie einen monatlichen Beitrag ein"
+    }
+  },
+
+  "contact": {
+    "title": "Kontaktieren Sie uns",
+    "subtitle": "Nehmen Sie Kontakt mit unserem Team auf. Wir sind hier, um zu helfen.",
+    "name": "Vollständiger Name",
+    "email": "E-Mail-Adresse",
+    "subject": "Betreff",
+    "message": "Nachricht",
+    "send": "Nachricht senden",
+    "sending": "Wird gesendet...",
+    "success": "Nachricht erfolgreich gesendet! Wir melden uns bald bei Ihnen.",
+    "error": "Fehler beim Senden der Nachricht. Bitte versuchen Sie es erneut.",
+    "validation": {
+      "nameRequired": "Bitte geben Sie Ihren Namen ein",
+      "emailRequired": "Bitte geben Sie Ihre E-Mail ein",
+      "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "messageRequired": "Bitte geben Sie eine Nachricht ein"
+    }
+  },
+
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Willkommen zurück",
+    "myContracts": "Meine Verträge",
+    "createNew": "Neuen Vertrag erstellen",
+    "viewAll": "Alle anzeigen",
+    "stats": {
+      "totalBalance": "Gesamtsaldo",
+      "activeContracts": "Aktive Verträge",
+      "pendingActions": "Ausstehende Aktionen",
+      "monthlyReturn": "Monatliche Rendite"
+    },
+    "recentActivity": "Letzte Aktivitäten",
+    "noContracts": "Sie haben noch keine Verträge",
+    "getStarted": "Beginnen Sie mit der Erstellung Ihres ersten Rentenvertrags"
+  },
+
+  "createContract": {
+    "title": "Rentenvertrag erstellen",
+    "subtitle": "Richten Sie Ihren personalisierten Alterssparplan ein",
+    "steps": {
+      "details": "Vertragsdetails",
+      "investment": "Anlageoptionen",
+      "review": "Überprüfen & Unterschreiben"
+    },
+    "contractType": "Vertragstyp",
+    "duration": "Laufzeit (Jahre)",
+    "contribution": "Monatlicher Beitrag",
+    "initialDeposit": "Ersteinzahlung",
+    "riskLevel": "Risikoniveau",
+    "riskLevels": {
+      "low": "Geringes Risiko - Konservativ",
+      "medium": "Mittleres Risiko - Ausgewogen",
+      "high": "Hohes Risiko - Aggressiv"
+    },
+    "beneficiary": "Begünstigter (Optional)",
+    "emergencyWithdrawal": "Notfallabhebung zulassen",
+    "autoReinvest": "Erträge automatisch reinvestieren",
+    "review": "Vertrag überprüfen",
+    "sign": "Vertrag unterschreiben",
+    "signing": "Wird unterschrieben...",
+    "terms": "Ich stimme den Allgemeinen Geschäftsbedingungen zu",
+    "success": "Vertrag erfolgreich erstellt!",
+    "error": "Fehler beim Erstellen des Vertrags. Bitte versuchen Sie es erneut."
+  },
+
+  "contractCreated": {
+    "title": "Vertrag erfolgreich erstellt!",
+    "subtitle": "Ihr Rentenvertrag ist jetzt aktiv",
+    "contractId": "Vertrags-ID",
+    "nextSteps": "Nächste Schritte",
+    "step1": "Ihr Vertrag ist jetzt auf der Blockchain aktiv",
+    "step2": "Sie können ihn in Ihrem Dashboard anzeigen und verwalten",
+    "step3": "Automatische monatliche Beiträge einrichten",
+    "goToDashboard": "Zum Dashboard",
+    "viewContract": "Vertragsdetails anzeigen"
+  },
+
+  "footer": {
+    "copyright": "© 2025 Ethernity DAO. Alle Rechte vorbehalten.",
+    "privacy": "Datenschutzerklärung",
+    "terms": "Nutzungsbedingungen",
+    "documentation": "Dokumentation",
+    "support": "Support",
+    "community": "Community",
+    "followUs": "Folgen Sie uns"
+  },
+
+  "errors": {
+    "walletNotConnected": "Bitte verbinden Sie Ihre Wallet",
+    "networkError": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+    "transactionFailed": "Transaktion fehlgeschlagen",
+    "insufficientFunds": "Unzureichende Mittel",
+    "userRejected": "Transaktion vom Benutzer abgelehnt",
+    "somethingWrong": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  }
 }

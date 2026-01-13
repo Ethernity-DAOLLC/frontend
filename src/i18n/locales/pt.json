@@ -1,0 +1,243 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "submit": "Enviar",
+    "close": "Fechar",
+    "yes": "Sim",
+    "no": "Não",
+    "optional": "Opcional",
+    "required": "Obrigatório"
+  },
+
+  "nav": {
+    "home": "Início",
+    "calculator": "Calculadora",
+    "dashboard": "Painel",
+    "contact": "Contato",
+    "about": "Sobre",
+    "connectWallet": "Conectar Carteira",
+    "disconnect": "Desconectar"
+  },
+
+  "wallet": {
+    "connectedWallet": "Carteira Conectada",
+    "balance": "Saldo",
+    "network": "Rede",
+    "switchTo": "Mudar para",
+    "correctNetwork": "Rede Correta.",
+    "connectedTo": "Conectado a",
+    "wrongNetwork": "Rede Incorreta.",
+    "viewFullAccount": "Ver Conta Completa",
+    "disconnect": "Desconectar Carteira",
+    "needTestEth": "Precisa de ETH de teste? Obter do faucet",
+    "yourWallet": "Sua Carteira",
+    "language": "Idioma"
+  },
+
+  "hero": {
+    "title": "Liberdade Financeira em Suas Mãos",
+    "subtitle": "Garanta Seu Amanhã com a Decisão que Você Toma Hoje",
+    "ctaConnected": "Ir para a Calculadora",
+    "ctaDisconnected": "Conectar Carteira e Começar"
+  },
+
+  "survey": {
+    "title": "Ajude-nos a Conhecê-lo Melhor",
+    "subtitle": "Sua opinião é valiosa. Responda a estas perguntas e ajude-nos a criar o melhor sistema de aposentadoria para você.",
+    "question1": "Qual é a sua faixa etária?",
+    "question2": "Eu Confio em Sistemas Tradicionais de Pensão/Aposentadoria",
+    "question3": "Estou Familiarizado com Blockchain/Criptomoedas",
+    "question4": "Estou Preocupado em Não Ter Dinheiro Suficiente para a Aposentadoria",
+    "question5": "Atualmente Tenho um Plano de Aposentadoria Ativo",
+    "question6": "Valorizo Transparência e Controle sobre Meus Investimentos de Aposentadoria",
+    "question7": "Estaria Interessado em Criar Meu Próprio Fundo de Aposentadoria com Transparência Blockchain",
+    "ageOptions": {
+      "18-24": "18-24 anos",
+      "25-34": "25-34 anos",
+      "35-44": "35-44 anos",
+      "45-54": "45-54 anos",
+      "55-64": "55-64 anos",
+      "65+": "65+ anos"
+    },
+    "rating": {
+      "stronglyDisagree": "Discordo Totalmente",
+      "disagree": "Discordo",
+      "neutral": "Neutro",
+      "agree": "Concordo",
+      "stronglyAgree": "Concordo Totalmente"
+    },
+    "submit": "Enviar Pesquisa",
+    "submitting": "Enviando...",
+    "required": "Todas as perguntas são obrigatórias. Suas respostas são anônimas.",
+    "errorTitle": "Erro",
+    "selectAge": "Por favor, selecione sua faixa etária",
+    "answerAll": "Por favor, responda todas as perguntas"
+  },
+
+  "followUp": {
+    "successTitle": "Pesquisa enviada com sucesso!",
+    "successMessage": "Obrigado pelo seu tempo. Mais duas perguntas e terminamos.",
+    "question1": "Gostaria de receber mais informações sobre Ethernity DAO?",
+    "yesInterested": "Sim, estou interessado",
+    "notNow": "Agora não",
+    "question2": "Qual é o seu e-mail?",
+    "emailPlaceholder": "seu@email.com",
+    "finish": "Finalizar",
+    "thankYou": "Muito obrigado pelo seu tempo!",
+    "willContact": "Entraremos em contato em breve com mais informações sobre Ethernity DAO.",
+    "helpImprove": "Suas respostas nos ajudarão a melhorar nosso serviço.",
+    "pleaseIndicate": "Por favor, indique se deseja receber mais informações",
+    "enterEmail": "Por favor, insira seu e-mail para receber informações"
+  },
+
+  "features": {
+    "title": "Por Que Nos Escolher?",
+    "security": {
+      "title": "Segurança Zero-Knowledge",
+      "description": "Seus dados permanecem privados. Usamos criptografia avançada para garantir que seus detalhes financeiros nunca sejam expostos."
+    },
+    "education": {
+      "title": "Educação Financeira",
+      "description": "Conheça nossos parceiros e as melhores plataformas de e-learning. Obtenha cursos financeiros especializados para otimizar seus investimentos."
+    },
+    "fees": {
+      "title": "Taxas Transparentes",
+      "description": "Sem custos ocultos. Taxas claras e baixas para maximizar suas economias de aposentadoria."
+    }
+  },
+
+  "about": {
+    "title": "Sobre Ethernity",
+    "description": "Dedicamo-nos a ajudá-lo a construir um futuro financeiro seguro. Com foco em privacidade, segurança e gestão especializada, nossos fundos de aposentadoria são projetados para lhe dar tranquilidade. Seus dados são protegidos com princípios zero-knowledge, garantindo que suas informações permaneçam apenas suas."
+  },
+
+  "calculator": {
+    "title": "Calculadora de Aposentadoria",
+    "subtitle": "Planeje seu futuro financeiro com nossa calculadora avançada",
+    "currentAge": "Idade Atual",
+    "retirementAge": "Idade de Aposentadoria",
+    "monthlyContribution": "Contribuição Mensal",
+    "expectedReturn": "Retorno Anual Esperado",
+    "inflationRate": "Taxa de Inflação",
+    "calculate": "Calcular",
+    "reset": "Redefinir",
+    "results": {
+      "title": "Sua Projeção de Aposentadoria",
+      "totalSavings": "Economia Total na Aposentadoria",
+      "monthlyIncome": "Renda Mensal Estimada",
+      "yearsOfRetirement": "Anos de Aposentadoria Financiados",
+      "purchasingPower": "Poder de Compra (ajustado pela inflação)"
+    },
+    "validation": {
+      "ageRequired": "Por favor, insira sua idade atual",
+      "retirementAgeRequired": "Por favor, insira sua idade de aposentadoria",
+      "retirementAgeTooLow": "A idade de aposentadoria deve ser maior que a idade atual",
+      "contributionRequired": "Por favor, insira uma contribuição mensal"
+    }
+  },
+
+  "contact": {
+    "title": "Entre em Contato",
+    "subtitle": "Fale com nossa equipe. Estamos aqui para ajudar.",
+    "name": "Nome Completo",
+    "email": "Endereço de E-mail",
+    "subject": "Assunto",
+    "message": "Mensagem",
+    "send": "Enviar Mensagem",
+    "sending": "Enviando...",
+    "success": "Mensagem enviada com sucesso! Entraremos em contato em breve.",
+    "error": "Erro ao enviar mensagem. Por favor, tente novamente.",
+    "validation": {
+      "nameRequired": "Por favor, insira seu nome",
+      "emailRequired": "Por favor, insira seu e-mail",
+      "emailInvalid": "Por favor, insira um endereço de e-mail válido",
+      "messageRequired": "Por favor, insira uma mensagem"
+    }
+  },
+
+  "dashboard": {
+    "title": "Painel",
+    "welcome": "Bem-vindo de volta",
+    "myContracts": "Meus Contratos",
+    "createNew": "Criar Novo Contrato",
+    "viewAll": "Ver Todos",
+    "stats": {
+      "totalBalance": "Saldo Total",
+      "activeContracts": "Contratos Ativos",
+      "pendingActions": "Ações Pendentes",
+      "monthlyReturn": "Retorno Mensal"
+    },
+    "recentActivity": "Atividade Recente",
+    "noContracts": "Você ainda não tem contratos",
+    "getStarted": "Comece criando seu primeiro contrato de aposentadoria"
+  },
+
+  "createContract": {
+    "title": "Criar Contrato de Aposentadoria",
+    "subtitle": "Configure seu plano de poupança de aposentadoria personalizado",
+    "steps": {
+      "details": "Detalhes do Contrato",
+      "investment": "Opções de Investimento",
+      "review": "Revisar e Assinar"
+    },
+    "contractType": "Tipo de Contrato",
+    "duration": "Duração (anos)",
+    "contribution": "Contribuição Mensal",
+    "initialDeposit": "Depósito Inicial",
+    "riskLevel": "Nível de Risco",
+    "riskLevels": {
+      "low": "Baixo Risco - Conservador",
+      "medium": "Risco Médio - Balanceado",
+      "high": "Alto Risco - Agressivo"
+    },
+    "beneficiary": "Beneficiário (Opcional)",
+    "emergencyWithdrawal": "Permitir Saque de Emergência",
+    "autoReinvest": "Reinvestir Automaticamente os Retornos",
+    "review": "Revisar Contrato",
+    "sign": "Assinar Contrato",
+    "signing": "Assinando...",
+    "terms": "Concordo com os termos e condições",
+    "success": "Contrato criado com sucesso!",
+    "error": "Erro ao criar contrato. Por favor, tente novamente."
+  },
+
+  "contractCreated": {
+    "title": "Contrato Criado com Sucesso!",
+    "subtitle": "Seu contrato de aposentadoria está agora ativo",
+    "contractId": "ID do Contrato",
+    "nextSteps": "Próximos Passos",
+    "step1": "Seu contrato está agora ativo na blockchain",
+    "step2": "Você pode visualizá-lo e gerenciá-lo no seu painel",
+    "step3": "Configure contribuições mensais automáticas",
+    "goToDashboard": "Ir para o Painel",
+    "viewContract": "Ver Detalhes do Contrato"
+  },
+
+  "footer": {
+    "copyright": "© 2025 Ethernity DAO. Todos os direitos reservados.",
+    "privacy": "Política de Privacidade",
+    "terms": "Termos de Serviço",
+    "documentation": "Documentação",
+    "support": "Suporte",
+    "community": "Comunidade",
+    "followUs": "Siga-nos"
+  },
+
+  "errors": {
+    "walletNotConnected": "Por favor, conecte sua carteira",
+    "networkError": "Erro de rede. Por favor, tente novamente.",
+    "transactionFailed": "Transação falhou",
+    "insufficientFunds": "Fundos insuficientes",
+    "userRejected": "Transação rejeitada pelo usuário",
+    "somethingWrong": "Algo deu errado. Por favor, tente novamente."
+  }
+}

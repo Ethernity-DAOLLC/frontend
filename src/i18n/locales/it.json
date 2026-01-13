@@ -1,15 +1,55 @@
 {
+  "common": {
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "success": "Successo",
+    "cancel": "Annulla",
+    "confirm": "Conferma",
+    "save": "Salva",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "back": "Indietro",
+    "next": "Avanti",
+    "submit": "Invia",
+    "close": "Chiudi",
+    "yes": "Sì",
+    "no": "No",
+    "optional": "Opzionale",
+    "required": "Obbligatorio"
+  },
+
   "nav": {
     "home": "Home",
     "calculator": "Calcolatore",
-    "about": "Chi siamo"
+    "dashboard": "Dashboard",
+    "contact": "Contatto",
+    "about": "Chi siamo",
+    "connectWallet": "Connetti Wallet",
+    "disconnect": "Disconnetti"
   },
+
+  "wallet": {
+    "connectedWallet": "Portafoglio Connesso",
+    "balance": "Saldo",
+    "network": "Rete",
+    "switchTo": "Passa a",
+    "correctNetwork": "Rete Corretta.",
+    "connectedTo": "Connesso a",
+    "wrongNetwork": "Rete Sbagliata.",
+    "viewFullAccount": "Visualizza Account Completo",
+    "disconnect": "Disconnetti Portafoglio",
+    "needTestEth": "Serve ETH di test? Ottienilo dal faucet",
+    "yourWallet": "Il Tuo Portafoglio",
+    "language": "Lingua"
+  },
+
   "hero": {
     "title": "Libertà Finanziaria nelle Tue Mani",
     "subtitle": "Assicura il Tuo Domani con la Decisione che Prendi Oggi",
     "ctaConnected": "Vai al Calcolatore",
     "ctaDisconnected": "Connetti Wallet e Inizia"
   },
+
   "survey": {
     "title": "Aiutaci a Conoscerti Meglio",
     "subtitle": "La tua opinione è preziosa. Rispondi a queste domande e aiutaci a creare il miglior sistema pensionistico per te.",
@@ -42,6 +82,7 @@
     "selectAge": "Seleziona la tua fascia d'età",
     "answerAll": "Rispondi a tutte le domande"
   },
+
   "followUp": {
     "successTitle": "Sondaggio inviato con successo!",
     "successMessage": "Grazie per il tuo tempo. Ancora due domande e abbiamo finito.",
@@ -57,6 +98,7 @@
     "pleaseIndicate": "Indica se desideri ricevere maggiori informazioni",
     "enterEmail": "Inserisci la tua email per ricevere informazioni"
   },
+
   "features": {
     "title": "Perché Sceglierci?",
     "security": {
@@ -72,22 +114,130 @@
       "description": "Nessun costo nascosto. Commissioni chiare e basse per massimizzare i tuoi risparmi pensionistici."
     }
   },
+
   "about": {
     "title": "Chi è Ethernity",
     "description": "Siamo dedicati ad aiutarti a costruire un futuro finanziario sicuro. Con focus su privacy, sicurezza e gestione esperta, i nostri fondi pensione sono progettati per darti tranquillità. I tuoi dati sono protetti con principi zero-knowledge, garantendo che le tue informazioni rimangano solo tue."
   },
-  "wallet": {
-    "connectedWallet": "Portafoglio Connesso",
-    "balance": "Saldo",
-    "network": "Rete",
-    "switchTo": "Passa a",
-    "correctNetwork": "Rete Corretta.",
-    "connectedTo": "Connesso a",
-    "wrongNetwork": "Rete Sbagliata.",
-    "viewFullAccount": "Visualizza Account Completo",
-    "disconnect": "Disconnetti Portafoglio",
-    "needTestEth": "Serve ETH di test? Ottienilo dal faucet",
-    "yourWallet": "Il Tuo Portafoglio",
-    "language": "Lingua"
+
+  "calculator": {
+    "title": "Calcolatore Pensionistico",
+    "subtitle": "Pianifica il tuo futuro finanziario con il nostro calcolatore avanzato",
+    "currentAge": "Età Attuale",
+    "retirementAge": "Età Pensionabile",
+    "monthlyContribution": "Contributo Mensile",
+    "expectedReturn": "Rendimento Annuo Atteso",
+    "inflationRate": "Tasso di Inflazione",
+    "calculate": "Calcola",
+    "reset": "Reimposta",
+    "results": {
+      "title": "La Tua Proiezione Pensionistica",
+      "totalSavings": "Risparmi Totali alla Pensione",
+      "monthlyIncome": "Reddito Mensile Stimato",
+      "yearsOfRetirement": "Anni di Pensione Finanziati",
+      "purchasingPower": "Potere d'Acquisto (adeguato all'inflazione)"
+    },
+    "validation": {
+      "ageRequired": "Inserisci la tua età attuale",
+      "retirementAgeRequired": "Inserisci la tua età pensionabile",
+      "retirementAgeTooLow": "L'età pensionabile deve essere maggiore dell'età attuale",
+      "contributionRequired": "Inserisci un contributo mensile"
+    }
+  },
+
+  "contact": {
+    "title": "Contattaci",
+    "subtitle": "Mettiti in contatto con il nostro team. Siamo qui per aiutarti.",
+    "name": "Nome Completo",
+    "email": "Indirizzo Email",
+    "subject": "Oggetto",
+    "message": "Messaggio",
+    "send": "Invia Messaggio",
+    "sending": "Invio in corso...",
+    "success": "Messaggio inviato con successo! Ti risponderemo presto.",
+    "error": "Errore nell'invio del messaggio. Riprova.",
+    "validation": {
+      "nameRequired": "Inserisci il tuo nome",
+      "emailRequired": "Inserisci la tua email",
+      "emailInvalid": "Inserisci un indirizzo email valido",
+      "messageRequired": "Inserisci un messaggio"
+    }
+  },
+
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Bentornato",
+    "myContracts": "I Miei Contratti",
+    "createNew": "Crea Nuovo Contratto",
+    "viewAll": "Visualizza Tutti",
+    "stats": {
+      "totalBalance": "Saldo Totale",
+      "activeContracts": "Contratti Attivi",
+      "pendingActions": "Azioni in Sospeso",
+      "monthlyReturn": "Rendimento Mensile"
+    },
+    "recentActivity": "Attività Recente",
+    "noContracts": "Non hai ancora nessun contratto",
+    "getStarted": "Inizia creando il tuo primo contratto pensionistico"
+  },
+
+  "createContract": {
+    "title": "Crea Contratto Pensionistico",
+    "subtitle": "Configura il tuo piano di risparmio pensionistico personalizzato",
+    "steps": {
+      "details": "Dettagli del Contratto",
+      "investment": "Opzioni di Investimento",
+      "review": "Rivedi e Firma"
+    },
+    "contractType": "Tipo di Contratto",
+    "duration": "Durata (anni)",
+    "contribution": "Contributo Mensile",
+    "initialDeposit": "Deposito Iniziale",
+    "riskLevel": "Livello di Rischio",
+    "riskLevels": {
+      "low": "Basso Rischio - Conservativo",
+      "medium": "Rischio Medio - Bilanciato",
+      "high": "Alto Rischio - Aggressivo"
+    },
+    "beneficiary": "Beneficiario (Opzionale)",
+    "emergencyWithdrawal": "Consenti Prelievo di Emergenza",
+    "autoReinvest": "Reinvesti Automaticamente i Rendimenti",
+    "review": "Rivedi Contratto",
+    "sign": "Firma Contratto",
+    "signing": "Firma in corso...",
+    "terms": "Accetto i termini e le condizioni",
+    "success": "Contratto creato con successo!",
+    "error": "Errore nella creazione del contratto. Riprova."
+  },
+
+  "contractCreated": {
+    "title": "Contratto Creato con Successo!",
+    "subtitle": "Il tuo contratto pensionistico è ora attivo",
+    "contractId": "ID Contratto",
+    "nextSteps": "Prossimi Passi",
+    "step1": "Il tuo contratto è ora attivo sulla blockchain",
+    "step2": "Puoi visualizzarlo e gestirlo dalla tua dashboard",
+    "step3": "Configura contributi mensili automatici",
+    "goToDashboard": "Vai alla Dashboard",
+    "viewContract": "Visualizza Dettagli del Contratto"
+  },
+
+  "footer": {
+    "copyright": "© 2025 Ethernity DAO. Tutti i diritti riservati.",
+    "privacy": "Informativa sulla Privacy",
+    "terms": "Termini di Servizio",
+    "documentation": "Documentazione",
+    "support": "Supporto",
+    "community": "Comunità",
+    "followUs": "Seguici"
+  },
+
+  "errors": {
+    "walletNotConnected": "Connetti il tuo portafoglio",
+    "networkError": "Errore di rete. Riprova.",
+    "transactionFailed": "Transazione fallita",
+    "insufficientFunds": "Fondi insufficienti",
+    "userRejected": "Transazione rifiutata dall'utente",
+    "somethingWrong": "Qualcosa è andato storto. Riprova."
   }
 }
