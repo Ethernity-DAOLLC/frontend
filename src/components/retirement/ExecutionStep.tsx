@@ -3,11 +3,10 @@ import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagm
 import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { parseUnits } from 'viem';
 import { getContractAddress } from '@/config/addresses';
-import PersonalFundFactoryArtifact from '@/abis/PersonalFundFactory.json';  // Cambiamos nombre para claridad
+import PersonalFundFactoryArtifact from '@/abis/PersonalFundFactory.json';
 import type { RetirementPlan } from '@/types/retirement_types';
 
 const PersonalFundFactoryABI = PersonalFundFactoryArtifact.abi as const;
-
 const ERC20_ABI = [
   {
     name: 'approve',

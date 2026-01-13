@@ -33,13 +33,11 @@ const CreateContractPage: React.FC = () => {
   const chainId = useChainId();
   const { isConnected: authConnected } = useAuth();
   const { planData } = useRetirementPlan();
-  
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [verificationPassed, setVerificationPassed] = useState(false);
   const [needsApproval, setNeedsApproval] = useState(true);
-  
   const FACTORY_ADDRESS = useFactoryAddress(chainId);
 
   useEffect(() => {
@@ -57,7 +55,6 @@ const CreateContractPage: React.FC = () => {
 
   const totalFee = formData ? Number(formData.initialDeposit) * 0.03 : 0;
   const netToFund = formData ? Number(formData.initialDeposit) * 0.97 : 0;
-
   const handleVerificationComplete = (requiresApproval: boolean) => {
     setVerificationPassed(true);
     setNeedsApproval(requiresApproval);
