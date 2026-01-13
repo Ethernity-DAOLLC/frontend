@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { parseUnits } from 'viem';
-import { getContractAddress } from '@/config/addresses'
+import { getContractAddress } from '@/config/addresses';
 import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
 import type { RetirementPlan } from '@/types/retirement_types';
 
@@ -43,7 +43,6 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
   };
 
   const initialDepositWei = parseUSDC(plan.initialDeposit);
-
   const { 
     writeContract: writeApproval, 
     data: approvalHash, 
@@ -73,11 +72,12 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     error: receiptError
   } = useWaitForTransactionReceipt({
     hash: txHash,
-    pollingInterval: 10000, 
+    pollingInterval: 10000,
   });
 
+  const isStep = <T extends TransactionStep>(s: TransactionStep, expected: T): s is T => s === expected;
   useEffect(() => {
-    if (isApprovalSuccess && approvalHash && step === 'approving') {
+    if (isApprovalSuccess && approvalHash && isStep(step, 'approving')) {
       console.log('✅ Approval confirmed:', approvalHash);
       setStep('approved');
 
@@ -85,45 +85,41 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
   }, [isApprovalSuccess, approvalHash, step]);
 
   useEffect(() => {
-    if (approvalError && step === 'approving') {
-      console.error('❌ Approval error:', approvalError);
-      const errMsg = (approvalError as any)?.shortMessage || approvalError.message || 'Unknown error';
+    if (approvalError && isStep(step, 'approving')) {
+      const errMsg = (approvalError as any)?.shortMessage || approvalError.message || 'Error desconocido';
       setError(`Aprobación fallida: ${errMsg}`);
       setStep('error');
     }
   }, [approvalError, step]);
 
-  // Handle create error
   useEffect(() => {
-    if (createError && (step === 'creating' || step === 'approved')) {
-      console.error('❌ Create fund error:', createError);
-      const errMsg = (createError as any)?.shortMessage || createError.message || 'Unknown error';
+    if (createError && (isStep(step, 'creating') || isStep(step, 'approved'))) {
+      const errMsg = (createError as any)?.shortMessage || createError.message || 'Error desconocido';
       setError(`Creación fallida: ${errMsg}`);
       setStep('error');
     }
   }, [createError, step]);
 
   useEffect(() => {
-    if (receiptError && step === 'confirming') {
-      console.error('❌ Receipt error:', receiptError);
-      const errMsg = (receiptError as any)?.shortMessage || receiptError.message || 'Failed to get transaction receipt';
-      setError(`Error confirmando transacción: ${errMsg}. Intenta recargar la página.`);
+    if (receiptError && isStep(step, 'confirming')) {
+      const errMsg = (receiptError as any)?.shortMessage || receiptError.message || 'Fallo al obtener receipt';
+      setError(`Error confirmando: ${errMsg}. Recarga la página e intenta nuevamente.`);
       setStep('error');
     }
   }, [receiptError, step]);
 
   useEffect(() => {
-    if (isTxSuccess && receipt && step === 'confirming') {
-      if (!Array.isArray(receipt.logs)) {
-        console.error('❌ Invalid receipt logs:', receipt.logs);
-        setError('Error procesando transacción: Logs inválidos. Recarga la página e intenta de nuevo.');
+    if (isTxSuccess && receipt && isStep(step, 'confirming')) {
+      if (!Array.isArray(receipt?.logs)) {
+        console.error('Receipt logs inválidos:', receipt?.logs);
+        setError('Error procesando receipt: logs no válidos. Recarga la página.');
         setStep('error');
         return;
       }
 
       console.log('✅ Fondo creado exitosamente!', receipt);
       setStep('success');
-      onSuccess(txHash as string );
+      onSuccess(txHash as string);
     }
   }, [isTxSuccess, receipt, step, txHash, onSuccess]);
 
@@ -145,7 +141,6 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
 
   const handleCreateFund = () => {
     setStep('creating');
-
     writeCreateFund({
       address: factoryAddress,
       abi: PersonalFundFactoryABI,
@@ -170,8 +165,38 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
 
   return (
     <div className="space-y-6">
-      {/* Error Display */}
-      {error && (
+      {/* Mensaje especial después de aprobación exitosa */}
+      {isStep(step, 'approved') && (
+        <div className="bg-amber-50 rounded-xl p-6 border-2 border-amber-200">
+          <div className="flex items-start gap-3 mb-4">
+            <CheckCircle className="text-amber-600 flex-shrink-0 mt-1" size={24} />
+            <div>
+              <h3 className="text-lg font-bold text-amber-800 mb-2">¡Aprobación exitosa!</h3>
+              <p className="text-amber-700">
+                La aprobación de USDC se confirmó correctamente.
+              </p>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg p-4">
+            <p className="text-sm text-amber-900 font-semibold mb-2">
+              ⚠️ Para continuar con la creación del contrato:
+            </p>
+            <p className="text-sm text-amber-800 mb-4">
+              Recarga la página para asegurar una conexión estable con tu wallet.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"
+            >
+              <RefreshCw size={16} />
+              Recargar página ahora
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && !isStep(step, 'approved') && (
         <div className="bg-red-50 rounded-xl p-6 border-2 border-red-200">
           <div className="flex items-start gap-3">
             <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
@@ -200,38 +225,8 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
         </div>
       )}
 
-      {/* Reload Message after Approval */}
-      {step === 'approved' && (
-        <div className="bg-amber-50 rounded-xl p-6 border-2 border-amber-200">
-          <div className="flex items-start gap-3 mb-4">
-            <CheckCircle className="text-amber-600 flex-shrink-0 mt-1" size={24} />
-            <div>
-              <h3 className="text-lg font-bold text-amber-800 mb-2">¡Aprobación exitosa!</h3>
-              <p className="text-amber-700">
-                La aprobación de USDC se confirmó correctamente.
-              </p>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg p-4">
-            <p className="text-sm text-amber-900 font-semibold mb-2">
-              ⚠️ Para continuar, recarga la página
-            </p>
-            <p className="text-sm text-amber-800 mb-4">
-              Esto asegura una conexión estable con tu wallet antes de crear el contrato.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"
-            >
-              <RefreshCw size={16} />
-              Recargar ahora
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Progress Steps */}
-      {step !== 'idle' && step !== 'approved' && !error && (
+      {/* Progreso */}
+      {step !== 'idle' && !isStep(step, 'approved') && !error && (
         <div className="space-y-4">
           <h3 className="text-xl font-bold text-gray-800 text-center">
             Ejecutando transacciones...
@@ -240,12 +235,12 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
           <div className="space-y-3">
             {needsApproval && (
               <div className={`flex items-center gap-3 p-3 rounded-lg ${
-                step === 'approving' || step === 'approved' || step === 'creating' 
+                isStep(step, 'approving') || isStep(step, 'approved') || isStep(step, 'creating') 
                   ? 'bg-green-100' : 'bg-gray-100'
               }`}>
-                {step === 'approved' || step === 'creating' || step === 'success' ? (
+                {isStep(step, 'approved') || isStep(step, 'creating') || isStep(step, 'success') ? (
                   <CheckCircle className="text-green-600 flex-shrink-0" size={24} />
-                ) : step === 'approving' ? (
+                ) : isStep(step, 'approving') ? (
                   <Loader2 className="animate-spin text-blue-600 flex-shrink-0" size={24} />
                 ) : (
                   <div className="w-6 h-6 rounded-full border-2 border-gray-400 flex-shrink-0" />
@@ -262,11 +257,12 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
             )}
 
             <div className={`flex items-center gap-3 p-3 rounded-lg ${
-              step === 'creating' || step === 'confirming' || step === 'success' ? 'bg-blue-100' : 'bg-gray-100'
+              isStep(step, 'creating') || isStep(step, 'confirming') || isStep(step, 'success') 
+                ? 'bg-blue-100' : 'bg-gray-100'
             }`}>
-              {step === 'success' ? (
+              {isStep(step, 'success') ? (
                 <CheckCircle className="text-blue-600 flex-shrink-0" size={24} />
-              ) : (step === 'creating' || step === 'confirming') ? (
+              ) : isStep(step, 'creating') || isStep(step, 'confirming') ? (
                 <Loader2 className="animate-spin text-blue-600 flex-shrink-0" size={24} />
               ) : (
                 <div className="w-6 h-6 rounded-full border-2 border-gray-400 flex-shrink-0" />
@@ -283,21 +279,18 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
               </div>
             </div>
           </div>
-
-          {/* Waiting messages */}
           <div className="mt-4 bg-amber-50 rounded-lg p-3">
             <p className="text-sm text-amber-800">
-              {step === 'approving' && '⏳ Confirma la aprobación en tu wallet'}
-              {step === 'approved' && '✓ Preparando creación del contrato...'}
-              {step === 'creating' && '⏳ Confirma la transacción en tu wallet'}
-              {step === 'confirming' && '⏳ Esperando confirmación en la blockchain...'}
+              {isStep(step, 'approving') && '⏳ Confirma la aprobación en tu wallet'}
+              {isStep(step, 'creating') && '⏳ Confirma la transacción en tu wallet'}
+              {isStep(step, 'confirming') && '⏳ Esperando confirmación en la blockchain...'}
             </p>
           </div>
         </div>
       )}
 
-      {/* Start Button */}
-      {step === 'idle' && (
+      {/* Botón de inicio */}
+      {isStep(step, 'idle') && (
         <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200">
           <h3 className="text-xl font-bold text-gray-800 mb-4">
             Listo para crear tu contrato
