@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';  
 import { formatUnits, parseUnits } from 'viem';
 import { useChainId } from 'wagmi';
 import { useBalanceVerification } from '@/hooks/funds/useBalanceVerification';
@@ -29,6 +29,12 @@ export function VerificationStep({ plan, onVerificationComplete }: VerificationS
   const gasToken = chainId === 421614 ? 'ETH' : 'POL';
   const networkName = chainId === 421614 ? 'Arbitrum Sepolia' : 'Polygon Amoy';
 
+  useEffect(() => {
+    if (allChecksPass) {
+      onVerificationComplete(!hasEnoughAllowance); 
+    }
+  }, [allChecksPass, hasEnoughAllowance, onVerificationComplete]); 
+
   if (isLoading) {
     return (
       <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 text-center">
@@ -40,7 +46,6 @@ export function VerificationStep({ plan, onVerificationComplete }: VerificationS
 
   const depositAmount = parseUnits(plan.initialDeposit.toString(), 6);
   const feeAmount = (depositAmount * 3n) / 100n;
-
   const CheckItem: React.FC<{
     passed: boolean;
     title: string;
@@ -242,12 +247,6 @@ export function VerificationStep({ plan, onVerificationComplete }: VerificationS
           </div>
         )}
       </div>
-
-      {allChecksPass && (
-        <div className="hidden">
-          {onVerificationComplete(!hasEnoughAllowance)}
-        </div>
-      )}
     </div>
   );
 }
