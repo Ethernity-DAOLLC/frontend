@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 const HomePage = lazy(() => import("../pages/Public/HomePage"));
 const Calculator = lazy(() => import("../pages/Public/CalculatorPage"));
 const ContactPage = lazy(() => import("../pages/Public/ContactPage"));
-const WalletTestPage = lazy(() => import("../pages/WalletTestPage"));
+const WalletTestPage = lazy(() => import("../stand_by_docs/WalletTestPage"));
 
 interface PublicRoute {
   path: string;

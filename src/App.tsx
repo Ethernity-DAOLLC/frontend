@@ -21,7 +21,7 @@ const ContractsManagement = lazy(() => import('./pages/Admin/ContractsManagement
 const GovernanceManagement = lazy(() => import('./pages/Admin/GovernanceManagement'));
 const TokenManagement = lazy(() => import('./pages/Admin/TokenManagement'));
 const TreasuryManagement = lazy(() => import('./pages/Admin/TreasuryManagement'));
-const WalletTestPage = lazy(() => import('./pages/WalletTestPage'));
+const WalletTestPage = lazy(() => import('./stand_by_docs/WalletTestPage'));
 
 function App() {
   return (
