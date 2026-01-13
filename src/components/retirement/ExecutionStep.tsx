@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
-import { Loader2, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { parseUnits } from 'viem';
 import { getContractAddress } from '@/config/addresses'
 import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
@@ -42,6 +42,8 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     return parseUnits(num.toString(), 6);
   };
 
+  const initialDepositWei = parseUSDC(plan.initialDeposit);
+
   const { 
     writeContract: writeApproval, 
     data: approvalHash, 
@@ -54,6 +56,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     isSuccess: isApprovalSuccess 
   } = useWaitForTransactionReceipt({
     hash: approvalHash,
+    pollingInterval: 10000, 
   });
 
   const { 
@@ -66,236 +69,181 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
   const { 
     isLoading: isTxConfirming, 
     isSuccess: isTxSuccess,
-    data: receipt 
+    data: receipt,
+    error: receiptError
   } = useWaitForTransactionReceipt({
     hash: txHash,
+    pollingInterval: 10000, 
   });
 
   useEffect(() => {
     if (isApprovalSuccess && approvalHash && step === 'approving') {
-      console.log('✅ Approval confirmed');
+      console.log('✅ Approval confirmed:', approvalHash);
       setStep('approved');
-      setTimeout(() => {
-        handleCreateFund();
-      }, 1500);
+
     }
   }, [isApprovalSuccess, approvalHash, step]);
 
   useEffect(() => {
     if (approvalError && step === 'approving') {
       console.error('❌ Approval error:', approvalError);
-      setError(`Aprobación fallida: ${(approvalError as any)?.shortMessage || approvalError.message}`);
+      const errMsg = (approvalError as any)?.shortMessage || approvalError.message || 'Unknown error';
+      setError(`Aprobación fallida: ${errMsg}`);
       setStep('error');
     }
   }, [approvalError, step]);
 
+  // Handle create error
   useEffect(() => {
     if (createError && (step === 'creating' || step === 'approved')) {
       console.error('❌ Create fund error:', createError);
-      setError(`Creación fallida: ${(createError as any)?.shortMessage || createError.message}`);
+      const errMsg = (createError as any)?.shortMessage || createError.message || 'Unknown error';
+      setError(`Creación fallida: ${errMsg}`);
       setStep('error');
     }
   }, [createError, step]);
 
   useEffect(() => {
-    if (isTxSuccess && txHash && step === 'confirming') {
-      console.log('✅ Transaction successful!', receipt);
-      setStep('success');
-
-      const fundAddress = '0x...';       
-      onSuccess(txHash, fundAddress);
+    if (receiptError && step === 'confirming') {
+      console.error('❌ Receipt error:', receiptError);
+      const errMsg = (receiptError as any)?.shortMessage || receiptError.message || 'Failed to get transaction receipt';
+      setError(`Error confirmando transacción: ${errMsg}. Intenta recargar la página.`);
+      setStep('error');
     }
-  }, [isTxSuccess, txHash, receipt, step]);
+  }, [receiptError, step]);
 
   useEffect(() => {
-    if (isTxConfirming && step === 'creating') {
-      setStep('confirming');
-    }
-  }, [isTxConfirming, step]);
+    if (isTxSuccess && receipt && step === 'confirming') {
+      if (!Array.isArray(receipt.logs)) {
+        console.error('❌ Invalid receipt logs:', receipt.logs);
+        setError('Error procesando transacción: Logs inválidos. Recarga la página e intenta de nuevo.');
+        setStep('error');
+        return;
+      }
 
-  const handleApproveUSDC = async () => {
-    if (!usdcAddress) {
-      setError('USDC address not configured for this network');
-      return;
+      console.log('✅ Fondo creado exitosamente!', receipt);
+      setStep('success');
+      onSuccess(txHash as string );
     }
+  }, [isTxSuccess, receipt, step, txHash, onSuccess]);
 
+  const handleStart = () => {
     setError('');
     setStep('approving');
-    
-    try {
-      console.log('🔐 Approving USDC...');
-      const requiredAmount = parseUSDC(plan.initialDeposit);
-      
+
+    if (needsApproval) {
       writeApproval({
         address: usdcAddress,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [factoryAddress, requiredAmount],
+        args: [factoryAddress, initialDepositWei],
       });
-    } catch (err: any) {
-      console.error('❌ Error approving USDC:', err);
-      setError(err.message || 'Failed to approve USDC');
-      setStep('error');
-    }
-  };
-
-  const handleCreateFund = async () => {
-    setStep('creating');
-    
-    try {
-      console.log('🚀 Creating retirement fund contract...');
-      
-      const args = [
-        parseUSDC(plan.initialDeposit),
-        parseUSDC(plan.monthlyDeposit),
-        BigInt(plan.currentAge),
-        BigInt(plan.retirementAge),
-        parseUSDC(plan.desiredMonthlyIncome),
-        BigInt(plan.yearsPayments),
-        BigInt(Math.round(plan.interestRate * 100)),
-        BigInt(plan.timelockYears),
-      ];
-
-      writeCreateFund({
-        address: factoryAddress,
-        abi: PersonalFundFactoryABI as any,
-        functionName: 'createPersonalFund',
-        args,
-      });
-
-      console.log('✅ Transaction submitted');
-    } catch (err: any) {
-      console.error('❌ Error creating contract:', err);
-      setError(err.message || 'Failed to create retirement fund contract');
-      setStep('error');
-    }
-  };
-
-  const handleStart = () => {
-    if (needsApproval) {
-      handleApproveUSDC();
     } else {
       handleCreateFund();
     }
   };
 
-  const getProgressPercentage = () => {
-    if (step === 'idle') return 0;
-    if (step === 'approving') return needsApproval ? 25 : 50;
-    if (step === 'approved') return 50;
-    if (step === 'creating') return 75;
-    if (step === 'confirming') return 90;
-    if (step === 'success') return 100;
-    return 0;
+  const handleCreateFund = () => {
+    setStep('creating');
+
+    writeCreateFund({
+      address: factoryAddress,
+      abi: PersonalFundFactoryABI,
+      functionName: 'createPersonalFund',
+      args: [
+        parseUSDC(plan.principal),
+        parseUSDC(plan.monthlyDeposit),
+        plan.currentAge,
+        plan.retirementAge,
+        parseUSDC(plan.desiredMonthlyIncome),
+        plan.yearsPayments,
+        plan.interestRate,
+        plan.timelockYears,
+      ],
+    });
   };
 
-  const getStatusMessage = () => {
-    switch (step) {
-      case 'idle':
-        return 'Listo para comenzar';
-      case 'approving':
-        return 'Aprobando USDC...';
-      case 'approved':
-        return 'USDC aprobado ✓';
-      case 'creating':
-        return 'Creando tu fondo...';
-      case 'confirming':
-        return 'Confirmando transacción...';
-      case 'success':
-        return '¡Fondo creado exitosamente!';
-      case 'error':
-        return 'Error en la transacción';
-      default:
-        return '';
-    }
+  const reset = () => {
+    setStep('idle');
+    setError('');
   };
-
-  if (step === 'success' && txHash) {
-    return (
-      <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-3xl p-8 text-center shadow-2xl">
-        <CheckCircle size={80} className="mx-auto mb-6 animate-bounce" />
-        <h3 className="text-4xl font-black mb-4">¡Contrato Creado!</h3>
-        <p className="text-xl opacity-90 mb-6">Tu fondo de retiro está ahora en la blockchain</p>
-        
-        <div className="bg-white/20 backdrop-blur rounded-xl p-4 mb-6">
-          <p className="text-sm opacity-80 mb-2">Transaction Hash:</p>
-          <p className="font-mono text-sm break-all">{txHash}</p>
-        </div>
-
-        <a
-          href={`${explorerUrl}/tx/${txHash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-white text-emerald-600 font-bold py-3 px-6 rounded-xl hover:bg-gray-100 transition"
-        >
-          <ExternalLink size={20} />
-          Ver en Explorer
-        </a>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
       {/* Error Display */}
-      {error && step === 'error' && (
-        <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
+      {error && (
+        <div className="bg-red-50 rounded-xl p-6 border-2 border-red-200">
           <div className="flex items-start gap-3">
             <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
-            <div className="flex-1">
-              <h4 className="font-bold text-red-800 mb-2">Error en la transacción</h4>
-              <p className="text-red-700 text-sm whitespace-pre-line">{error}</p>
-              
-              {factoryAddress && (
-                <a
-                  href={`${explorerUrl}/address/${factoryAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 underline mt-3"
-                >
-                  <ExternalLink size={14} />
-                  Verificar Factory en Explorer
-                </a>
-              )}
+            <div>
+              <h3 className="text-lg font-bold text-red-800 mb-2">Error en la transacción</h3>
+              <p className="text-red-700">{error}</p>
             </div>
           </div>
-          
-          <button
-            onClick={handleStart}
-            className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl transition"
-          >
-            Reintentar
-          </button>
+          <div className="mt-4 space-y-2">
+            <a
+              href={`${explorerUrl}/address/${factoryAddress}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+            >
+              <ExternalLink size={16} />
+              Verificar Factory en Arbiscan
+            </a>
+            <button
+              onClick={reset}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl mt-2"
+            >
+              Reintentar
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Progress Display */}
-      {step !== 'idle' && step !== 'error' && (
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-blue-800 font-semibold text-lg">
-              {getStatusMessage()}
-            </span>
-            <span className="text-blue-600 font-bold text-xl">
-              {getProgressPercentage()}%
-            </span>
+      {/* Reload Message after Approval */}
+      {step === 'approved' && (
+        <div className="bg-amber-50 rounded-xl p-6 border-2 border-amber-200">
+          <div className="flex items-start gap-3 mb-4">
+            <CheckCircle className="text-amber-600 flex-shrink-0 mt-1" size={24} />
+            <div>
+              <h3 className="text-lg font-bold text-amber-800 mb-2">¡Aprobación exitosa!</h3>
+              <p className="text-amber-700">
+                La aprobación de USDC se confirmó correctamente.
+              </p>
+            </div>
           </div>
-
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-            <div 
-              className="bg-blue-600 h-3 rounded-full transition-all duration-500"
-              style={{ width: `${getProgressPercentage()}%` }}
-            />
+          <div className="bg-white rounded-lg p-4">
+            <p className="text-sm text-amber-900 font-semibold mb-2">
+              ⚠️ Para continuar, recarga la página
+            </p>
+            <p className="text-sm text-amber-800 mb-4">
+              Esto asegura una conexión estable con tu wallet antes de crear el contrato.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"
+            >
+              <RefreshCw size={16} />
+              Recargar ahora
+            </button>
           </div>
+        </div>
+      )}
 
-          {/* Step Indicators */}
+      {/* Progress Steps */}
+      {step !== 'idle' && step !== 'approved' && !error && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold text-gray-800 text-center">
+            Ejecutando transacciones...
+          </h3>
+
           <div className="space-y-3">
             {needsApproval && (
               <div className={`flex items-center gap-3 p-3 rounded-lg ${
-                step === 'approving' || step === 'approved' ? 'bg-blue-100' : 'bg-gray-100'
+                step === 'approving' || step === 'approved' || step === 'creating' 
+                  ? 'bg-green-100' : 'bg-gray-100'
               }`}>
-                {step === 'approved' ? (
+                {step === 'approved' || step === 'creating' || step === 'success' ? (
                   <CheckCircle className="text-green-600 flex-shrink-0" size={24} />
                 ) : step === 'approving' ? (
                   <Loader2 className="animate-spin text-blue-600 flex-shrink-0" size={24} />
@@ -317,7 +265,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
               step === 'creating' || step === 'confirming' || step === 'success' ? 'bg-blue-100' : 'bg-gray-100'
             }`}>
               {step === 'success' ? (
-                <CheckCircle className="text-green-600 flex-shrink-0" size={24} />
+                <CheckCircle className="text-blue-600 flex-shrink-0" size={24} />
               ) : (step === 'creating' || step === 'confirming') ? (
                 <Loader2 className="animate-spin text-blue-600 flex-shrink-0" size={24} />
               ) : (
