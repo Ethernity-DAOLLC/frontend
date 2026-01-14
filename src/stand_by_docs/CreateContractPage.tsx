@@ -208,20 +208,6 @@ const CreateContractPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 px-4">
       <div className="max-w-5xl mx-auto">
-        {/* 🔍 DEBUG BOX - ELIMINAR DESPUÉS */}
-        <div className="mb-4 bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4">
-          <h3 className="font-bold text-yellow-900 mb-2">🔍 Debug Info (eliminar después)</h3>
-          <div className="text-xs font-mono space-y-1">
-            <p className="text-gray-700">
-              <strong>Factory (usado como spender):</strong>
-            </p>
-            <p className="text-blue-600 break-all">{FACTORY_ADDRESS}</p>
-            <p className="text-gray-700 mt-2">
-              <strong>¿Es la dirección vieja?</strong> {FACTORY_ADDRESS === '0xe02D1A836A2145c4A87d6f3efAFe546F789823c5' ? '❌ SÍ' : '✅ NO'}
-            </p>
-          </div>
-        </div>
-
         <button
           onClick={() => navigate('/calculator')}
           className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition"
