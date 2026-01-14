@@ -10,11 +10,9 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 const HomePage = lazy(() => import('./pages/Public/HomePage'));
 const CalculatorPage = lazy(() => import('./pages/Public/CalculatorPage'));
 const ContactPage = lazy(() => import('./pages/Public/ContactPage'));
-
 const DashboardPage = lazy(() => import('./pages/User/DashboardPage'));
 const CreateContractPage = lazy(() => import('./stand_by_docs/CreateContractPage'));
 const ContractCreatedPage = lazy(() => import('./stand_by_docs/ContractCreatedPage'));
-
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 const ContactMessages = lazy(() => import('./pages/Admin/ContactMessages'));
 const ContractsManagement = lazy(() => import('./pages/Admin/ContractsManagement'));
