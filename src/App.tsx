@@ -10,16 +10,18 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 const HomePage = lazy(() => import('./pages/Public/HomePage'));
 const CalculatorPage = lazy(() => import('./pages/Public/CalculatorPage'));
 const ContactPage = lazy(() => import('./pages/Public/ContactPage'));
+
 const DashboardPage = lazy(() => import('./pages/User/DashboardPage'));
-const CreateContractPage = lazy(() => import('./stand_by_docs/CreateContractPage'));
-const ContractCreatedPage = lazy(() => import('./stand_by_docs/ContractCreatedPage'));
+const CreateContractPage = lazy(() => import('./pages/User/CreateContractPage'));
+const ContractCreatedPage = lazy(() => import('./pages/User/ContractCreatedPage'));
+
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 const ContactMessages = lazy(() => import('./pages/Admin/ContactMessages'));
 const ContractsManagement = lazy(() => import('./pages/Admin/ContractsManagement'));
 const GovernanceManagement = lazy(() => import('./pages/Admin/GovernanceManagement'));
 const TokenManagement = lazy(() => import('./pages/Admin/TokenManagement'));
 const TreasuryManagement = lazy(() => import('./pages/Admin/TreasuryManagement'));
-const WalletTestPage = lazy(() => import('./stand_by_docs/WalletTestPage'));
+const WalletTestPage = lazy(() => import('./pages/WalletTestPage'));
 
 function App() {
   return (

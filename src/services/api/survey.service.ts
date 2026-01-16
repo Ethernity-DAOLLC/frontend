@@ -243,3 +243,5 @@ export const contactService = {
     });
   },
 };
+
+export default surveyService;

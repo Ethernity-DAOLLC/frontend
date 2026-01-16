@@ -33,6 +33,7 @@ const CreateContractPage: React.FC = () => {
   const chainId = useChainId();
   const { isConnected: authConnected } = useAuth();
   const { planData } = useRetirementPlan();
+  
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);

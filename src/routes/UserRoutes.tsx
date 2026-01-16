@@ -3,8 +3,8 @@ import { Navigate } from "react-router-dom";
 import { useRetirementPlan } from "../context/RetirementContext";
 
 const DashboardPage = lazy(() => import("../pages/User/DashboardPage"));
-const CreateContractPage = lazy(() => import("../stand_by_docs/CreateContractPage"));
-const ContractCreatedPage = lazy(() => import("../stand_by_docs/ContractCreatedPage"));
+const CreateContractPage = lazy(() => import("../pages/User/CreateContractPage"));
+const ContractCreatedPage = lazy(() => import("../pages/User/ContractCreatedPage"));
 const GovernancePage = lazy(() => import("../pages/User/GovernancePage"));
 
 export const USER_PATHS = {
