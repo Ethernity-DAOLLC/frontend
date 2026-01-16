@@ -1,25 +1,65 @@
 {
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "back": "Zurück",
+    "next": "Weiter",
+    "submit": "Absenden",
+    "close": "Schließen",
+    "yes": "Ja",
+    "no": "Nein",
+    "optional": "Optional",
+    "required": "Erforderlich"
+  },
+
   "nav": {
     "home": "Startseite",
     "calculator": "Rechner",
-    "about": "Über uns"
+    "dashboard": "Dashboard",
+    "contact": "Kontakt",
+    "about": "Über uns",
+    "connectWallet": "Wallet verbinden",
+    "disconnect": "Trennen"
   },
+
+  "wallet": {
+    "connectedWallet": "Verbundenes Wallet",
+    "balance": "Guthaben",
+    "network": "Netzwerk",
+    "switchTo": "Wechseln zu",
+    "correctNetwork": "Korrekte Netzwerk.",
+    "connectedTo": "Verbunden mit",
+    "wrongNetwork": "Falsches Netzwerk.",
+    "viewFullAccount": "Vollständiges Konto anzeigen",
+    "disconnect": "Wallet trennen",
+    "needTestEth": "Brauchst du Test-ETH? Vom Faucet holen",
+    "yourWallet": "Dein Wallet",
+    "language": "Sprache"
+  },
+
   "hero": {
-    "title": "Finanzielle Freiheit in Ihren Händen",
-    "subtitle": "Sichern Sie Ihr Morgen mit der Entscheidung, die Sie heute treffen",
-    "ctaConnected": "Zum Rechner",
+    "title": "Finanzielle Freiheit in deinen Händen",
+    "subtitle": "Sichere deine Zukunft mit der Entscheidung, die du heute triffst",
+    "ctaConnected": "Zum Rechner gehen",
     "ctaDisconnected": "Wallet verbinden & Loslegen"
   },
+
   "survey": {
-    "title": "Helfen Sie uns, Sie besser kennenzulernen",
-    "subtitle": "Ihre Meinung ist wertvoll. Beantworten Sie diese Fragen und helfen Sie uns, das beste Rentensystem für Sie zu schaffen.",
-    "question1": "Wie alt sind Sie?",
-    "question2": "Ich vertraue traditionellen Renten-/Altersvorsorgessystemen",
-    "question3": "Ich bin mit Blockchain/Kryptowährungen vertraut",
-    "question4": "Ich mache mir Sorgen, nicht genug Geld für den Ruhestand zu haben",
-    "question5": "Ich habe derzeit einen aktiven Altersvorsorgeplan",
-    "question6": "Ich schätze Transparenz und Kontrolle über meine Altersvorsorgeinvestitionen",
-    "question7": "Ich wäre daran interessiert, meinen eigenen Altersvorsorgefonds mit Blockchain-Transparenz zu erstellen",
+    "title": "Hilf uns, dich besser kennenzulernen",
+    "subtitle": "Deine Meinung ist uns wichtig. Beantworte diese Fragen und hilf uns, das beste Rentensystem für dich zu schaffen.",
+    "question1": "In welcher Altersgruppe bist du?",
+    "question2": "Ich vertraue traditionellen Renten-/Pensionssystemen",
+    "question3": "Ich kenne mich mit Blockchain/Kryptowährungen aus",
+    "question4": "Ich mache mir Sorgen, im Ruhestand nicht genug Geld zu haben",
+    "question5": "Ich habe derzeit einen aktiven Rentenplan",
+    "question6": "Mir sind Transparenz und Kontrolle über meine Rentenanlagen wichtig",
+    "question7": "Ich wäre daran interessiert, meinen eigenen Rentenfonds mit Blockchain-Transparenz zu erstellen",
     "ageOptions": {
       "18-24": "18-24 Jahre",
       "25-34": "25-34 Jahre",
@@ -33,62 +73,171 @@
       "disagree": "Stimme nicht zu",
       "neutral": "Neutral",
       "agree": "Stimme zu",
-      "stronglyAgree": "Stimme voll zu"
+      "stronglyAgree": "Stimme voll und ganz zu"
     },
     "submit": "Umfrage absenden",
     "submitting": "Wird gesendet...",
-    "required": "Alle Fragen sind erforderlich. Ihre Antworten sind anonymous.",
+    "required": "Alle Fragen sind erforderlich. Deine Antworten sind anonym.",
     "errorTitle": "Fehler",
-    "selectAge": "Bitte wählen Sie Ihre Altersgruppe",
-    "answerAll": "Bitte beantworten Sie alle Fragen"
+    "selectAge": "Bitte wähle deine Altersgruppe aus",
+    "answerAll": "Bitte beantworte alle Fragen"
   },
+
   "followUp": {
-    "successTitle": "Umfrage erfolgreich eingereicht!",
-    "successMessage": "Vielen Dank für Ihre Zeit. Noch zwei Fragen und wir sind fertig.",
-    "question1": "Möchten Sie weitere Informationen über Ethernity DAO erhalten?",
+    "successTitle": "Umfrage erfolgreich gesendet!",
+    "successMessage": "Vielen Dank für deine Zeit. Noch zwei Fragen und wir sind fertig.",
+    "question1": "Möchtest du mehr Informationen über Ethernity DAO erhalten?",
     "yesInterested": "Ja, ich bin interessiert",
     "notNow": "Jetzt nicht",
-    "question2": "Wie lautet Ihre E-Mail?",
-    "emailPlaceholder": "ihre@email.com",
-    "finish": "Fertig",
-    "thankYou": "Vielen Dank für Ihre Zeit!",
-    "willContact": "Wir werden Sie bald mit weiteren Informationen über Ethernity DAO kontaktieren.",
-    "helpImprove": "Ihre Antworten helfen uns, unseren Service zu verbessern.",
-    "pleaseIndicate": "Bitte geben Sie an, ob Sie weitere Informationen erhalten möchten",
-    "enterEmail": "Bitte geben Sie Ihre E-Mail ein, um Informationen zu erhalten"
+    "question2": "Was ist deine E-Mail-Adresse?",
+    "emailPlaceholder": "deine@email.com",
+    "finish": "Fertigstellen",
+    "thankYou": "Vielen Dank für deine Zeit!",
+    "willContact": "Wir werden dich bald mit weiteren Informationen zu Ethernity DAO kontaktieren.",
+    "helpImprove": "Deine Antworten helfen uns, unseren Service zu verbessern.",
+    "pleaseIndicate": "Bitte gib an, ob du weitere Informationen erhalten möchtest",
+    "enterEmail": "Bitte gib deine E-Mail ein, um Informationen zu erhalten"
   },
+
   "features": {
     "title": "Warum uns wählen?",
     "security": {
       "title": "Zero-Knowledge-Sicherheit",
-      "description": "Ihre Daten bleiben privat. Wir verwenden fortschrittliche Verschlüsselung, um sicherzustellen, dass Ihre finanziellen Details niemals offengelegt werden."
+      "description": "Deine Daten bleiben privat. Wir verwenden Zero-Knowledge-Methodik, um sicherzustellen, dass deine persönlichen oder finanziellen Informationen niemals preisgegeben werden. Keine Registrierung, keine Speicherung persönlicher Daten oder Schlüssel. Dein WALLET ist dein Zugang."
     },
     "education": {
       "title": "Finanzbildung",
-      "description": "Treffen Sie unsere Partner und die besten E-Learning-Plattformen. Erhalten Sie Expertenkurse zur Optimierung Ihrer Investitionen."
+      "description": "Weil Finanzbildung Sicherheit und Gelassenheit schafft, ist es unsere Aufgabe, dir die besten E-Learning-Plattformen anzubieten. Erhalte Kurse, Videos, Tutorials und Finanzberatung von Experten, um deine Investments zu optimieren."
     },
     "fees": {
       "title": "Transparente Gebühren",
-      "description": "Keine versteckten Kosten. Klare, niedrige Gebühren zur Maximierung Ihrer Altersvorsorge."
+      "description": "Einfache Gebührenstruktur ohne versteckte Kosten. Klare, transparente und niedrige Gebühren, um deine Ersparnisse zu optimieren und deine Erträge zu maximieren."
     }
   },
+
   "about": {
     "title": "Über Ethernity",
-    "description": "Wir widmen uns dem Aufbau einer sicheren finanziellen Zukunft für Sie. Mit Fokus auf Privatsphäre, Sicherheit und Expertenmanagement sind unsere Altersvorsorgefonds darauf ausgelegt, Ihnen Seelenfrieden zu geben. Ihre Daten sind mit Zero-Knowledge-Prinzipien geschützt, um sicherzustellen, dass Ihre Informationen nur Ihnen gehören."
+    "description": "Wir widmen uns dabei, dir zu helfen, deinen persönlichen dezentralen Rentenfonds zu BERECHNEN, ZU ERSTELLEN und SELBST ZU VERWALTEN, damit du eine solide, sichere und maßgeschneiderte finanzielle Zukunft aufbauen kannst. Mit Fokus auf Datenschutz, Sicherheit und Selbstverwaltung sind unsere Smart Contracts so gestaltet, dass sie dir Ruhe und Transparenz bieten. Deine Daten sind durch Zero-Knowledge-Methodik geschützt, sodass deine persönlichen, sensiblen und finanziellen Informationen PRIVAT bleiben."
   },
-  "wallet": {
-    "connectedWallet": "Verbundene Wallet",
-    "balance": "Guthaben",
-    "network": "Netzwerk",
-    "switchTo": "Wechseln zu",
-    "correctNetwork": "Korrektes Netzwerk.",
-    "connectedTo": "Verbunden mit",
-    "wrongNetwork": "Falsches Netzwerk.",
-    "viewFullAccount": "Vollständiges Konto anzeigen",
-    "disconnect": "Wallet trennen",
-    "needTestEth": "Test-ETH benötigt? Vom Faucet erhalten",
-    "yourWallet": "Deine Wallet",
-    "language": "Sprache"
-  }
 
+  "calculator": {
+    "title": "Rentenrechner",
+    "subtitle": "Plane deine finanzielle Zukunft mit unserem fortschrittlichen Rechner",
+    "currentAge": "Aktuelles Alter",
+    "retirementAge": "Renteneintrittsalter",
+    "monthlyContribution": "Monatlicher Beitrag",
+    "expectedReturn": "Erwartete jährliche Rendite",
+    "inflationRate": "Inflationsrate",
+    "calculate": "Berechnen",
+    "reset": "Zurücksetzen",
+    "results": {
+      "title": "Deine Rentenprojektion",
+      "totalSavings": "Gesamtersparnisse bei Renteneintritt",
+      "monthlyIncome": "Gewünschtes monatliches Einkommen",
+      "yearsOfRetirement": "Finanzierte Rentenjahre",
+      "purchasingPower": "Kaufkraft (inflationsbereinigt)"
+    },
+    "validation": {
+      "ageRequired": "Bitte gib dein aktuelles Alter ein",
+      "retirementAgeRequired": "Bitte gib dein Renteneintrittsalter ein",
+      "retirementAgeTooLow": "Das Renteneintrittsalter muss höher als das aktuelle Alter sein",
+      "contributionRequired": "Bitte gib einen monatlichen Beitrag ein"
+    }
+  },
+
+  "contact": {
+    "title": "Kontaktiere uns",
+    "subtitle": "Nimm Kontakt mit unserem Team auf. Wir sind für dich da.",
+    "name": "Vollständiger Name",
+    "email": "E-Mail-Adresse",
+    "subject": "Betreff",
+    "message": "Nachricht",
+    "send": "Nachricht senden",
+    "sending": "Wird gesendet...",
+    "success": "Nachricht erfolgreich gesendet! Wir melden uns bald bei dir.",
+    "error": "Fehler beim Senden der Nachricht. Bitte versuche es erneut.",
+    "validation": {
+      "nameRequired": "Bitte gib deinen Namen ein",
+      "emailRequired": "Bitte gib deine E-Mail ein",
+      "emailInvalid": "Bitte gib eine gültige E-Mail-Adresse ein",
+      "messageRequired": "Bitte gib eine Nachricht ein"
+    }
+  },
+
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Willkommen zurück",
+    "myContracts": "Meine Verträge",
+    "createNew": "Neuen Vertrag erstellen",
+    "viewAll": "Alle anzeigen",
+    "stats": {
+      "totalBalance": "Gesamtsaldo",
+      "activeContracts": "Aktive Verträge",
+      "pendingActions": "Ausstehende Aktionen",
+      "monthlyReturn": "Monatliche Rendite"
+    },
+    "recentActivity": "Letzte Aktivitäten",
+    "noContracts": "Du hast noch keinen Vertrag",
+    "getStarted": "Starte, indem du deinen ersten Rentenvertrag erstellst"
+  },
+
+  "createContract": {
+    "title": "Rentenvertrag erstellen",
+    "subtitle": "Konfiguriere deinen personalisierten Sparplan für die Rente",
+    "steps": {
+      "details": "Vertragsdetails",
+      "investment": "Anlageoptionen",
+      "review": "Prüfen & Unterzeichnen"
+    },
+    "contractType": "Vertragstyp",
+    "duration": "Laufzeit (Jahre)",
+    "contribution": "Monatlicher Beitrag",
+    "initialDeposit": "Ersteinzahlung",
+    "riskLevel": "Risikostufe",
+    "riskLevels": {
+      "low": "Niedriges Risiko – Konservativ",
+      "medium": "Mittleres Risiko – Ausgewogen",
+      "high": "Hohes Risiko – Aggressiv"
+    },
+    "beneficiary": "Begünstigter (optional)",
+    "emergencyWithdrawal": "Notfallabhebung erlauben",
+    "autoReinvest": "Renditen automatisch reinvestieren",
+    "review": "Vertrag prüfen",
+    "sign": "Vertrag unterzeichnen",
+    "signing": "Wird unterzeichnet...",
+    "terms": "Ich akzeptiere die Allgemeinen Geschäftsbedingungen",
+    "success": "Vertrag erfolgreich erstellt!",
+    "error": "Fehler beim Erstellen des Vertrags. Bitte versuche es erneut."
+  },
+
+  "contractCreated": {
+    "title": "Vertrag erfolgreich erstellt!",
+    "subtitle": "Dein Rentenvertrag ist jetzt aktiv",
+    "contractId": "Vertrags-ID",
+    "nextSteps": "Nächste Schritte",
+    "step1": "Dein Vertrag ist jetzt auf der Blockchain aktiv",
+    "step2": "Du kannst ihn in deinem Dashboard ansehen und verwalten",
+    "step3": "Richte automatische monatliche Beiträge ein",
+    "goToDashboard": "Zum Dashboard",
+    "viewContract": "Vertragsdetails anzeigen"
+  },
+
+  "footer": {
+    "copyright": "© 2025 Ethernity DAO. Alle Rechte vorbehalten.",
+    "privacy": "Datenschutzrichtlinie",
+    "terms": "Nutzungsbedingungen",
+    "documentation": "Dokumentation",
+    "support": "Support",
+    "community": "Community",
+    "followUs": "Folge uns"
+  },
+
+  "errors": {
+    "walletNotConnected": "Bitte verbinde dein Wallet",
+    "networkError": "Netzwerkfehler. Bitte versuche es erneut.",
+    "transactionFailed": "Transaktion fehlgeschlagen",
+    "insufficientFunds": "Unzureichendes Guthaben",
+    "userRejected": "Transaktion vom Benutzer abgelehnt",
+    "somethingWrong": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+  }
 }

@@ -1,15 +1,55 @@
 {
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "submit": "Enviar",
+    "close": "Cerrar",
+    "yes": "Sí",
+    "no": "No",
+    "optional": "Opcional",
+    "required": "Requerido"
+  },
+
   "nav": {
     "home": "Inicio",
     "calculator": "Calculadora",
-    "about": "Acerca de"
+    "dashboard": "Panel",
+    "contact": "Contacto",
+    "about": "Acerca de",
+    "connectWallet": "Conectar Billetera",
+    "disconnect": "Desconectar"
   },
+
+  "wallet": {
+    "connectedWallet": "Billetera Conectada",
+    "balance": "Saldo",
+    "network": "Red",
+    "switchTo": "Cambiar a",
+    "correctNetwork": "Red Correcta.",
+    "connectedTo": "Conectado a",
+    "wrongNetwork": "Red Incorrecta.",
+    "viewFullAccount": "Ver Cuenta Completa",
+    "disconnect": "Desconectar Billetera",
+    "needTestEth": "¿Necesitas ETH de prueba? Obtener del faucet",
+    "yourWallet": "Tu Billetera",
+    "language": "Idioma"
+  },
+
   "hero": {
     "title": "Libertad Financiera en tus Manos",
     "subtitle": "Asegura tu Mañana con la Decisión que Tomas Hoy",
     "ctaConnected": "Ir a la Calculadora",
     "ctaDisconnected": "Conectar Billetera y Comenzar"
   },
+
   "survey": {
     "title": "Ayúdanos a Conocerte Mejor",
     "subtitle": "Tu opinión es valiosa. Responde estas preguntas y ayúdanos a crear el mejor sistema de jubilación para ti.",
@@ -42,6 +82,7 @@
     "selectAge": "Por favor selecciona tu rango de edad",
     "answerAll": "Por favor responde todas las preguntas"
   },
+
   "followUp": {
     "successTitle": "¡Encuesta enviada exitosamente!",
     "successMessage": "Gracias por tu tiempo. Dos preguntas más y terminamos.",
@@ -57,37 +98,146 @@
     "pleaseIndicate": "Por favor indica si deseas recibir más información",
     "enterEmail": "Por favor ingresa tu email para recibir información"
   },
+
   "features": {
     "title": "¿Por Qué Elegirnos?",
     "security": {
       "title": "Seguridad Zero-Knowledge",
-      "description": "Tus datos permanecen privados. Usamos encriptación avanzada para asegurar que tus detalles financieros nunca sean expuestos."
+      "description": "Tus datos permanecen privados. Usamos metodologia Zero-knowledge para asegurar que tus Informacion Personal o Financiera nunca sea expuesta. No tenes que Registrarte, No Almacenamos Informacion Personal ni Claves. Tu WALLET es tu MEDIO PARA ACCEDER"
     },
     "education": {
       "title": "Educación Financiera",
-      "description": "Conoce a nuestros socios y las mejores plataformas de e-learning. Obtén cursos financieros expertos para optimizar tus inversiones."
+      "description": "Porque la Educacion Financiera genera Seguridad y Tranquilidad, nuestros tarea es ofrecerte las mejores plataformas de E-learning. Obtén Cursos, Videos, Tutoriales y Asesoria Financiera de Expertos para optimizar tus inversiones."
     },
     "fees": {
       "title": "Tarifas Transparentes",
-      "description": "Sin costos ocultos. Tarifas claras y bajas para maximizar tus ahorros de jubilación."
+      "description": "FEE simple Sin costos ocultos. Tarifas claras, transparentes y bajas para Optimizar tus Ahorros y Maximizar tus Beneficios."
     }
   },
+
   "about": {
     "title": "Acerca de Ethernity",
-    "description": "Nos dedicamos a ayudarte a construir un futuro financiero seguro. Con enfoque en privacidad, seguridad y gestión experta, nuestros fondos de jubilación están diseñados para darte tranquilidad. Tus datos están protegidos con principios zero-knowledge, asegurando que tu información permanezca solo tuya."
+    "description": "Nos dedicamos a ayudarte a CALCULAR, CREAR y AUTO-GESTIONAR tu Fondo Personal Descentralizado de Retiro, para que puedas construir un futuro financiero solido, seguro y a tu medida. Con enfoque en la Privacidad, la Seguridad y la Autogestion, nuestros Smart Contracts están diseñados para darte Tranquilidad y Transparencia. Tus datos están protegidos con Metodologia Zero-knowledge, asegurando que tu Información Personal, Sensible y Financiera permanezca PRIVADA."
   },
-  "wallet": {
-    "connectedWallet": "Billetera Conectada",
-    "balance": "Saldo",
-    "network": "Red",
-    "switchTo": "Cambiar a",
-    "correctNetwork": "Red Correcta.",
-    "connectedTo": "Conectado a",
-    "wrongNetwork": "Red Incorrecta.",
-    "viewFullAccount": "Ver Cuenta Completa",
-    "disconnect": "Desconectar Billetera",
-    "needTestEth": "¿Necesitas ETH de prueba? Obtener del faucet",
-    "yourWallet": "Tu Billetera",
-    "language": "Idioma"
+
+  "calculator": {
+    "title": "Calculadora de Retiro",
+    "subtitle": "Planifica tu futuro financiero con nuestra calculadora avanzada",
+    "currentAge": "Edad Actual",
+    "retirementAge": "Edad de Retiro",
+    "monthlyContribution": "Contribución Mensual",
+    "expectedReturn": "Retorno Anual Esperado",
+    "inflationRate": "Tasa de Inflación",
+    "calculate": "Calcular",
+    "reset": "Restablecer",
+    "results": {
+      "title": "Tu Proyección de Jubilación",
+      "totalSavings": "Ahorros Totales al Jubilarte",
+      "monthlyIncome": "Ingreso Mensual Deseado",
+      "yearsOfRetirement": "Años de Jubilación Financiados",
+      "purchasingPower": "Poder Adquisitivo (ajustado por inflación)"
+    },
+    "validation": {
+      "ageRequired": "Por favor ingresa tu edad actual",
+      "retirementAgeRequired": "Por favor ingresa tu edad de jubilación",
+      "retirementAgeTooLow": "La edad de jubilación debe ser mayor que la edad actual",
+      "contributionRequired": "Por favor ingresa una contribución mensual"
+    }
+  },
+
+  "contact": {
+    "title": "Contáctanos",
+    "subtitle": "Comunícate con nuestro equipo. Estamos aquí para ayudarte.",
+    "name": "Nombre Completo",
+    "email": "Correo Electrónico",
+    "subject": "Asunto",
+    "message": "Mensaje",
+    "send": "Enviar Mensaje",
+    "sending": "Enviando...",
+    "success": "¡Mensaje enviado exitosamente! Te responderemos pronto.",
+    "error": "Error al enviar el mensaje. Por favor intenta nuevamente.",
+    "validation": {
+      "nameRequired": "Por favor ingresa tu nombre",
+      "emailRequired": "Por favor ingresa tu correo electrónico",
+      "emailInvalid": "Por favor ingresa un correo electrónico válido",
+      "messageRequired": "Por favor ingresa un mensaje"
+    }
+  },
+
+  "dashboard": {
+    "title": "Panel de Control",
+    "welcome": "Bienvenido de nuevo",
+    "myContracts": "Mis Contratos",
+    "createNew": "Crear Nuevo Contrato",
+    "viewAll": "Ver Todos",
+    "stats": {
+      "totalBalance": "Balance Total",
+      "activeContracts": "Contratos Activos",
+      "pendingActions": "Acciones Pendientes",
+      "monthlyReturn": "Retorno Mensual"
+    },
+    "recentActivity": "Actividad Reciente",
+    "noContracts": "Aún no tienes ningún contrato",
+    "getStarted": "Comienza creando tu primer contrato de retiro"
+  },
+
+  "createContract": {
+    "title": "Crear Contrato de Retiro",
+    "subtitle": "Configura tu Plan de Ahorro personalizado para el Retiro",
+    "steps": {
+      "details": "Detalles del Contrato",
+      "investment": "Opciones de Inversión",
+      "review": "Revisar y Firmar"
+    },
+    "contractType": "Tipo de Contrato",
+    "duration": "Duración (años)",
+    "contribution": "Contribución Mensual",
+    "initialDeposit": "Depósito Inicial",
+    "riskLevel": "Nivel de Riesgo",
+    "riskLevels": {
+      "low": "Bajo Riesgo - Conservador",
+      "medium": "Riesgo Medio - Balanceado",
+      "high": "Alto Riesgo - Agresivo"
+    },
+    "beneficiary": "Beneficiario (Opcional)",
+    "emergencyWithdrawal": "Permitir Retiro de Emergencia",
+    "autoReinvest": "Reinvertir Retornos Automáticamente",
+    "review": "Revisar Contrato",
+    "sign": "Firmar Contrato",
+    "signing": "Firmando...",
+    "terms": "Acepto los términos y condiciones",
+    "success": "¡Contrato creado exitosamente!",
+    "error": "Error al crear el contrato. Por favor intenta nuevamente."
+  },
+
+  "contractCreated": {
+    "title": "¡Contrato Creado Exitosamente!",
+    "subtitle": "Tu contrato de jubilación está ahora activo",
+    "contractId": "ID del Contrato",
+    "nextSteps": "Próximos Pasos",
+    "step1": "Tu contrato está ahora activo en la blockchain",
+    "step2": "Puedes verlo y administrarlo desde tu panel",
+    "step3": "Configura contribuciones mensuales automáticas",
+    "goToDashboard": "Ir al Panel",
+    "viewContract": "Ver Detalles del Contrato"
+  },
+
+  "footer": {
+    "copyright": "© 2025 Ethernity DAO. Todos los derechos reservados.",
+    "privacy": "Política de Privacidad",
+    "terms": "Términos de Servicio",
+    "documentation": "Documentación",
+    "support": "Soporte",
+    "community": "Comunidad",
+    "followUs": "Síguenos"
+  },
+
+  "errors": {
+    "walletNotConnected": "Por favor conecta tu billetera",
+    "networkError": "Error de red. Por favor intenta nuevamente.",
+    "transactionFailed": "Transacción fallida",
+    "insufficientFunds": "Fondos insuficientes",
+    "userRejected": "Transacción rechazada por el usuario",
+    "somethingWrong": "Algo salió mal. Por favor intenta nuevamente."
   }
 }
