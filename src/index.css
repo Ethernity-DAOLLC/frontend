@@ -1,7 +1,5 @@
 /*  TAILWIND BASE  */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   --forest-green: #1B5E20;
