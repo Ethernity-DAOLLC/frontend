@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@reference "tailwindcss";
+
 @theme {
   /* Colores personalizados */
   --color-forest-green: #1B5E20;
