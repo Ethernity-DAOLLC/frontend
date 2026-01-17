@@ -27,7 +27,6 @@
   --radius-3xl: 2rem;
   --radius-full: 9999px;
 
-  /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
@@ -45,7 +44,9 @@
   --breakpoint-2xl: 1536px;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -112,25 +113,11 @@ a:hover {
   padding-right: 1rem;
 }
 
-@media (min-width: 640px) {
-  .container-custom { max-width: 640px; }
-}
-
-@media (min-width: 768px) {
-  .container-custom { max-width: 768px; }
-}
-
-@media (min-width: 1024px) {
-  .container-custom { max-width: 1024px; }
-}
-
-@media (min-width: 1280px) {
-  .container-custom { max-width: 1280px; }
-}
-
-@media (min-width: 1536px) {
-  .container-custom { max-width: 1536px; }
-}
+@screen sm { .container-custom { max-width: 640px; } }
+@screen md { .container-custom { max-width: 768px; } }
+@screen lg { .container-custom { max-width: 1024px; } }
+@screen xl { .container-custom { max-width: 1280px; } }
+@screen 2xl { .container-custom { max-width: 1536px; } }
 
 .btn-custom {
   display: inline-flex;
@@ -210,76 +197,19 @@ a:hover {
   box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.1);
 }
 
-.badge-custom {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.badge-success {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.badge-warning {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.badge-error {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.bg-gradient-primary {
-  background-image: linear-gradient(135deg, #1f2937, #1B5E20);
-}
-
-.bg-gradient-gold {
-  background-image: linear-gradient(135deg, #fbbf24, #8a7d07ef);
-}
-
 @keyframes fadeIn {
-  from { 
-    opacity: 0; 
-  }
-  to { 
-    opacity: 1; 
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse {
-  0%, 100% { 
-    opacity: 1; 
-    transform: scale(1); 
-  }
-  50% { 
-    opacity: 0.8; 
-    transform: scale(1.05); 
-  }
-}
-
-@keyframes spin {
-  from { 
-    transform: rotate(0deg); 
-  }
-  to { 
-    transform: rotate(360deg); 
-  }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
 }
 
 .animate-fade-in {
@@ -292,10 +222,6 @@ a:hover {
 
 .animate-pulse-custom {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.animate-spin-custom {
-  animation: spin 1s linear infinite;
 }
 
 @media (max-width: 640px) {
