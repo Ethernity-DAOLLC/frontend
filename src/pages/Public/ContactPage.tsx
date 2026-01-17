@@ -102,6 +102,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-8 sm:py-12 px-4">
       <div className="max-w-2xl mx-auto">
+        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
             <Mail className="text-purple-600" size={40} />
@@ -112,6 +113,7 @@ export default function ContactPage() {
           </p>
         </div>
 
+        {/* Success Message */}
         {success && (
           <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 sm:p-6 mb-6 shadow-lg animate-fade-in">
             <div className="flex items-start gap-3">
@@ -126,6 +128,7 @@ export default function ContactPage() {
           </div>
         )}
 
+        {/* Error Message */}
         {error && (
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 sm:p-6 mb-6 shadow-lg">
             <div className="flex items-start gap-3">
@@ -138,7 +141,9 @@ export default function ContactPage() {
           </div>
         )}
 
+        {/* Contact Form */}
         <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 border border-purple-100">
+          {/* Name Field */}
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
               <User className="w-5 h-5" />
@@ -165,6 +170,7 @@ export default function ContactPage() {
             )}
           </div>
 
+          {/* Email Field */}
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
               <Mail className="w-5 h-5" />
@@ -191,10 +197,11 @@ export default function ContactPage() {
             )}
           </div>
 
+          {/* Subject Field */}
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
               <MessageSquare className="w-5 h-5" />
-              Subject *
+              Subject
             </label>
             <input
               type="text"
@@ -205,6 +212,7 @@ export default function ContactPage() {
             />
           </div>
 
+          {/* Message Field */}
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
               <MessageSquare className="w-5 h-5" />
@@ -234,6 +242,7 @@ export default function ContactPage() {
             </p>
           </div>
 
+          {/* Wallet Connected Info */}
           {address && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <div className="flex items-start gap-2">
@@ -250,6 +259,7 @@ export default function ContactPage() {
             </div>
           )}
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
@@ -273,6 +283,7 @@ export default function ContactPage() {
           </p>
         </form>
 
+        {/* Additional Contact Info */}
         <div className="mt-8 bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
           <h3 className="font-semibold text-gray-900 mb-4 text-center">Other Ways to Contact</h3>
           <div className="space-y-3 text-center text-sm text-gray-600">
