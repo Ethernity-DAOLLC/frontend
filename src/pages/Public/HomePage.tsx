@@ -32,7 +32,6 @@ const HomePage: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [finalSuccess, setFinalSuccess] = useState(false);
   const [error, setError] = useState('');
-
   useEffect(() => {
     const shouldAutoDisconnect = sessionStorage.getItem('autoDisconnectHome');
     
@@ -41,7 +40,6 @@ const HomePage: React.FC = () => {
       sessionStorage.removeItem('autoDisconnectHome');
     }
   }, [isConnected, disconnect]);
-
   const handleGetStarted = () => {
     if (isConnected) {
       navigate('/calculator');
@@ -71,7 +69,6 @@ const HomePage: React.FC = () => {
       setError(t('survey.answerAll'));
       return;
     }
-
     setLoading(true);
     setError('');
 
@@ -85,8 +82,8 @@ const HomePage: React.FC = () => {
         values_in_retirement: surveyData.valuesInRetirement!,
         interested_in_blockchain: surveyData.interestedInBlockchain!
       };
-      
       const result = await surveyService.createSurvey(surveyPayload);
+      
       console.log('✅ Survey submitted:', result);
       setSuccess(true);
       setShowFollowUp(true);
@@ -132,7 +129,6 @@ const HomePage: React.FC = () => {
       console.log('✅ Follow-up submitted:', result);
       setFinalSuccess(true);
       setShowFollowUp(false);
-      
       setTimeout(() => {
         setFinalSuccess(false);
         setSuccess(false);
@@ -216,10 +212,10 @@ const HomePage: React.FC = () => {
       {/* Hero Section */}
       <section className="bg-gradient-to-b from-gray-800 to-green-800 text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-6">
+          <h1 className="text-5xl font-bold mb-6">
             {t('hero.title')}
           </h1>
-          <p className="text-lg sm:text-xl mb-8 text-gray-200">
+          <p className="text-xl mb-8 text-gray-200">
             {t('hero.subtitle')}
           </p>
           <button
@@ -235,14 +231,13 @@ const HomePage: React.FC = () => {
       <section className="py-16 px-4 bg-gradient-to-br from-blue-50 to-green-50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+            <h2 className="text-4xl font-bold text-gray-800 mb-4">
               {t('survey.title')}
             </h2>
-            <p className="text-base sm:text-lg text-gray-600">
+            <p className="text-lg text-gray-600">
               {t('survey.subtitle')}
             </p>
           </div>
-
           {finalSuccess && (
             <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-6 shadow-lg animate-fade-in">
               <div className="flex items-start gap-3">
@@ -258,7 +253,6 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           )}
-
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6 mb-6 shadow-lg">
               <div className="flex items-start gap-3">
@@ -273,7 +267,7 @@ const HomePage: React.FC = () => {
 
           {/* Survey Form */}
           {!success && !showFollowUp && (
-            <form onSubmit={handleSurveySubmit} className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 space-y-8">
+            <form onSubmit={handleSurveySubmit} className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
               {/* Question 1: Age */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -297,7 +291,7 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Questions 2-7 */}
+              {/* Question 2 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   2. {t('survey.question2')} *
@@ -309,6 +303,7 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
+              {/* Question 3 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   3. {t('survey.question3')} *
@@ -320,6 +315,7 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
+              {/* Question 4 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   4. {t('survey.question4')} *
@@ -331,6 +327,7 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
+              {/* Question 5 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   5. {t('survey.question5')} *
@@ -342,6 +339,7 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
+              {/* Question 6 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   6. {t('survey.question6')} *
@@ -353,6 +351,7 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
+              {/* Question 7 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
                   7. {t('survey.question7')} *
@@ -390,7 +389,7 @@ const HomePage: React.FC = () => {
 
           {/* Follow-Up Form */}
           {success && showFollowUp && (
-            <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 space-y-6 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
               <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-6">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="text-green-600 flex-shrink-0 mt-1" size={24} />
@@ -402,7 +401,6 @@ const HomePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-
               <form onSubmit={handleFollowUpSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-4">
@@ -433,7 +431,6 @@ const HomePage: React.FC = () => {
                     </button>
                   </div>
                 </div>
-
                 {followUpData.wantsMoreInfo === 'yes' && (
                   <div className="animate-fade-in">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -449,7 +446,6 @@ const HomePage: React.FC = () => {
                     />
                   </div>
                 )}
-
                 <button
                   type="submit"
                   disabled={loading}
@@ -472,11 +468,9 @@ const HomePage: React.FC = () => {
           )}
         </div>
       </section>
-
-      {/* Features Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 text-gray-800">
+          <h2 className="text-4xl font-bold text-center mb-12 text-gray-800">
             {t('features.title')}
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -510,14 +504,12 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* About Section */}
       <section className="bg-gray-100 py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-gray-800">
+          <h2 className="text-4xl font-bold mb-6 text-gray-800">
             {t('about.title')}
           </h2>
-          <p className="text-base sm:text-lg text-gray-700 leading-relaxed">
+          <p className="text-lg text-gray-700 leading-relaxed">
             {t('about.description')}
           </p>
         </div>
