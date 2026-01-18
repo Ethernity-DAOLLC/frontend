@@ -136,9 +136,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
         abi: ERC20_ABI,
         functionName: 'approve',
         args: [factoryAddress, requiredAmount],
-        chainId: currentChainId,
-        amount,
-      } as const );
+      } as any);
     } catch (err: any) {
       console.error('❌ Error approving USDC:', err);
       setError(err.message || 'Failed to approve USDC');
@@ -161,14 +159,14 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
         BigInt(plan.yearsPayments),
         BigInt(Math.round(plan.interestRate * 100)),
         BigInt(plan.timelockYears),
-      ];
+      ] as const;
 
       writeCreateFund({
         address: factoryAddress,
         abi: PersonalFundFactoryABI as any,
         functionName: 'createPersonalFund',
         args,
-      });
+      } as any);
 
       console.log('✅ Transaction submitted');
     } catch (err: any) {
