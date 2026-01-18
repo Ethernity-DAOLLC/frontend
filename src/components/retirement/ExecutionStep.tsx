@@ -6,7 +6,7 @@ import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
 import type { RetirementPlan } from '@/types/retirement_types';
 
 const USDC_ADDRESSES: Record<number, `0x${string}`> = {
-  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d', // Arbitrum Sepolia
+  421614: '0x58c086c3662f45C76D468063Dc112542732b4562', // Arbitrum Sepolia
   80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',  // Polygon Amoy
 };
 
