@@ -15,7 +15,6 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
   const { address: userAddress } = useAccount();
   const USDC_ADDRESS = useUSDCAddress(); 
   const { writeContract, data: hash, isPending } = useWriteContract();
-  
   const { data, isLoading, isError, error, refetch } = useReadContracts({
     contracts: [
       {
@@ -196,7 +195,6 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
     isConfirming,
     isSuccess,
     hash,
-
     useCalculateFee,
     depositMonthly,
     startRetirement,

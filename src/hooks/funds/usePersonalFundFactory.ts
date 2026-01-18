@@ -131,8 +131,8 @@ export function usePersonalFundFactory(
           pendingParams.interestRate,
           pendingParams.timelockYears,
         ],
-        gas: 800_000n,       
-        maxFeePerGas: 2_000_000_000n,
+        // gas: 800_000n,       
+        // maxFeePerGas: 2_000_000_000n,
       });
       setNewFundAddress(undefined);
     } catch (err: any) {
@@ -216,7 +216,6 @@ export function usePersonalFundFactory(
     userFund: userFund?.result as `0x${string}` | undefined,
     canUserCreateFund: canUserCreateFund?.result as boolean | undefined,
     userFundCount: userFundCount?.result as bigint | undefined,
-
     usdcBalance: 0n,   
     usdcAllowance: 0n,  
     isLoading,

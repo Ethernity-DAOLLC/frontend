@@ -59,7 +59,7 @@ export function useBalanceVerification(plan: RetirementPlan | null): BalanceChec
   const usdcBalanceValue = usdcBalance?.value ?? 0n;
   const gasBalanceValue = gasBalance?.value ?? 0n;
   const allowanceValue = allowance ?? 0n;
-  const minGasRequired = parseUnits('0.001', 18);
+  const minGasRequired = parseUnits('0.005', 18);
 
   return {
     hasEnoughUSDC: usdcBalanceValue >= totalRequired,

@@ -115,8 +115,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       } else if (approvalError.message) {
         errorMessage = approvalError.message;
       }
-      
-      // Add helpful context
+
       errorMessage += `\n\nDetalles de debug:\n`;
       errorMessage += `- Chain ID: ${chainId}\n`;
       errorMessage += `- USDC Address: ${usdcAddress}\n`;
@@ -140,8 +139,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       console.log('✅ Transaction successful!', receipt);
       setStep('success');
 
-      const fundAddress = '0x...'; // Parse from receipt.logs
-      
+      const fundAddress = '0x...';
       onSuccess(txHash, fundAddress);
     }
   }, [isTxSuccess, txHash, receipt, step]);
@@ -194,7 +192,6 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       // Or: principal = initialDeposit * 0.97
       const initialDepositWithDecimals = parseUSDC(plan.initialDeposit);
       const principal = (initialDepositWithDecimals * 97n) / 100n; // 97% goes to fund, 3% is fee
-      
       const monthlyDeposit = parseUSDC(plan.monthlyDeposit);
       const currentAge = BigInt(plan.currentAge);
       const retirementAge = BigInt(plan.retirementAge);
@@ -221,7 +218,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
         abi: FACTORY_ABI,
         functionName: 'createPersonalFund',
         args: [
-          principal,  // Net amount after 3% fee
+          principal, 
           monthlyDeposit,
           currentAge,
           retirementAge,
