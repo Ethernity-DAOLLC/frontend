@@ -153,7 +153,6 @@ const ContractCreatedPage: React.FC = () => {
         <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border-2 border-indigo-300 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-8 sm:p-12 text-center text-white">
-            <Sparkles className="w-24 h-24 mx-auto mb-6" />
             <h1 className="text-3xl sm:text-5xl font-black mb-4">
               Confirmación Final
             </h1>
