@@ -1,11 +1,7 @@
-@import "tailwindcss";
-
-@theme {
-  /* Colores personalizados */
-  --color-forest-green: #1B5E20;
-  --color-dark-blue: #1f2937;
-  --color-gold: #8a7d07ef;
-}
+/*  TAILWIND BASE  */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --forest-green: #1B5E20;

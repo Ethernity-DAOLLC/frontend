@@ -64,6 +64,7 @@ const Navbar: React.FC = () => {
     { path: '/calculator', label: t('nav.calculator') },
     { path: '/contact', label: t('nav.contact') },
     ...(isConnected ? [{ path: '/dashboard', label: t('nav.dashboard') }] : []),
+    ...(appConfig.isDevelopment ? [{ path: '/wallet-test', label: '🔧 Test' }] : []),
   ];
 
   return (

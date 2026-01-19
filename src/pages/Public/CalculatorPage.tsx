@@ -118,16 +118,13 @@ const FormField: React.FC<{
     )}
   </div>
 );
-
 const FEE_PERCENTAGE = 0.03;
-
 const CalculatorPage: React.FC = () => {
   const navigate = useNavigate();
   const chainId = useChainId();
   const { setPlanData } = useRetirementPlan();
   const { isConnected, openModal } = useWallet();
   const factoryAddress = CONTRACT_ADDRESSES[chainId]?.personalFundFactory;
-  
   const [chartReady, setChartReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string>('');
@@ -146,11 +143,9 @@ const CalculatorPage: React.FC = () => {
   useEffect(() => {
     loadChartJS().then(setChartReady);
   }, []);
-
   useEffect(() => {
     calculatePlan();
   }, [inputs]);
-
   const calculatePlan = () => {
     setError('');
     
@@ -163,7 +158,6 @@ const CalculatorPage: React.FC = () => {
       contributionFrequency: inputs.contributionFrequency,
       yearsInRetirement: inputs.yearsInRetirement || 0,
     };
-
     if (safeInputs.currentAge <= 0) {
       setError('Current age must be greater than 0');
       setResult(null);
@@ -185,14 +179,12 @@ const CalculatorPage: React.FC = () => {
       setChartData([]);
       return;
     }
-
     if (yearsToRetirement < 5) {
       setError('You must have at least 5 years until retirement to use this plan');
       setResult(null);
       setChartData([]);
       return;
     }
-
     if (safeInputs.desiredMonthlyIncome <= 0) {
       setError('Desired monthly income must be greater than 0');
       setResult(null);
@@ -206,13 +198,11 @@ const CalculatorPage: React.FC = () => {
       setChartData([]);
       return;
     }
-
     const periodsPerYear = getPeriodsPerYear(safeInputs.contributionFrequency);
     const r = safeInputs.annualRate / 100 / periodsPerYear;
     const n = yearsToRetirement * periodsPerYear;
     const totalNeededAtRetirement = safeInputs.desiredMonthlyIncome * 12 * safeInputs.yearsInRetirement;
     const fvInitial = safeInputs.initialCapital * Math.pow(1 + r, n);
-    
     let requiredPMT = 0;
     if (r > 0) {
       requiredPMT = (totalNeededAtRetirement - fvInitial) * (r / (Math.pow(1 + r, n) - 1));
@@ -236,7 +226,6 @@ const CalculatorPage: React.FC = () => {
         contributions.push(requiredPMT);
       }
     }
-
     const totalContributed = safeInputs.initialCapital + contributions.reduce((a, b) => a + b, 0);
     const totalInterest = balance - totalContributed;
     const principal = safeInputs.initialCapital;
@@ -268,36 +257,29 @@ const CalculatorPage: React.FC = () => {
       default: return 12;
     }
   };
-
-  const handleCreateContract = async () => {
-    if (!result) return;
-    
-    if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
-      setError('Contracts not deployed on this network yet. Please switch to Arbitrum Sepolia.');
-      return;
+const handleCreateContract = async () => {
+  if (!result) return;
+  if (!factoryAddress || factoryAddress === '0x0000000000000000000000000000000000000000') {
+    setError('Contracts not deployed on this network yet. Please switch to Arbitrum Sepolia.');
+    return;
+  }
+  if (!isConnected) {
+    setIsConnecting(true);
+    try {
+      await openModal();
+    } catch (error) {
+      console.error('Error opening wallet modal:', error);
+      setError('Failed to open wallet modal');
+    } finally {
+      setIsConnecting(false);
     }
-
-    if (!isConnected) {
-      setIsConnecting(true);
-      try {
-        await openModal();
-      } catch (error) {
-        console.error('Error opening wallet modal:', error);
-        setError('Failed to open wallet modal');
-      } finally {
-        setIsConnecting(false);
-      }
-      return; 
-    }
-
-    proceedToCreateContract();
+    return; 
+  }
+  proceedToCreateContract();
   };
-
   const proceedToCreateContract = () => {
     if (!result) return;
-    
     const timelockYears = Math.max(15, Math.floor((inputs.retirementAge - inputs.currentAge) * 0.3));
-    
     setPlanData({
       principal: result.principal.toFixed(2),
       initialDeposit: result.initialDeposit.toFixed(2),
@@ -309,7 +291,6 @@ const CalculatorPage: React.FC = () => {
       interestRate: inputs.annualRate,
       timelockYears,
     });
-    
     navigate('/create-contract');
   };
 
@@ -332,7 +313,6 @@ const CalculatorPage: React.FC = () => {
       },
     },
   } : null;
-
   const chartDataConfig = chartReady ? {
     labels: chartData.map(d => `Age ${d.year}`),
     datasets: [
@@ -350,7 +330,6 @@ const CalculatorPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8 sm:py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-800 mb-4 flex items-center justify-center gap-3 sm:gap-4">
             <Calculator className="text-indigo-600" size={40} />
@@ -362,7 +341,6 @@ const CalculatorPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <div className="max-w-2xl mx-auto mb-6">
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-start gap-3">
@@ -451,6 +429,9 @@ const CalculatorPage: React.FC = () => {
                       onChange={(e) => setInputs({ ...inputs, yearsInRetirement: parseInt(e.target.value) })}
                       className="flex-1 h-3 bg-gray-200 rounded-lg cursor-pointer accent-purple-600"
                       aria-label="Years receiving income"
+                      aria-valuemin={10}
+                      aria-valuemax={40}
+                      aria-valuenow={inputs.yearsInRetirement}
                     />
                     <span className="bg-purple-100 text-purple-800 font-bold px-4 sm:px-5 py-2 sm:py-3 rounded-xl text-base sm:text-lg min-w-24 sm:min-w-32 text-center">
                       {formatYears(inputs.yearsInRetirement)}
@@ -460,7 +441,7 @@ const CalculatorPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Faucet Section */}
+            {/* GET TEST TOKENS SECTION */}
             <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl shadow-2xl p-6 sm:p-8 border-2 border-blue-200">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-blue-600 p-3 rounded-xl">
@@ -484,7 +465,7 @@ const CalculatorPage: React.FC = () => {
               />
             </div>
 
-            {/* Guide Section */}
+            {/* STEP-BY-STEP GUIDE */}
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl shadow-2xl p-6 sm:p-8 border-2 border-purple-200">
               <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
                 <Info className="text-purple-600" />
@@ -536,7 +517,6 @@ const CalculatorPage: React.FC = () => {
                   </div>
                 ))}
               </div>
-
               <div className="mt-6 bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
@@ -554,7 +534,6 @@ const CalculatorPage: React.FC = () => {
           {/* RIGHT COLUMN - Results */}
           {result && (
             <div className="space-y-6 sm:space-y-8">
-              {/* Chart */}
               {chartReady && Line && chartOptions && chartDataConfig ? (
                 <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 sm:p-8 border border-purple-100">
                   <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">Growth Projection</h3>
@@ -573,8 +552,6 @@ const CalculatorPage: React.FC = () => {
                   </div>
                 </div>
               )}
-
-              {/* Initial Deposit Summary */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-6 sm:p-8">
                 <h3 className="text-xl sm:text-2xl font-bold text-blue-800 mb-4 sm:mb-6 flex items-center gap-3">
                   <Info className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -603,8 +580,6 @@ const CalculatorPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              {/* CTA Section */}
               <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-3xl shadow-2xl p-6 sm:p-10 text-white text-center">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 sm:mb-6">
                   {isConnected ? "Your fund is ready!" : "Last step"}
@@ -655,5 +630,4 @@ const CalculatorPage: React.FC = () => {
     </div>
   );
 };
-
 export default CalculatorPage;

@@ -14,7 +14,6 @@ export const LanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = React.useState(false);
   const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
-  
   const changeLanguage = (langCode: string) => {
     i18n.changeLanguage(langCode);
     setIsOpen(false);
@@ -33,13 +32,11 @@ export const LanguageSwitcher: React.FC = () => {
 
       {isOpen && (
         <>
-          {/* Overlay para cerrar al hacer click fuera */}
           <div 
             className="fixed inset-0 z-10" 
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Menú desplegable */}
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
             {languages.map((lang) => (
               <button

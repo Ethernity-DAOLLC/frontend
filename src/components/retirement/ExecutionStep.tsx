@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { Loader2, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import { parseUnits } from 'viem';
+import PersonalFundFactoryABI from '@/abis/PersonalFundFactory.json';
 import type { RetirementPlan } from '@/types/retirement_types';
 
 const USDC_ADDRESSES: Record<number, `0x${string}`> = {
-  421614: '0x58c086c3662f45C76D468063Dc112542732b4562', // Arbitrum Sepolia
+  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d', // Arbitrum Sepolia
   80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',  // Polygon Amoy
 };
 
@@ -19,25 +20,6 @@ const ERC20_ABI = [
       { name: 'amount', type: 'uint256' },
     ],
     outputs: [{ name: '', type: 'bool' }],
-  },
-] as const;
-
-const FACTORY_ABI = [
-  {
-    name: 'createPersonalFund',
-    type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: '_principal', type: 'uint256' },
-      { name: '_monthlyDeposit', type: 'uint256' },
-      { name: '_currentAge', type: 'uint256' },
-      { name: '_retirementAge', type: 'uint256' },
-      { name: '_desiredMonthly', type: 'uint256' },
-      { name: '_yearsPayments', type: 'uint256' },
-      { name: '_interestRate', type: 'uint256' },
-      { name: '_timelockYears', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'address' }],
   },
 ] as const;
 
@@ -106,25 +88,10 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
   useEffect(() => {
     if (approvalError && step === 'approving') {
       console.error('❌ Approval error:', approvalError);
-      console.error('Full error object:', JSON.stringify(approvalError, null, 2));
-      
-      let errorMessage = 'Aprobación fallida';
-      
-      if ((approvalError as any)?.shortMessage) {
-        errorMessage = (approvalError as any).shortMessage;
-      } else if (approvalError.message) {
-        errorMessage = approvalError.message;
-      }
-
-      errorMessage += `\n\nDetalles de debug:\n`;
-      errorMessage += `- Chain ID: ${chainId}\n`;
-      errorMessage += `- USDC Address: ${usdcAddress}\n`;
-      errorMessage += `- Factory Address: ${factoryAddress}\n`;
-      
-      setError(errorMessage);
+      setError(`Aprobación fallida: ${(approvalError as any)?.shortMessage || approvalError.message}`);
       setStep('error');
     }
-  }, [approvalError, step, chainId, usdcAddress, factoryAddress]);
+  }, [approvalError, step]);
 
   useEffect(() => {
     if (createError && (step === 'creating' || step === 'approved')) {
@@ -139,7 +106,8 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       console.log('✅ Transaction successful!', receipt);
       setStep('success');
 
-      const fundAddress = '0x...';
+      const fundAddress = '0x...'; // Parse from receipt.logs
+      
       onSuccess(txHash, fundAddress);
     }
   }, [isTxSuccess, txHash, receipt, step]);
@@ -161,18 +129,16 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     
     try {
       console.log('🔐 Approving USDC...');
-      console.log('Chain ID:', chainId);
-      console.log('USDC Address:', usdcAddress);
-      console.log('Factory Address:', factoryAddress);
       const requiredAmount = parseUSDC(plan.initialDeposit);
-      console.log('Required Amount:', requiredAmount.toString());
       
       writeApproval({
         address: usdcAddress,
         abi: ERC20_ABI,
         functionName: 'approve',
         args: [factoryAddress, requiredAmount],
-      } as any);
+        chainId: currentChainId,
+        amount,
+      } as const );
     } catch (err: any) {
       console.error('❌ Error approving USDC:', err);
       setError(err.message || 'Failed to approve USDC');
@@ -185,54 +151,28 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     
     try {
       console.log('🚀 Creating retirement fund contract...');
-      console.log('Plan data:', plan);
       
-      // Calculate principal (net amount after 3% fee is deducted)
-      // Formula: principal (net) = initialDeposit - (initialDeposit * 0.03)
-      // Or: principal = initialDeposit * 0.97
-      const initialDepositWithDecimals = parseUSDC(plan.initialDeposit);
-      const principal = (initialDepositWithDecimals * 97n) / 100n; // 97% goes to fund, 3% is fee
-      const monthlyDeposit = parseUSDC(plan.monthlyDeposit);
-      const currentAge = BigInt(plan.currentAge);
-      const retirementAge = BigInt(plan.retirementAge);
-      const desiredMonthlyIncome = parseUSDC(plan.desiredMonthlyIncome);
-      const yearsPayments = BigInt(plan.yearsPayments);
-      const interestRate = BigInt(Math.round(plan.interestRate * 100));
-      const timelockYears = BigInt(plan.timelockYears);
-
-      console.log('Contract arguments:');
-      console.log('  initialDeposit (gross):', initialDepositWithDecimals.toString(), '=', (Number(initialDepositWithDecimals) / 1e6).toFixed(2), 'USDC');
-      console.log('  fee (3%):', ((initialDepositWithDecimals * 3n) / 100n).toString(), '=', (Number((initialDepositWithDecimals * 3n) / 100n) / 1e6).toFixed(2), 'USDC');
-      console.log('  principal (net to fund):', principal.toString(), '=', (Number(principal) / 1e6).toFixed(2), 'USDC');
-      console.log('  monthlyDeposit:', monthlyDeposit.toString(), '=', (Number(monthlyDeposit) / 1e6).toFixed(2), 'USDC');
-      console.log('  currentAge:', currentAge.toString());
-      console.log('  retirementAge:', retirementAge.toString());
-      console.log('  desiredMonthlyIncome:', desiredMonthlyIncome.toString(), '=', (Number(desiredMonthlyIncome) / 1e6).toFixed(2), 'USDC');
-      console.log('  yearsPayments:', yearsPayments.toString());
-      console.log('  interestRate:', interestRate.toString(), 'basis points (', plan.interestRate, '%)');
-      console.log('  timelockYears:', timelockYears.toString());
-      console.log('Factory address:', factoryAddress);
+      const args = [
+        parseUSDC(plan.initialDeposit),
+        parseUSDC(plan.monthlyDeposit),
+        BigInt(plan.currentAge),
+        BigInt(plan.retirementAge),
+        parseUSDC(plan.desiredMonthlyIncome),
+        BigInt(plan.yearsPayments),
+        BigInt(Math.round(plan.interestRate * 100)),
+        BigInt(plan.timelockYears),
+      ];
 
       writeCreateFund({
         address: factoryAddress,
-        abi: FACTORY_ABI,
+        abi: PersonalFundFactoryABI as any,
         functionName: 'createPersonalFund',
-        args: [
-          principal, 
-          monthlyDeposit,
-          currentAge,
-          retirementAge,
-          desiredMonthlyIncome,
-          yearsPayments,
-          interestRate,
-          timelockYears,
-        ],
-      } as any);
+        args,
+      });
 
       console.log('✅ Transaction submitted');
     } catch (err: any) {
       console.error('❌ Error creating contract:', err);
-      console.error('Full error:', JSON.stringify(err, null, 2));
       setError(err.message || 'Failed to create retirement fund contract');
       setStep('error');
     }
