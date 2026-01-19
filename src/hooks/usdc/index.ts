@@ -5,6 +5,8 @@ export {
   USDC_PRESETS,
   getUSDCAddress,
   useUSDCAddress,
+  getFaucetAddress,
+  useFaucetAddress,
   formatUSDC,
   formatUSDCWithSymbol,
   formatUSDCDisplay,
@@ -20,12 +22,14 @@ export {
   subtractUSDC,
   multiplyUSDC,
   percentageOfUSDC,
-
   isUSDCAddress,
+  isFaucetAddress,
 } from './usdcUtils';
 
 export type { USDCPreset } from './usdcUtils';
+
 export {
+  useUSDC,
   useUSDCBalance,
   useUSDCAllowance,
   useUSDCSymbol,
@@ -37,4 +41,3 @@ export {
 
 export { useUSDCApproval } from './useUSDCApproval';
 export { useUSDCTransaction } from './useUSDCTransaction';
-export { useUSDCBalance as useUSDC } from './useUSDC';

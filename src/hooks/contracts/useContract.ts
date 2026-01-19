@@ -1,5 +1,5 @@
 import { useChainId, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { getContractAddress, type ContractName } from '@/config/contracts';
+import { getContractAddress, type ContractName } from '@/config/addresses'; 
 import { Abi } from 'viem';
 
 export function useContractRead<T = unknown>(
@@ -25,9 +25,7 @@ export function useContractRead<T = unknown>(
 export function useContractWrite(contractName: ContractName, abi: Abi) {
   const chainId = useChainId();
   const address = getContractAddress(chainId, contractName);
-
   const { data: hash, writeContract, isPending, error } = useWriteContract();
-
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });

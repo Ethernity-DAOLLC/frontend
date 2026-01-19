@@ -57,10 +57,56 @@ frontend/
 │   │   ├── AuthContext.tsx          # Autenticación
 │   │   └── RetirementContext.tsx    # Estado de planes de retiro
 │   │
-│   ├── hooks/                       # Custom hooks
-│   │   ├── web3/                    # Hooks de Web3
-│   │   │   └── useWallet.ts
-│   │   └── useEthernityDAO.ts       # Hook principal del DAO
+│   ├── hooks/
+|   |   ├── auth/
+|   |   │   ├── useAuth.ts
+|   |   │   └── index.ts 
+|   |   ├── web3/
+|   |   │   ├── useNetwork.ts
+|   |   │   ├── useCorrectChain.ts
+|   |   │   ├── useRequireCorrectNetwork.ts
+|   |   │   ├── useWallet.ts
+|   |   │   ├── useTokenBalance.ts
+|   |   │   ├── useFaucet.ts
+|   |   │   └── index.ts 
+|   |   ├── usdc/
+|   |   │   ├── usdcUtils.ts
+|   |   │   ├── useUSDC.ts
+|   |   │   ├── useUSDCApproval.ts
+|   |   │   ├── useUSDCTransaction.ts
+|   |   │   ├── useUSDCBalance.ts
+|   |   │   └── index.ts 
+|   |   ├── contracts/
+|   |   │   ├── useContract.ts
+|   |   |   ├── useContracts.ts
+|   |   │   ├── useContractFromAPI.ts
+|   |   │   ├── useDepositFunds.ts
+|   |   │   ├── usePersistedPlan.ts
+|   |   │   └── index.ts 
+|   |   ├── core/
+|   |   │   ├── useDateTime.ts
+|   |   │   ├── useGovernance.ts
+|   |   │   ├── useToken.ts
+|   |   │   ├── useTreasury.ts
+|   |   │   └── index.ts 
+|   |   ├── funds/
+|   |   │   ├── usePersonalFund.ts
+|   |   │   ├── usePersonalFundFactory.ts
+|   |   │   ├── usePersonalFundWithApproval.ts
+|   |   │   ├── useCreateFund.ts
+|   |   │   ├── useHasFund.ts
+|   |   │   ├── useMonthlyDeposit.ts
+|   |   │   ├── useExtraDeposit.ts
+|   |   │   ├── useBalanceVerification.ts
+|   |   │   └── index.ts 
+|   |   ├── defi/
+|   |   │   ├── useProtocolRegistry.ts
+|   |   │   ├── useUserPreferences.ts
+|   |   │   └── index.ts 
+|   |   ├── useEthernityDAO.ts
+|   |   ├── useAdmin.ts
+|   |   ├── useSecureAdmin.ts
+|   |   └── index.ts 
 │   │
 │   ├── pages/                       # Páginas de la aplicación
 │   │   ├── Public/                  # Páginas públicas
@@ -69,7 +115,8 @@ frontend/
 │   │   │   └── ContactPage.tsx
 │   │   ├── User/                    # Páginas de usuario
 │   │   │   ├── DashboardPage.tsx
-│   │   │   └── CreateContractPage.tsx
+|   |   |   ├── CreateContactPage.tsx
+│   │   │   └── ContractCreatedPage.tsx
 │   │   └── Admin/                   # Páginas de administración
 │   │       ├── AdminDashboard.tsx
 │   │       ├── ContactMessages.tsx
@@ -99,6 +146,9 @@ frontend/
 ├── vercel.json                     # Deploy config
 ├── .gitignore                      # Archivos ignorados
 └── README.md                       # Este archivo
+```
+
+## Estructura Final Completa
 ```
 
 ## 🔧 Configuración
@@ -163,17 +213,17 @@ pnpm install
 
 ```bash
 # Iniciar servidor de desarrollo (puerto 3000)
-pnpm dev
+pnpm run dev
 ```
 
 ### Build
 
 ```bash
 # Build de producción
-pnpm build
+pnpm run build
 
 # Build sin verificación de tipos (más rápido)
-pnpm build:skip-types
+pnpm run build:skip-types
 ```
 
 ### Preview
@@ -195,7 +245,7 @@ pnpm lint
 ### Sistema de Rutas
 
 - **Públicas**: `/`, `/calculator`, `/contact`
-- **Usuario**: `/dashboard`, `/create-contract`
+- **Usuario**: `/dashboard`, `/create-contract`, `/contract-created`
 - **Admin**: `/admin/*` (requiere privilegios)
 
 ### Protección de Rutas

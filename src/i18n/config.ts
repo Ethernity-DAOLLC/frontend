@@ -15,7 +15,8 @@ i18n
       en: { translation: enTranslations },
       es: { translation: esTranslations },
       de: { translation: deTranslations },
-      it: { translation: itTranslations }
+      it: { translation: itTranslations },
+      pt: { translation: ptTranslations }
     },
     fallbackLng: 'en',
     interpolation: {
