@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
-import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
+import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
+import { Loader2, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import { parseUnits } from 'viem';
-import { getContractAddress } from '@/config/addresses';
 import PersonalFundFactoryArtifact from '@/abis/PersonalFundFactory.json';
 import type { RetirementPlan } from '@/types/retirement_types';
+import type { Abi } from 'viem';
 
-const PersonalFundFactoryABI = PersonalFundFactoryArtifact.abi as const;
+const PersonalFundFactoryABI = PersonalFundFactoryArtifact.abi as Abi;
 const ERC20_ABI = [
   {
     name: 'approve',
@@ -20,6 +20,12 @@ const ERC20_ABI = [
   },
 ] as const;
 
+// IMPORTANT: Use the SAME addresses as in useBalanceVerification
+const USDC_ADDRESSES: Record<number, `0x${string}`> = {
+  421614: '0x58c086c3662f45C76D468063Dc112542732b4562', // Arbitrum Sepolia
+  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',  // Polygon Amoy
+};
+
 interface ExecutionStepProps {
   plan: RetirementPlan;
   factoryAddress: `0x${string}`;
@@ -30,10 +36,14 @@ interface ExecutionStepProps {
 type TransactionStep = 'idle' | 'approving' | 'approved' | 'creating' | 'confirming' | 'success' | 'error';
 
 export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }: ExecutionStepProps) {
-  const chainId = useChainId();
+  const { address: account, chain } = useAccount();
   const [step, setStep] = useState<TransactionStep>('idle');
   const [error, setError] = useState<string>('');
-  const usdcAddress = getContractAddress(chainId, 'usdc');
+  
+  // Use the same USDC addresses as useBalanceVerification
+  const chainId = chain?.id ?? 421614;
+  const usdcAddress = USDC_ADDRESSES[chainId];
+  
   const explorerUrl = chainId === 421614 
     ? 'https://sepolia.arbiscan.io'
     : 'https://amoy.polygonscan.com';
@@ -44,6 +54,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
   };
 
   const initialDepositWei = parseUSDC(plan.initialDeposit);
+  
   const { 
     writeContract: writeApproval, 
     data: approvalHash, 
@@ -56,7 +67,6 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     isSuccess: isApprovalSuccess 
   } = useWaitForTransactionReceipt({
     hash: approvalHash,
-    pollingInterval: 10000, 
   });
 
   const { 
@@ -73,15 +83,14 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     error: receiptError
   } = useWaitForTransactionReceipt({
     hash: txHash,
-    pollingInterval: 10000,
   });
 
   const isStep = <T extends TransactionStep>(s: TransactionStep, expected: T): s is T => s === expected;
+  
   useEffect(() => {
     if (isApprovalSuccess && approvalHash && isStep(step, 'approving')) {
       console.log('✅ Approval confirmed:', approvalHash);
       setStep('approved');
-
     }
   }, [isApprovalSuccess, approvalHash, step]);
 
@@ -126,6 +135,27 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
 
   const handleStart = () => {
     setError('');
+    
+    if (!account || !chain) {
+      setError('No hay cuenta conectada');
+      setStep('error');
+      return;
+    }
+
+    if (!usdcAddress) {
+      setError(`USDC no soportado en la red ${chain.id}`);
+      setStep('error');
+      return;
+    }
+
+    console.log('🔍 Starting approval with:', {
+      usdcAddress,
+      factoryAddress,
+      amount: initialDepositWei.toString(),
+      account,
+      chainId: chain.id
+    });
+
     setStep('approving');
 
     if (needsApproval) {
@@ -141,6 +171,12 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
   };
 
   const handleCreateFund = () => {
+    if (!account || !chain) {
+      setError('No hay cuenta conectada');
+      setStep('error');
+      return;
+    }
+
     setStep('creating');
     writeCreateFund({
       address: factoryAddress,
@@ -166,10 +202,8 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
 
   return (
     <div className="space-y-6">
-      {/* Mensaje especial después de aprobación exitosa */}
       {isStep(step, 'approved') && (
         <div className="bg-amber-50 rounded-xl p-6 border-2 border-amber-200">
-          {/* ... (el resto del código truncado permanece igual) */}
         </div>
       )}
 

@@ -129,7 +129,7 @@ const CalculatorPage: React.FC = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string>('');
   const [inputs, setInputs] = useState<Inputs>({
-    initialCapital: 10000,
+    initialCapital: 0,
     currentAge: 30,
     retirementAge: 65,
     desiredMonthlyIncome: 4000,
