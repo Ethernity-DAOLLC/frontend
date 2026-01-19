@@ -20,7 +20,6 @@ const ERC20_ABI = [
   },
 ] as const;
 
-// IMPORTANT: Use the SAME addresses as in useBalanceVerification
 const USDC_ADDRESSES: Record<number, `0x${string}`> = {
   421614: '0x58c086c3662f45C76D468063Dc112542732b4562', // Arbitrum Sepolia
   80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',  // Polygon Amoy
@@ -39,11 +38,8 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
   const { address: account, chain } = useAccount();
   const [step, setStep] = useState<TransactionStep>('idle');
   const [error, setError] = useState<string>('');
-  
-  // Use the same USDC addresses as useBalanceVerification
   const chainId = chain?.id ?? 421614;
   const usdcAddress = USDC_ADDRESSES[chainId];
-  
   const explorerUrl = chainId === 421614 
     ? 'https://sepolia.arbiscan.io'
     : 'https://amoy.polygonscan.com';
@@ -53,8 +49,9 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     return parseUnits(num.toString(), 6);
   };
 
-  const initialDepositWei = parseUSDC(plan.initialDeposit);
-  
+  const principalWei = parseUSDC(plan.principal);
+  const monthlyDepositWei = parseUSDC(plan.monthlyDeposit);
+  const initialDepositForFactory = principalWei + monthlyDepositWei;
   const { 
     writeContract: writeApproval, 
     data: approvalHash, 
@@ -148,22 +145,25 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       return;
     }
 
-    console.log('🔍 Starting approval with:', {
+    console.log('🔍 Starting approval with CORRECTED amounts:', {
       usdcAddress,
       factoryAddress,
-      amount: initialDepositWei.toString(),
+      principal: principalWei.toString(),
+      monthlyDeposit: monthlyDepositWei.toString(),
+      totalForFactory: initialDepositForFactory.toString(),
       account,
       chainId: chain.id
     });
 
-    setStep('approving');
-
     if (needsApproval) {
+      setStep('approving');
+
       writeApproval({
         address: usdcAddress,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [factoryAddress, initialDepositWei],
+        args: [factoryAddress, initialDepositForFactory],
+        gas: 200000n, 
       });
     } else {
       handleCreateFund();
@@ -178,20 +178,32 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     }
 
     setStep('creating');
+    console.log('🔍 Creating fund with params:', {
+      principal: principalWei.toString(),
+      monthlyDeposit: monthlyDepositWei.toString(),
+      currentAge: plan.currentAge,
+      retirementAge: plan.retirementAge,
+      desiredMonthlyIncome: parseUSDC(plan.desiredMonthlyIncome).toString(),
+      yearsPayments: plan.yearsPayments,
+      interestRate: plan.interestRate,
+      timelockYears: plan.timelockYears,
+    });
+
     writeCreateFund({
       address: factoryAddress,
       abi: PersonalFundFactoryABI, 
       functionName: 'createPersonalFund',
       args: [
-        parseUSDC(plan.principal),
-        parseUSDC(plan.monthlyDeposit),
-        plan.currentAge,
-        plan.retirementAge,
-        parseUSDC(plan.desiredMonthlyIncome),
-        plan.yearsPayments,
-        plan.interestRate,
-        plan.timelockYears,
+        principalWei,                              // _principal
+        monthlyDepositWei,                         // _monthlyDeposit
+        plan.currentAge,                           // _currentAge
+        plan.retirementAge,                        // _retirementAge
+        parseUSDC(plan.desiredMonthlyIncome),     // _desiredMonthly
+        plan.yearsPayments,                        // _yearsPayments
+        plan.interestRate,                         // _interestRate
+        plan.timelockYears,                        // _timelockYears
       ],
+      gas: 3000000n, // Gas limit más alto para crear contrato
     });
   };
 
@@ -204,6 +216,23 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     <div className="space-y-6">
       {isStep(step, 'approved') && (
         <div className="bg-amber-50 rounded-xl p-6 border-2 border-amber-200">
+          <div className="flex items-start gap-3">
+            <CheckCircle className="text-amber-600 flex-shrink-0 mt-1" size={24} />
+            <div>
+              <h3 className="text-lg font-bold text-amber-800 mb-2">
+                ✅ Aprobación Completada
+              </h3>
+              <p className="text-amber-700">
+                Ahora procederemos a crear tu contrato de retiro
+              </p>
+              <button
+                onClick={handleCreateFund}
+                className="mt-4 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-6 rounded-lg transition"
+              >
+                Crear Contrato Ahora
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -214,7 +243,17 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
             <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
             <div>
               <h3 className="text-lg font-bold text-red-800 mb-2">Error en la transacción</h3>
-              <p className="text-red-700">{error}</p>
+              <p className="text-red-700 mb-2">{error}</p>
+              <details className="text-xs text-red-600 mt-2">
+                <summary className="cursor-pointer font-semibold">Posibles causas</summary>
+                <ul className="mt-2 ml-4 list-disc space-y-1">
+                  <li>Balance de USDC insuficiente</li>
+                  <li>Balance de gas (ETH/POL) insuficiente</li>
+                  <li>Aprobación insuficiente para el Factory</li>
+                  <li>Parámetros inválidos según configuración del Factory</li>
+                  <li>Ya tienes un fondo creado (solo se permite uno por wallet)</li>
+                </ul>
+              </details>
             </div>
           </div>
           <div className="mt-4 space-y-2">
@@ -222,10 +261,19 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
               href={`${explorerUrl}/address/${factoryAddress}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
             >
               <ExternalLink size={16} />
               Verificar Factory en Arbiscan
+            </a>
+            <a
+              href={`${explorerUrl}/address/${usdcAddress}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
+            >
+              <ExternalLink size={16} />
+              Verificar USDC en Arbiscan
             </a>
             <button
               onClick={reset}
@@ -260,9 +308,19 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
                 <div className="flex-1">
                   <p className="font-semibold text-gray-800">Paso 1: Aprobar USDC</p>
                   {approvalHash && (
-                    <p className="text-xs text-gray-600 font-mono mt-1">
-                      {approvalHash.slice(0, 10)}...{approvalHash.slice(-8)}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-xs text-gray-600 font-mono">
+                        {approvalHash.slice(0, 10)}...{approvalHash.slice(-8)}
+                      </p>
+                      <a
+                        href={`${explorerUrl}/tx/${approvalHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <ExternalLink size={12} />
+                      </a>
+                    </div>
                   )}
                 </div>
               </div>
@@ -284,9 +342,19 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
                   Paso {needsApproval ? '2' : '1'}: Crear Contrato
                 </p>
                 {txHash && (
-                  <p className="text-xs text-gray-600 font-mono mt-1">
-                    {txHash.slice(0, 10)}...{txHash.slice(-8)}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs text-gray-600 font-mono">
+                      {txHash.slice(0, 10)}...{txHash.slice(-8)}
+                    </p>
+                    <a
+                      href={`${explorerUrl}/tx/${txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
                 )}
               </div>
             </div>
