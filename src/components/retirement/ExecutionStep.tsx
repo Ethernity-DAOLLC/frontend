@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
-import { Loader2, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, ExternalLink, Info } from 'lucide-react';
 import { parseUnits } from 'viem';
 import PersonalFundFactoryArtifact from '@/abis/PersonalFundFactory.json';
 import type { RetirementPlan } from '@/types/retirement_types';
 import type { Abi } from 'viem';
+import { parseContractError, formatErrorForUI } from '@/utils/contractErrorParser';
 
 const PersonalFundFactoryABI = PersonalFundFactoryArtifact.abi as Abi;
 const ERC20_ABI = [
@@ -34,10 +35,17 @@ interface ExecutionStepProps {
 
 type TransactionStep = 'idle' | 'approving' | 'approved' | 'creating' | 'confirming' | 'success' | 'error';
 
+interface ErrorDisplay {
+  title: string;
+  message: string;
+  details?: string;
+  suggestions?: string[];
+}
+
 export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }: ExecutionStepProps) {
   const { address: account, chain } = useAccount();
   const [step, setStep] = useState<TransactionStep>('idle');
-  const [error, setError] = useState<string>('');
+  const [errorDisplay, setErrorDisplay] = useState<ErrorDisplay | null>(null);
   const chainId = chain?.id ?? 421614;
   const usdcAddress = USDC_ADDRESSES[chainId];
   const explorerUrl = chainId === 421614 
@@ -93,34 +101,42 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
 
   useEffect(() => {
     if (approvalError && isStep(step, 'approving')) {
-      const errMsg = (approvalError as any)?.shortMessage || approvalError.message || 'Error desconocido';
-      setError(`Aprobación fallida: ${errMsg}`);
+      const formatted = formatErrorForUI(approvalError);
+      setErrorDisplay(formatted);
       setStep('error');
+      console.error('🔴 Approval Error:', formatted);
     }
   }, [approvalError, step]);
 
   useEffect(() => {
     if (createError && (isStep(step, 'creating') || isStep(step, 'approved'))) {
-      const errMsg = (createError as any)?.shortMessage || createError.message || 'Error desconocido';
-      setError(`Creación fallida: ${errMsg}`);
+      const formatted = formatErrorForUI(createError);
+      setErrorDisplay(formatted);
       setStep('error');
+      console.error('🔴 Create Error:', formatted);
     }
   }, [createError, step]);
 
   useEffect(() => {
     if (receiptError && isStep(step, 'confirming')) {
-      const errMsg = (receiptError as any)?.shortMessage || receiptError.message || 'Fallo al obtener receipt';
-      setError(`Error confirmando: ${errMsg}. Recarga la página e intenta nuevamente.`);
+      const formatted = formatErrorForUI(receiptError);
+      setErrorDisplay(formatted);
       setStep('error');
+      console.error('🔴 Receipt Error:', formatted);
     }
   }, [receiptError, step]);
 
   useEffect(() => {
     if (isTxSuccess && receipt && isStep(step, 'confirming')) {
       if (!Array.isArray(receipt?.logs)) {
-        console.error('Receipt logs inválidos:', receipt?.logs);
-        setError('Error procesando receipt: logs no válidos. Recarga la página.');
+        const errorMsg = {
+          title: 'Error de Receipt',
+          message: 'Error procesando la confirmación de la transacción',
+          suggestions: ['Recarga la página y verifica en el explorador de bloques'],
+        };
+        setErrorDisplay(errorMsg);
         setStep('error');
+        console.error('Receipt logs inválidos:', receipt?.logs);
         return;
       }
 
@@ -131,21 +147,29 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
   }, [isTxSuccess, receipt, step, txHash, onSuccess]);
 
   const handleStart = () => {
-    setError('');
+    setErrorDisplay(null);
     
     if (!account || !chain) {
-      setError('No hay cuenta conectada');
+      setErrorDisplay({
+        title: 'Wallet no conectada',
+        message: 'Por favor conecta tu wallet para continuar',
+        suggestions: ['Conecta tu wallet usando el botón de la barra superior'],
+      });
       setStep('error');
       return;
     }
 
     if (!usdcAddress) {
-      setError(`USDC no soportado en la red ${chain.id}`);
+      setErrorDisplay({
+        title: 'Red no soportada',
+        message: `USDC no está disponible en la red ${chain.id}`,
+        suggestions: ['Cambia a Arbitrum Sepolia o Polygon Amoy'],
+      });
       setStep('error');
       return;
     }
 
-    console.log('🔍 Starting approval with CORRECTED amounts:', {
+    console.log('🔐 Starting approval with CORRECT amounts:', {
       usdcAddress,
       factoryAddress,
       principal: principalWei.toString(),
@@ -172,13 +196,17 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
 
   const handleCreateFund = () => {
     if (!account || !chain) {
-      setError('No hay cuenta conectada');
+      setErrorDisplay({
+        title: 'Wallet no conectada',
+        message: 'La wallet se desconectó durante el proceso',
+        suggestions: ['Reconecta tu wallet e intenta nuevamente'],
+      });
       setStep('error');
       return;
     }
 
     setStep('creating');
-    console.log('🔍 Creating fund with params:', {
+    console.log('🔐 Creating fund with params:', {
       principal: principalWei.toString(),
       monthlyDeposit: monthlyDepositWei.toString(),
       currentAge: plan.currentAge,
@@ -194,22 +222,22 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       abi: PersonalFundFactoryABI, 
       functionName: 'createPersonalFund',
       args: [
-        principalWei,                              // _principal
-        monthlyDepositWei,                         // _monthlyDeposit
-        plan.currentAge,                           // _currentAge
-        plan.retirementAge,                        // _retirementAge
-        parseUSDC(plan.desiredMonthlyIncome),     // _desiredMonthly
-        plan.yearsPayments,                        // _yearsPayments
-        plan.interestRate,                         // _interestRate
-        plan.timelockYears,                        // _timelockYears
+        principalWei,
+        monthlyDepositWei,
+        plan.currentAge,
+        plan.retirementAge,
+        parseUSDC(plan.desiredMonthlyIncome),
+        plan.yearsPayments,
+        plan.interestRate,
+        plan.timelockYears,
       ],
-      gas: 3000000n, // Gas limit más alto para crear contrato
+      gas: 3000000n,
     });
   };
 
   const reset = () => {
     setStep('idle');
-    setError('');
+    setErrorDisplay(null);
   };
 
   return (
@@ -236,24 +264,31 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
         </div>
       )}
 
-      {/* Error Box */}
-      {error && (
+      {errorDisplay && (
         <div className="bg-red-100 rounded-xl p-6 border-2 border-red-200">
           <div className="flex items-start gap-3">
             <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
-            <div>
-              <h3 className="text-lg font-bold text-red-800 mb-2">Error en la transacción</h3>
-              <p className="text-red-700 mb-2">{error}</p>
-              <details className="text-xs text-red-600 mt-2">
-                <summary className="cursor-pointer font-semibold">Posibles causas</summary>
-                <ul className="mt-2 ml-4 list-disc space-y-1">
-                  <li>Balance de USDC insuficiente</li>
-                  <li>Balance de gas (ETH/POL) insuficiente</li>
-                  <li>Aprobación insuficiente para el Factory</li>
-                  <li>Parámetros inválidos según configuración del Factory</li>
-                  <li>Ya tienes un fondo creado (solo se permite uno por wallet)</li>
-                </ul>
-              </details>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-red-800 mb-2">{errorDisplay.title}</h3>
+              <p className="text-red-700 mb-3">{errorDisplay.message}</p>
+              
+              {errorDisplay.details && (
+                <details className="text-xs text-red-600 mb-3">
+                  <summary className="cursor-pointer font-semibold">Detalles técnicos</summary>
+                  <p className="mt-2 font-mono bg-red-50 p-2 rounded">{errorDisplay.details}</p>
+                </details>
+              )}
+
+              {errorDisplay.suggestions && errorDisplay.suggestions.length > 0 && (
+                <div className="bg-red-50 rounded-lg p-3 mt-3">
+                  <p className="text-sm font-semibold text-red-800 mb-2">💡 Sugerencias:</p>
+                  <ul className="space-y-1 text-sm text-red-700">
+                    {errorDisplay.suggestions.map((suggestion, idx) => (
+                      <li key={idx}>• {suggestion}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-4 space-y-2">
@@ -286,7 +321,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       )}
 
       {/* Progreso */}
-      {step !== 'idle' && !isStep(step, 'approved') && !error && (
+      {step !== 'idle' && !isStep(step, 'approved') && !errorDisplay && (
         <div className="space-y-4">
           <h3 className="text-xl font-bold text-gray-800 text-center">
             Ejecutando transacciones...

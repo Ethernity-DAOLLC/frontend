@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   useAccount,
   useReadContract,
@@ -131,8 +131,6 @@ export function usePersonalFundFactory(
           pendingParams.interestRate,
           pendingParams.timelockYears,
         ],
-        // gas: 800_000n,       
-        // maxFeePerGas: 2_000_000_000n,
       });
       setNewFundAddress(undefined);
     } catch (err: any) {
@@ -157,7 +155,8 @@ export function usePersonalFundFactory(
         return;
       }
 
-      const requiredAmount = params.principal;
+      const requiredAmount = params.principal + params.monthlyDeposit;
+      
       setError(null);
       setNewFundAddress(undefined);
       setPendingParams(params);

@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useRetirementPlan } from '@/context/RetirementContext';
 import { useAccount, useChainId } from 'wagmi';
+import { useHasFund } from '@/hooks/funds/useHasFund';
 import { 
-  ArrowLeft, ArrowRight, Sparkles, Edit3, AlertCircle, CheckCircle
+  ArrowLeft, ArrowRight, Sparkles, Edit3, AlertCircle, CheckCircle, Info
 } from 'lucide-react';
 import { getContractAddress } from '@/config/addresses';
 import { VerificationStep } from '@/components/retirement/VerificationStep';
+import { formatErrorForUI } from '@/utils/contractErrorParser';
 
 const EXPECTED_CHAIN_ID = 421614;
 
@@ -33,7 +35,7 @@ const CreateContractPage: React.FC = () => {
   const chainId = useChainId();
   const { isConnected: authConnected } = useAuth();
   const { planData } = useRetirementPlan();
-  
+  const { hasFund, fundAddress, isLoading: isLoadingFund } = useHasFund();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -50,6 +52,12 @@ const CreateContractPage: React.FC = () => {
     setIsInitialized(true);
   }, [planData, isConnected, authConnected, navigate]);
 
+  useEffect(() => {
+    if (hasFund && fundAddress) {
+      console.warn('⚠️ User already has a fund:', fundAddress);
+    }
+  }, [hasFund, fundAddress]);
+
   const formatNumber = (num: string | number) => {
     return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
   };
@@ -63,6 +71,13 @@ const CreateContractPage: React.FC = () => {
 
   const handleContinueToConfirmation = () => {
     if (!formData || !FACTORY_ADDRESS) return;
+
+    if (hasFund) {
+      alert('Ya tienes un fondo creado. No puedes crear más de uno por wallet.');
+      navigate('/dashboard');
+      return;
+    }
+    
     navigate('/contract-created', {
       state: {
         planData: formData,
@@ -118,7 +133,39 @@ const CreateContractPage: React.FC = () => {
     );
   }
 
-  if (!isInitialized || !formData) {
+  if (hasFund && fundAddress) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-12 text-center max-w-lg border border-amber-300">
+          <Info className="w-24 h-24 text-amber-600 mx-auto mb-6 animate-pulse" />
+          <h1 className="text-4xl font-black text-amber-700 mb-4">Ya Tienes un Fondo</h1>
+          <p className="text-xl text-gray-700 mb-6">
+            Solo puedes tener un fondo de retiro por wallet.
+          </p>
+          <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm">
+            <p className="text-gray-600 mb-2">Tu fondo existente:</p>
+            <p className="font-mono text-xs text-gray-800 break-all">
+              {fundAddress}
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-5 px-10 rounded-2xl text-xl transition w-full mb-3"
+          >
+            Ir al Dashboard
+          </button>
+          <button
+            onClick={() => navigate('/calculator')}
+            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-4 px-8 rounded-xl text-lg transition w-full"
+          >
+            Volver a Calculadora
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isInitialized || !formData || isLoadingFund) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -242,17 +289,22 @@ const CreateContractPage: React.FC = () => {
             <div className="mt-12 space-y-4">
               <button
                 onClick={handleContinueToConfirmation}
-                disabled={!verificationPassed || isEditing}
+                disabled={!verificationPassed || isEditing || hasFund}
                 className={`
                   w-full font-black text-3xl px-20 py-8 rounded-3xl shadow-2xl 
                   transition-all transform flex items-center justify-center gap-6
-                  ${!verificationPassed || isEditing
+                  ${!verificationPassed || isEditing || hasFund
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                     : 'bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white hover:scale-105'
                   }
                 `}
               >
-                {!verificationPassed ? (
+                {hasFund ? (
+                  <>
+                    <AlertCircle size={56} />
+                    Ya Tienes un Fondo
+                  </>
+                ) : !verificationPassed ? (
                   <>
                     <AlertCircle size={56} />
                     Completa la Verificación
@@ -265,7 +317,7 @@ const CreateContractPage: React.FC = () => {
                 )}
               </button>
 
-              {!verificationPassed && (
+              {!verificationPassed && !hasFund && (
                 <p className="text-center text-gray-600 text-sm">
                   Asegúrate de tener suficiente balance de USDC y gas antes de continuar
                 </p>
