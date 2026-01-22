@@ -1,397 +1,393 @@
-{
-  "contractName": "UserPreferences",
-  "abi": [
-    {
-      "name": "UserConfigUpdated",
-      "inputs": [
-        {
-          "name": "user",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "selectedProtocol",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "autoCompound",
-          "type": "bool",
-          "indexed": false
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "DepositRouted",
-      "inputs": [
-        {
-          "name": "user",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "protocol",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "amount",
-          "type": "uint256",
-          "indexed": false
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "ContractAuthorized",
-      "inputs": [
-        {
-          "name": "contract",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "ContractRevoked",
-      "inputs": [
-        {
-          "name": "contract",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "setTreasury",
-      "inputs": [
-        {
-          "name": "_treasury",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "setProtocolRegistry",
-      "inputs": [
-        {
-          "name": "_registry",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "authorizeContract",
-      "inputs": [
-        {
-          "name": "_contract",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "revokeContract",
-      "inputs": [
-        {
-          "name": "_contract",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "setUserConfig",
-      "inputs": [
-        {
-          "name": "_selectedProtocol",
-          "type": "address"
-        },
-        {
-          "name": "_autoCompound",
-          "type": "bool"
-        },
-        {
-          "name": "_riskTolerance",
-          "type": "uint8"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "routeDeposit",
-      "inputs": [
-        {
-          "name": "_user",
-          "type": "address"
-        },
-        {
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getUserConfig",
-      "inputs": [
-        {
-          "name": "_user",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "tuple",
-          "components": [
-            {
-              "name": "selectedProtocol",
-              "type": "address"
-            },
-            {
-              "name": "autoCompound",
-              "type": "bool"
-            },
-            {
-              "name": "riskTolerance",
-              "type": "uint8"
-            },
-            {
-              "name": "lastUpdate",
-              "type": "uint256"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getRecommendedProtocol",
-      "inputs": [
-        {
-          "name": "_user",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getProtocolDeposits",
-      "inputs": [
-        {
-          "name": "_protocol",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "isContractAuthorized",
-      "inputs": [
-        {
-          "name": "_contract",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ]
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "changeAdmin",
-      "inputs": [
-        {
-          "name": "_newAdmin",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "admin",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "treasury",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "protocolRegistry",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "userConfigs",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "tuple",
-          "components": [
-            {
-              "name": "selectedProtocol",
-              "type": "address"
-            },
-            {
-              "name": "autoCompound",
-              "type": "bool"
-            },
-            {
-              "name": "riskTolerance",
-              "type": "uint8"
-            },
-            {
-              "name": "lastUpdate",
-              "type": "uint256"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "authorizedContracts",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "protocolDeposits",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "constructor",
-      "inputs": [
-        {
-          "name": "_protocolRegistry",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    }
-  ],
-  "bytecode": "0x346100ab576020610f445f395f518060a01c6100ab576040526040516100905760208060c05260106060527f496e76616c69642072656769737472790000000000000000000000000000000060805260608160c001603082825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b335f55604051600255610e5e6100af61000039610e5e610000f35b5f80fd5f3560e01c60026012820660011b610e3a01601e395f51565b63f0f442608118610e2c57602436103417610e36576004358060a01c610e36576040525f543318156100b55760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60405161012d5760208060c05260106060527f496e76616c69642074726561737572790000000000000000000000000000000060805260608160c001603082825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b604051600155005b633e22119d811861025257602436103417610e36576004358060a01c610e36576040525f543318156101d25760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60405161024a5760208060c05260106060527f496e76616c69642072656769737472790000000000000000000000000000000060805260608160c001603082825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b604051600255005b6316626ab98118610e2c57602436103417610e36576004358060a01c610e365760405260036040516020525f5260405f2080546060526001810154608052600281015460a052600381015460c0525060806060f35b6367561d93811861040d57602436103417610e36576004358060a01c610e36576040525f5433186102d95760016102e0565b6001543318155b6103555760208060c052600c6060527f556e617574686f72697a6564000000000000000000000000000000000000000060805260608160c001602c82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6040516103cd5760208060c05260106060527f496e76616c696420636f6e74726163740000000000000000000000000000000060805260608160c001603082825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b600160046040516020525f5260405f20556040517fd3b29d2cc460308277e197ea30a9c162c1824420ab1b965b1881547bbd77bef94260605260206060a2005b637656419f8118610e2c5734610e365760025460405260206040f35b63cc2e3ee18118610e2c57602436103417610e36576004358060a01c610e36576040525f543318156104c65760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b5f60046040516020525f5260405f20556040517f47602e4d35cfca70bcadaaf7c6b9cb7f3be23ec77277ceb42898ea929a88be0b4260605260206060a2005b63bb575c3581186108be57606436103417610e36576004358060a01c610e36576040526024358060011c610e36576060526044358060081c610e365760805260016080511215610555575f61055d565b600360805113155b6105d45760208061010052601660a0527f496e76616c6964207269736b20746f6c6572616e63650000000000000000000060c05260a08161010001603682825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060e0528060040160fcfd5b600254630914364660a05260405160c052602060a0602460bc845afa6105fc573d5f5f3e3d5ffd5b3d602081183d60201002188060a00160c011610e365760a0518060011c610e365760e0525060e09050516106a257602080610160526013610100527f50726f746f636f6c206e6f742061637469766500000000000000000000000000610120526101008161016001603382825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610140528060040161015cfd5b6002546321027dc56101c0526040516101e0526101606101c060246101dc845afa6106cf573d5f5f3e3d5ffd5b3d61016081183d610160100218806101c0016101e011610e36576101c06101c0516101c00110610e36576101c0516101c001816101c00160e0820111610e365780518060a01c610e365761034052806020820151820110610e3657602081015181018051836101c0018251602001830111610e365760408111610e3657506060816103605e5060408101516103c05260608101518060011c610e36576103e05260808101516104005260a08101518060081c610e36576104205260c08101516104405250506103409050805160a0526020810160608160c05e5060808101516101205260a08101516101405260c08101516101605260e0810151610180526101008101516101a0525060805161018051131561085d5760208061022052601f6101c0527f50726f746f636f6c207269736b206578636565647320746f6c6572616e6365006101e0526101c08161022001603f82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610200528060040161021cfd5b6003336020525f5260405f2060405181556060516001820155608051600282015542600382015550604051337f30f27d20489e642da050e561049f50e82a00707f444c3a696dc485b547bb849c6060516101c052426101e05260406101c0a3005b633fa8cbc98118610e2c57602436103417610e36576004358060a01c610e365760405260036040516020525f5260405f2080546060526001810154608052600281015460a052600381015460c0525060a05160e05260e05161092057600160e0525b60206060f35b632a30a2068118610e2c57604436103417610e36576004358060a01c610e36576040526004336020525f5260405f20546109cb5760208060c05260156060527f43616c6c6572206e6f7420617574686f72697a6564000000000000000000000060805260608160c001603582825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60036040516020525f5260405f2080546060526001810154608052600281015460a052600381015460c0525060605160e05260e051610a1757610a0f610100610e30565b6101005160e0525b60025463091436466101005260e051610120526020610100602461011c845afa610a43573d5f5f3e3d5ffd5b3d602081183d6020100218806101000161012011610e3657610100518060011c610e36576101405250610140905051610aee576020806101c0526013610160527f50726f746f636f6c206e6f74206163746976650000000000000000000000000061018052610160816101c001603382825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a06101a052806004016101bcfd5b600560e0516020525f5260405f208054602435808201828110610e36579050905081555060025463468a93636101005260e05161012052600560e0516020525f5260405f205461014052803b15610e36575f610100604461011c5f855af1610b58573d5f5f3e3d5ffd5b5060e0516040517f215754f07a66078586b192add8de684c71c8d1002663b792e82c1bab9482516a6024356101005242610120526040610100a3602060e0f35b632690c0188118610e2c57602436103417610e36576004358060a01c610e365760405260056040516020525f5260405f205460605260206060f35b63103aeda78118610c0e57602436103417610e36576004358060a01c610e365760405260046040516020525f5260405f205460605260206060f35b6361d027b38118610e2c5734610e365760015460405260206040f35b638f2839708118610e2c57602436103417610e36576004358060a01c610e36576040525f54331815610cc75760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b604051610d3f5760208060c052600f6060527f496e76616c69642061646472657373000000000000000000000000000000000060805260608160c001602f82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6040515f55005b63f851a4408118610e2c5734610e36575f5460405260206040f35b63c2200e3c8118610e2c57602436103417610e36576004358060a01c610e365760405260036040516020525f5260405f2080546060526001810154608052600281015460a052600381015460c0525060806060f35b63d5b9221b8118610e2c57602436103417610e36576004358060a01c610e365760405260046040516020525f5260405f205460605260206060f35b63493bc9378118610e2c57602436103417610e36576004358060a01c610e365760405260056040516020525f5260405f205460605260206060f35b5f5ffd5b5f815250565b5f80fd0e2c0e2c0b980135001802a709260bd30e2c04290e2c05050d610df10d460db60c2a0e2c855820179d3424b54ef5badaf774c5805798df5d9ad6fb7bcf7010b8896ddefe78a044190e5e81182400a1657679706572830004030037"
-}
+[
+  {
+    "name": "UserConfigUpdated",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "selectedProtocol",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "autoCompound",
+        "type": "bool",
+        "indexed": false
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "DepositRouted",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "protocol",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "ContractAuthorized",
+    "inputs": [
+      {
+        "name": "contract",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "ContractRevoked",
+    "inputs": [
+      {
+        "name": "contract",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "setTreasury",
+    "inputs": [
+      {
+        "name": "_treasury",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "setProtocolRegistry",
+    "inputs": [
+      {
+        "name": "_registry",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "authorizeContract",
+    "inputs": [
+      {
+        "name": "_contract",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "revokeContract",
+    "inputs": [
+      {
+        "name": "_contract",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "setUserConfig",
+    "inputs": [
+      {
+        "name": "_selectedProtocol",
+        "type": "address"
+      },
+      {
+        "name": "_autoCompound",
+        "type": "bool"
+      },
+      {
+        "name": "_riskTolerance",
+        "type": "uint8"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "routeDeposit",
+    "inputs": [
+      {
+        "name": "_user",
+        "type": "address"
+      },
+      {
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getUserConfig",
+    "inputs": [
+      {
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "selectedProtocol",
+            "type": "address"
+          },
+          {
+            "name": "autoCompound",
+            "type": "bool"
+          },
+          {
+            "name": "riskTolerance",
+            "type": "uint8"
+          },
+          {
+            "name": "lastUpdate",
+            "type": "uint256"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getRecommendedProtocol",
+    "inputs": [
+      {
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getProtocolDeposits",
+    "inputs": [
+      {
+        "name": "_protocol",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "isContractAuthorized",
+    "inputs": [
+      {
+        "name": "_contract",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "changeAdmin",
+    "inputs": [
+      {
+        "name": "_newAdmin",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "admin",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "treasury",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "protocolRegistry",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "userConfigs",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "selectedProtocol",
+            "type": "address"
+          },
+          {
+            "name": "autoCompound",
+            "type": "bool"
+          },
+          {
+            "name": "riskTolerance",
+            "type": "uint8"
+          },
+          {
+            "name": "lastUpdate",
+            "type": "uint256"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "authorizedContracts",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "protocolDeposits",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "_protocolRegistry",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  }
+]

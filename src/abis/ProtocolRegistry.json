@@ -1,453 +1,449 @@
-{
-  "contractName": "ProtocolRegistry",
-  "abi": [
-    {
-      "name": "ProtocolAdded",
-      "inputs": [
-        {
-          "name": "protocolAddress",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "name",
-          "type": "string",
-          "indexed": false
-        },
-        {
-          "name": "apy",
-          "type": "uint256",
-          "indexed": false
-        },
-        {
-          "name": "riskLevel",
-          "type": "uint8",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "ProtocolUpdated",
-      "inputs": [
-        {
-          "name": "protocolAddress",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "apy",
-          "type": "uint256",
-          "indexed": false
-        },
-        {
-          "name": "isActive",
-          "type": "bool",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "ProtocolRemoved",
-      "inputs": [
-        {
-          "name": "protocolAddress",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "setTreasury",
-      "inputs": [
-        {
-          "name": "_treasury",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "addAuthorizedManager",
-      "inputs": [
-        {
-          "name": "_manager",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "removeAuthorizedManager",
-      "inputs": [
-        {
-          "name": "_manager",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "addDeFiProtocol",
-      "inputs": [
-        {
-          "name": "_protocolAddress",
-          "type": "address"
-        },
-        {
-          "name": "_name",
-          "type": "string"
-        },
-        {
-          "name": "_apy",
-          "type": "uint256"
-        },
-        {
-          "name": "_riskLevel",
-          "type": "uint8"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "updateProtocolAPY",
-      "inputs": [
-        {
-          "name": "_protocolAddress",
-          "type": "address"
-        },
-        {
-          "name": "_newAPY",
-          "type": "uint256"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "toggleProtocolStatus",
-      "inputs": [
-        {
-          "name": "_protocolAddress",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "removeProtocol",
-      "inputs": [
-        {
-          "name": "_protocolAddress",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "updateTotalDeposited",
-      "inputs": [
-        {
-          "name": "_protocolAddress",
-          "type": "address"
-        },
-        {
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getProtocol",
-      "inputs": [
-        {
-          "name": "_protocolAddress",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "tuple",
-          "components": [
-            {
-              "name": "protocolAddress",
-              "type": "address"
-            },
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "apy",
-              "type": "uint256"
-            },
-            {
-              "name": "isActive",
-              "type": "bool"
-            },
-            {
-              "name": "totalDeposited",
-              "type": "uint256"
-            },
-            {
-              "name": "riskLevel",
-              "type": "uint8"
-            },
-            {
-              "name": "addedTimestamp",
-              "type": "uint256"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getActiveProtocols",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address[100]"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getProtocolsByRisk",
-      "inputs": [
-        {
-          "name": "_riskLevel",
-          "type": "uint8"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address[100]"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getTotalValueLocked",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getProtocolStats",
-      "inputs": [
-        {
-          "name": "_protocolAddress",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "isProtocolActive",
-      "inputs": [
-        {
-          "name": "_protocolAddress",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ]
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "changeAdmin",
-      "inputs": [
-        {
-          "name": "_newAdmin",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "admin",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "treasury",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "protocols",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "tuple",
-          "components": [
-            {
-              "name": "protocolAddress",
-              "type": "address"
-            },
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "apy",
-              "type": "uint256"
-            },
-            {
-              "name": "isActive",
-              "type": "bool"
-            },
-            {
-              "name": "totalDeposited",
-              "type": "uint256"
-            },
-            {
-              "name": "riskLevel",
-              "type": "uint8"
-            },
-            {
-              "name": "addedTimestamp",
-              "type": "uint256"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "protocolAddresses",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "uint256"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "protocolCount",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "authorizedManagers",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ]
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "constructor",
-      "inputs": [],
-      "outputs": []
-    }
-  ],
-  "bytecode": "0x3461002c57335f555f60675560016068336020525f5260405f205561156d6100306100003961156d610000f35b5f80fd5f3560e01c60026013820660011b61154701601e395f51565b63f0f44260811861014657602436103417611543576004358060a01c611543576040525f543318156100b55760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60405161012d5760208060c05260106060527f496e76616c69642074726561737572790000000000000000000000000000000060805260608160c001603082825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b604051600155600160686040516020525f5260405f2055005b63468a9363811861028957604436103417611543576004358060a01c611543576040526068336020525f5260405f20546101eb5760208060c052600c6060527f556e617574686f72697a6564000000000000000000000000000000000000000060805260608160c001602c82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60026040516020525f5260405f205461026f5760208060c05260126060527f50726f746f636f6c206e6f7420666f756e64000000000000000000000000000060805260608160c001603282825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60243560026040516020525f5260405f2060068101905055005b6326638a0a811861153f57602436103417611543576004358060a01c6115435760405260208060605260026040516020525f5260405f208160600160e0825482528060208301526001830181830160208254015f81601f0160051c6003811161154357801561030a57905b808501548160051b8501526001018181186102f4575b5050508051806020830101601f825f03163682375050601f19601f825160200101169050905081019050600483015460408301526005830154606083015260068301546080830152600783015460a0830152600883015460c083015290509050810190506060f35b62497e7681186104aa57602436103417611543576004358060a01c611543576040525f5433186103a35760016103aa565b6001543318155b61041f5760208060c052600c6060527f556e617574686f72697a6564000000000000000000000000000000000000000060805260608160c001602c82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6040516104975760208060c052600f6060527f496e76616c6964206d616e61676572000000000000000000000000000000000060805260608160c001602f82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b600160686040516020525f5260405f2055005b638f283970811861153f57602436103417611543576004358060a01c611543576040525f543318156105475760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6040516105bf5760208060c052600f6060527f496e76616c69642061646472657373000000000000000000000000000000000060805260608160c001602f82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6040515f55600160686040516020525f5260405f2055005b63dd99d123811861068657602436103417611543576004358060a01c611543576040525f543318156106745760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b5f60686040516020525f5260405f2055005b6398ef6464811861153f57602436103417611543576004358060a01c6115435760405260026040516020525f5260405f2080546060526001810160208154015f81601f0160051c600381116115435780156106f457905b808401548160051b608001526001018181186106dd575b50505050600481015460e0526005810154610100526006810154610120526007810154610140526008810154610160525060e05161018052610120516101a052610100516101c0526060610180f35b630c6ebd798118610b6d57608436103417611543576004358060a01c611543576040526024356004018035604081116115435750606081606037506064358060081c6115435760c0526068336020525f5260405f20546108135760208061014052600c60e0527f556e617574686f72697a656400000000000000000000000000000000000000006101005260e08161014001602c82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610120528060040161013cfd5b6040516108905760208061014052601060e0527f496e76616c69642070726f746f636f6c000000000000000000000000000000006101005260e08161014001603082825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610120528060040161013cfd5b60026040516020525f5260405f20541561091a5760208061014052600f60e0527f50726f746f636f6c2065786973747300000000000000000000000000000000006101005260e08161014001602f82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610120528060040161013cfd5b600160c051121561092b575f610933565b600360c05113155b6109ad5760208061014052601260e0527f496e76616c6964207269736b206c6576656c00000000000000000000000000006101005260e08161014001603282825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610120528060040161013cfd5b6127106044351115610a2f5760208061014052600c60e0527f41505920746f6f206869676800000000000000000000000000000000000000006101005260e08161014001602c82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610120528060040161013cfd5b60405160e052606060606101005e604435610160526001610180525f6101a05260c0516101c052426101e05260026040516020525f5260405f2060e051815560206101005101600182015f82601f0160051c60038111611543578015610aa957905b8060051b610100015181840155600101818118610a91575b505050506101605160048201556101805160058201556101a05160068201556101c05160078201556101e05160088201555060405160675460648110156115435760030155606754600181018181106115435790506067556040517fc54779c81ea24a6409aea61eea072c402c7a01103da5f6b84ec5a89123925c7860608060e0528060e00160606060825e8051806020830101601f825f03163682375050601f19601f825160200101169050810190506044356101005260c0516101205260e0a2005b6321027dc5811861153f57602436103417611543576004358060a01c6115435760405260208060605260026040516020525f5260405f208160600160e0825482528060208301526001830181830160208254015f81601f0160051c60038111611543578015610bee57905b808501548160051b850152600101818118610bd8575b5050508051806020830101601f825f03163682375050601f19601f825160200101169050905081019050600483015460408301526005830154606083015260068301546080830152600783015460a0830152600883015460c083015290509050810190506060f35b63e881978f811861153f57604436103417611543576004358060a01c611543576040526068336020525f5260405f2054610cfb5760208060c052600c6060527f556e617574686f72697a6564000000000000000000000000000000000000000060805260608160c001602c82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60026040516020525f5260405f2054610d7f5760208060c05260126060527f50726f746f636f6c206e6f7420666f756e64000000000000000000000000000060805260608160c001603282825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6127106024351115610dfc5760208060c052600c6060527f41505920746f6f2068696768000000000000000000000000000000000000000060805260608160c001602c82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60243560026040516020525f5260405f20600481019050556040517fa052d0a1607256f78e82ded6e0a2e2c483208aefcc6a44ef568032b9b41353c860243560605260026040516020525f5260405f206005810190505460805260406060a2005b63efc027c8811861100157602436103417611543576004358060a01c611543576040526068336020525f5260405f2054610f025760208060c052600c6060527f556e617574686f72697a6564000000000000000000000000000000000000000060805260608160c001602c82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60026040516020525f5260405f2054610f865760208060c05260126060527f50726f746f636f6c206e6f7420666f756e64000000000000000000000000000060805260608160c001603282825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60026040516020525f5260405f20600581019050546060526060511560026040516020525f5260405f20600581019050556040517fa052d0a1607256f78e82ded6e0a2e2c483208aefcc6a44ef568032b9b41353c860026040516020525f5260405f20600481019050546080526060511560a05260406080a2005b63e2eed04f811861153f57346115435760675460405260206040f35b6318ff5768811861153f57602436103417611543576004358060a01c611543576040525f543318156110ba5760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60026040516020525f5260405f205461113e5760208060c05260126060527f50726f746f636f6c206e6f7420666f756e64000000000000000000000000000060805260608160c001603282825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b5f60026040516020525f5260405f20600581019050556040517f708643cb1bd91c80967f227a54f1bfdb24543f8a8411ca28313075360aeaf5f34260605260206060a2005b63f081e3688118611223573461154357610ca0366040375f6064905b80610ce052606754610ce051101561121a57610ce05160648110156115435760030154610d00526002610d00516020525f5260405f20600581019050541561120f57610d0051610cc05160648110156115435760051b60400152610cc05160018101818110611543579050610cc0525b60010181811861119f575b5050610c806040f35b6361d027b3811861153f57346115435760015460405260206040f35b63a727659b811861153f57602436103417611543576004358060081c6115435760405260016040511215611273575f61127b565b600360405113155b6112f05760208060c05260126060527f496e76616c6964207269736b206c6576656c000000000000000000000000000060805260608160c001603282825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b610ca0366060375f6064905b80610d0052606754610d005110156113f957610d005160648110156115435760030154610d20526002610d20516020525f5260405f208054610d40526001810160208154015f81601f0160051c6003811161154357801561137157905b808401548160051b610d600152600101818118611359575b505050506004810154610dc0526005810154610de0526006810154610e00526007810154610e20526008810154610e405250610de0516113b1575f6113bb565b604051610e205118155b156113ee57610d2051610ce05160648110156115435760051b60600152610ce05160018101818110611543579050610ce0525b6001018181186112fc575b5050610c806060f35b63b26025aa811861147a5734611543575f6040525f6064905b806060526067546060511015611472576060516064811015611543576003015460805260405160026080516020525f5260405f2060068101905054808201828110611543579050905060405260010181811861141b575b505060206040f35b636a762060811861153f57602436103417611543576004356064811015611543576003015460405260206040f35b6309143646811861153f57602436103417611543576004358060a01c6115435760405260026040516020525f5260405f206005810190505460605260206060f35b63f851a440811861153f5734611543575f5460405260206040f35b630a3cb21b811861153f57602436103417611543576004358060a01c6115435760405260686040516020525f5260405f205460605260206060f35b5f5ffd5b5f80fd153f153f0372153f1504074314021183153f0c5605d70e5d101d153f14e9123f14a8153f0018855820901de9dcc2bda8c6a1d23d197e707633cad973ba73220347ef5fa949f4b6efcf19156d81182600a1657679706572830004030037"
-}
+[
+  {
+    "name": "ProtocolAdded",
+    "inputs": [
+      {
+        "name": "protocolAddress",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "indexed": false
+      },
+      {
+        "name": "apy",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "riskLevel",
+        "type": "uint8",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "ProtocolUpdated",
+    "inputs": [
+      {
+        "name": "protocolAddress",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "apy",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "isActive",
+        "type": "bool",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "ProtocolRemoved",
+    "inputs": [
+      {
+        "name": "protocolAddress",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "setTreasury",
+    "inputs": [
+      {
+        "name": "_treasury",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "addAuthorizedManager",
+    "inputs": [
+      {
+        "name": "_manager",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "removeAuthorizedManager",
+    "inputs": [
+      {
+        "name": "_manager",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "addDeFiProtocol",
+    "inputs": [
+      {
+        "name": "_protocolAddress",
+        "type": "address"
+      },
+      {
+        "name": "_name",
+        "type": "string"
+      },
+      {
+        "name": "_apy",
+        "type": "uint256"
+      },
+      {
+        "name": "_riskLevel",
+        "type": "uint8"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "updateProtocolAPY",
+    "inputs": [
+      {
+        "name": "_protocolAddress",
+        "type": "address"
+      },
+      {
+        "name": "_newAPY",
+        "type": "uint256"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "toggleProtocolStatus",
+    "inputs": [
+      {
+        "name": "_protocolAddress",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "removeProtocol",
+    "inputs": [
+      {
+        "name": "_protocolAddress",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "updateTotalDeposited",
+    "inputs": [
+      {
+        "name": "_protocolAddress",
+        "type": "address"
+      },
+      {
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getProtocol",
+    "inputs": [
+      {
+        "name": "_protocolAddress",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "protocolAddress",
+            "type": "address"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "apy",
+            "type": "uint256"
+          },
+          {
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "name": "totalDeposited",
+            "type": "uint256"
+          },
+          {
+            "name": "riskLevel",
+            "type": "uint8"
+          },
+          {
+            "name": "addedTimestamp",
+            "type": "uint256"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getActiveProtocols",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[100]"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getProtocolsByRisk",
+    "inputs": [
+      {
+        "name": "_riskLevel",
+        "type": "uint8"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[100]"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getTotalValueLocked",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getProtocolStats",
+    "inputs": [
+      {
+        "name": "_protocolAddress",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "isProtocolActive",
+    "inputs": [
+      {
+        "name": "_protocolAddress",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "changeAdmin",
+    "inputs": [
+      {
+        "name": "_newAdmin",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "admin",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "treasury",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "protocols",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "protocolAddress",
+            "type": "address"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "apy",
+            "type": "uint256"
+          },
+          {
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "name": "totalDeposited",
+            "type": "uint256"
+          },
+          {
+            "name": "riskLevel",
+            "type": "uint8"
+          },
+          {
+            "name": "addedTimestamp",
+            "type": "uint256"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "protocolAddresses",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "protocolCount",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "authorizedManagers",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "constructor",
+    "inputs": [],
+    "outputs": []
+  }
+]

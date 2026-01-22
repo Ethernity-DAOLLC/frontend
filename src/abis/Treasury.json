@@ -1,744 +1,740 @@
-{
-  "contractName": "Treasury",
-  "abi": [
-    {
-      "name": "FeeReceived",
-      "inputs": [
-        {
-          "name": "fundAddress",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "amount",
-          "type": "uint256",
-          "indexed": false
-        },
-        {
-          "name": "totalFromFund",
-          "type": "uint256",
-          "indexed": false
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "EarlyRetirementRequested",
-      "inputs": [
-        {
-          "name": "fundAddress",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "requester",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "proposalId",
-          "type": "uint256",
-          "indexed": false
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "EarlyRetirementApproved",
-      "inputs": [
-        {
-          "name": "fundAddress",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "proposalId",
-          "type": "uint256",
-          "indexed": false
-        },
-        {
-          "name": "approver",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "EarlyRetirementRejected",
-      "inputs": [
-        {
-          "name": "fundAddress",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "proposalId",
-          "type": "uint256",
-          "indexed": false
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "FeesWithdrawn",
-      "inputs": [
-        {
-          "name": "recipient",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "amount",
-          "type": "uint256",
-          "indexed": false
-        },
-        {
-          "name": "token",
-          "type": "address",
-          "indexed": false
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "ManagerAdded",
-      "inputs": [
-        {
-          "name": "manager",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "name": "ManagerRemoved",
-      "inputs": [
-        {
-          "name": "manager",
-          "type": "address",
-          "indexed": true
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256",
-          "indexed": false
-        }
-      ],
-      "anonymous": false,
-      "type": "event"
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "setGovernance",
-      "inputs": [
-        {
-          "name": "_governance",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "setToken",
-      "inputs": [
-        {
-          "name": "_token",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "addTreasuryManager",
-      "inputs": [
-        {
-          "name": "_manager",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "removeTreasuryManager",
-      "inputs": [
-        {
-          "name": "_manager",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "updateFeePercentage",
-      "inputs": [
-        {
-          "name": "_newFee",
-          "type": "uint256"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "recordFee",
-      "inputs": [
-        {
-          "name": "_fundAddress",
-          "type": "address"
-        },
-        {
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "requestEarlyRetirement",
-      "inputs": [
-        {
-          "name": "_fundAddress",
-          "type": "address"
-        },
-        {
-          "name": "_reason",
-          "type": "string"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "linkProposalToRequest",
-      "inputs": [
-        {
-          "name": "_fundAddress",
-          "type": "address"
-        },
-        {
-          "name": "_proposalId",
-          "type": "uint256"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "processEarlyRetirementVote",
-      "inputs": [
-        {
-          "name": "_proposalId",
-          "type": "uint256"
-        },
-        {
-          "name": "_fundAddress",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "calculateFee",
-      "inputs": [
-        {
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "withdrawFees",
-      "inputs": [
-        {
-          "name": "_recipient",
-          "type": "address"
-        },
-        {
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getEarlyRetirementRequest",
-      "inputs": [
-        {
-          "name": "_fundAddress",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "tuple",
-          "components": [
-            {
-              "name": "fundAddress",
-              "type": "address"
-            },
-            {
-              "name": "requester",
-              "type": "address"
-            },
-            {
-              "name": "proposalId",
-              "type": "uint256"
-            },
-            {
-              "name": "approved",
-              "type": "bool"
-            },
-            {
-              "name": "processed",
-              "type": "bool"
-            },
-            {
-              "name": "timestamp",
-              "type": "uint256"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getPendingRequests",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address[]"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getTreasuryBalance",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getTotalFeesCollected",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getFundFeeRecord",
-      "inputs": [
-        {
-          "name": "_fundAddress",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "tuple",
-          "components": [
-            {
-              "name": "fundAddress",
-              "type": "address"
-            },
-            {
-              "name": "totalFeesPaid",
-              "type": "uint256"
-            },
-            {
-              "name": "lastFeeTimestamp",
-              "type": "uint256"
-            },
-            {
-              "name": "feeCount",
-              "type": "uint256"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "getFundCount",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "isTreasuryManager",
-      "inputs": [
-        {
-          "name": "_address",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ]
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "name": "changeAdmin",
-      "inputs": [
-        {
-          "name": "_newAdmin",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "fallback"
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "admin",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "governance",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "token",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "usdc",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "fundFeeRecords",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "tuple",
-          "components": [
-            {
-              "name": "fundAddress",
-              "type": "address"
-            },
-            {
-              "name": "totalFeesPaid",
-              "type": "uint256"
-            },
-            {
-              "name": "lastFeeTimestamp",
-              "type": "uint256"
-            },
-            {
-              "name": "feeCount",
-              "type": "uint256"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "registeredFunds",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "uint256"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "fundCount",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "isFundRegistered",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "earlyRetirementRequests",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "tuple",
-          "components": [
-            {
-              "name": "fundAddress",
-              "type": "address"
-            },
-            {
-              "name": "requester",
-              "type": "address"
-            },
-            {
-              "name": "proposalId",
-              "type": "uint256"
-            },
-            {
-              "name": "approved",
-              "type": "bool"
-            },
-            {
-              "name": "processed",
-              "type": "bool"
-            },
-            {
-              "name": "timestamp",
-              "type": "uint256"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "pendingRequests",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "uint256"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "pendingCount",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "totalFeesCollectedUSDC",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "treasuryManagers",
-      "inputs": [
-        {
-          "name": "arg0",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ]
-    },
-    {
-      "stateMutability": "view",
-      "type": "function",
-      "name": "feePercentage",
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ]
-    },
-    {
-      "stateMutability": "nonpayable",
-      "type": "constructor",
-      "inputs": [
-        {
-          "name": "_usdc",
-          "type": "address"
-        }
-      ],
-      "outputs": []
-    }
-  ],
-  "bytecode": "0x346100d6576020611cde5f395f518060a01c6100d6576040526040516100905760208060c05260146060527f496e76616c69642055534443206164647265737300000000000000000000000060805260608160c001603482825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b335f5560405160035561012c62018a93555f620186a5555f62018a90555f62018a9155600162018a92336020525f5260405f2055611bcd6100da61000039611bcd610000f35b5f80fd5f3560e01c60026022820660011b611b8901601e395f51565b63ab033ea98118611b0f57602436103417611b85576004358060a01c611b85576040525f543318156100b55760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60405161012d5760208060c05260126060527f496e76616c696420676f7665726e616e6365000000000000000000000000000060805260608160c001603282825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b604051600155005b63144fa6d7811861025257602436103417611b85576004358060a01c611b85576040525f543318156101d25760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b60405161024a5760208060c052600d6060527f496e76616c696420746f6b656e0000000000000000000000000000000000000060805260608160c001602d82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b604051600255005b63ea70b4af8118611b0f5734611b855762018a905460405260206040f35b63a333658f8118611b0f57602436103417611b85576004358060a01c611b85576040525f5433181561030d5760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6040516103855760208060c052600f6060527f496e76616c6964206d616e61676572000000000000000000000000000000000060805260608160c001602f82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b600162018a926040516020525f5260405f20556040517ffae05d1286e3d4cd0db21fce06a66beb75ec586eb923fc0fcc332e69d7ad2e2f4260605260206060a2005b632c60bbf1811861052057602436103417611b85576004358060a01c611b85576040525f543318156104645760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b5f54604051186104df5760208060c05260136060527f43616e6e6f742072656d6f76652061646d696e0000000000000000000000000060805260608160c001603382825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b5f62018a926040516020525f5260405f20556040517f31baedb05285cc3d480d05ac4e7b919a28dd271aeb1c0f812a9b6be2530e42b94260605260206060a2005b63ad3b1b478118611b0f57604436103417611b85576004358060a01c611b85576040525f543318156105bd5760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6040516106355760208060c05260116060527f496e76616c696420726563697069656e7400000000000000000000000000000060805260608160c001603182825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6024356106ad5760208060c052600e6060527f496e76616c696420616d6f756e7400000000000000000000000000000000000060805260608160c001602e82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6003546370a082316080523060a052602060806024609c845afa6106d3573d5f5f3e3d5ffd5b60203d10611b8557608090505160605260605160243511156107605760208060e05260146080527f496e73756666696369656e742062616c616e636500000000000000000000000060a05260808160e001603482825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060c0528060040160dcfd5b60035463a9059cbb60805260405160a05260243560c052602060806044609c5f855af161078f573d5f5f3e3d5ffd5b3d602081183d60201002188060800160a011611b85576080518060011c611b855760e0525060e09050516108355760208061016052600f610100527f5472616e73666572206661696c65640000000000000000000000000000000000610120526101008161016001602f82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610140528060040161015cfd5b6040517fa6ec8c013a27da594f07b48ca9e2d7c1126196102f4b24b2206eef5a339cc0d660243560805260035460a0524260c05260606080a2005b636cad3fb0811861098657602436103417611b85575f543318156108ff5760208060a052600a6040527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060605260408160a001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060805280600401609cfd5b6103e8600435111561097c5760208060a05260166040527f46656520746f6f206869676820286d617820313025290000000000000000000060605260408160a001603682825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060805280600401609cfd5b60043562018a9355005b6380a1f7128118611b0f5734611b85575f6040525f6103e8905b80617d605262018a9054617d60511015610a4557617d60516103e8811015611b8557620186a80154617d8052620186a7617d80516020525f5260405f208054617da0526001810154617dc0526002810154617de0526003810154617e00526004810154617e20526005810154617e405250617e2051610a3a576040516103e78111611b8557617d80518160051b6060015260018101604052505b6001018181186109a0575b5050602080617d605280617d60015f6040518083528060051b5f826103e88111611b85578015610a8e57905b8060051b606001518160051b602088010152600101818118610a71575b50508201602001915050905081019050617d60f35b630a6e0fd48118610c9b57604436103417611b85576004358060a01c611b8557604052602435610b3e5760208060c052600e6060527f496e76616c696420616d6f756e7400000000000000000000000000000000000060805260608160c001602e82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b620186a66040516020525f5260405f2054610bcd57604051620186a554620186a0811015611b855760050155620186a55460018101818110611b85579050620186a5556001620186a66040516020525f5260405f205560405160605260603660803760046040516020525f5260405f206060518155608051600182015560a051600282015560c0516003820155505b60046040516020525f5260405f206001810190508054602435808201828110611b8557905090508155504260046040516020525f5260405f206002810190505560046040516020525f5260405f20600381019050805460018101818110611b8557905081555062018a9154602435808201828110611b85579050905062018a91556040517ffa10d43f8afb9dba7a4767cf7355042b4d7246d790ba4c9441573ec301cb876b60243560605260046040516020525f5260405f20600181019050546080524260a05260606060a2005b633b6659948118611b0f57602436103417611b85576004358060a01c611b855760405262018a926040516020525f5260405f205460605260206060f35b639809c4e78118611b0f57604436103417611b85576004358060a01c611b855760405260243560040180356102008111611b855750602081350180826060375050620186a66040516020525f5260405f2054610da6576020806102e0526013610280527f46756e64206e6f742072656769737465726564000000000000000000000000006102a052610280816102e001603382825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a06102c052806004016102dcfd5b604051638da5cb5b6102a05260206102a060046102bc845afa610dcb573d5f5f3e3d5ffd5b3d602081183d6020100218806102a0016102c011611b85576102a0518060a01c611b85576102e052506102e09050516102805261028051331815610e815760208061030052601b6102a0527f4f6e6c792066756e64206f776e65722063616e207265717565737400000000006102c0526102a08161030001603b82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a06102e052806004016102fcfd5b620186a76040516020525f5260405f2080546102a05260018101546102c05260028101546102e052600381015461030052600481015461032052600581015461034052506102a051610ed4576001610ed9565b610320515b610f55576020806103c0526017610360527f5265717565737420616c72656164792070656e64696e6700000000000000000061038052610360816103c001603782825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a06103a052806004016103bcfd5b6040516103605261028051610380526060366103a0374261040052620186a76040516020525f5260405f206103605181556103805160018201556103a05160028201556103c05160038201556103e05160048201556104005160058201555060405162018a90546103e8811015611b8557620186a8015562018a905460018101818110611b8557905062018a9055610280516040517f5fd3d6bc14eab256b3892b70b78d6dfaf909685d61ab3d00608259b5589ab12b5f6103605242610380526040610360a35f610360526020610360f35b63bbc4a98f811861123857604436103417611b85576004358060a01c611b85576040525f543318611059576001611069565b62018a92336020525f5260405f20545b6110de5760208060c052600c6060527f556e617574686f72697a6564000000000000000000000000000000000000000060805260608160c001602c82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b620186a76040516020525f5260405f2080546060526001810154608052600281015460a052600381015460c052600481015460e0526005810154610100525060605161119c57602080610180526010610120527f4e6f207265717565737420666f756e6400000000000000000000000000000000610140526101208161018001603082825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610160528060040161017cfd5b60a0511561121c57602080610180526017610120527f50726f706f73616c20616c7265616479206c696e6b6564000000000000000000610140526101208161018001603782825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610160528060040161017cfd5b602435620186a76040516020525f5260405f2060028101905055005b63c9e319bf8118611b0f57602436103417611b85576004358060a01c611b8557604052620186a66040516020525f5260405f205460605260206060f35b6380b9fe52811861163c57604436103417611b85576024358060a01c611b855760405260015433186112a85760016112ae565b5f543318155b6113235760208060c05260186060527f4f6e6c7920676f7665726e616e6365206f722061646d696e000000000000000060805260608160c001603882825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b620186a76040516020525f5260405f2080546060526001810154608052600281015460a052600381015460c052600481015460e052600581015461010052506060516113e157602080610180526010610120527f4e6f207265717565737420666f756e6400000000000000000000000000000000610140526101208161018001603082825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610160528060040161017cfd5b60e0511561146157602080610180526011610120527f416c72656164792070726f636573736564000000000000000000000000000000610140526101208161018001603182825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610160528060040161017cfd5b60043560a05118156114e557602080610180526014610120527f50726f706f73616c204944206d69736d61746368000000000000000000000000610140526101208161018001603482825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a0610160528060040161017cfd5b6060366101203760015463bfa0fc93610180526004356101a0526060610180602461019c845afa611518573d5f5f3e3d5ffd5b3d606081183d606010021880610180016101e011611b855760406101806102005e6101c0518060011c611b8557610240525061020090506060816102605e5060606102606101205e6001620186a76040516020525f5260405f2060048101905055610160516115bc576040517f677a163d9bcb6c328745bfc7d60d68c83fe510eb6baef18e3722af3de85dcb3560043561018052426101a0526040610180a261163a565b6001620186a76040516020525f5260405f2060038101905055604051639a7f907961018052803b15611b85575f610180600461019c5f855af1611601573d5f5f3e3d5ffd5b50336040517f21ccddd9921490a47e3a041a99ee1a891db6be138269d0b173ced33c2b57f77b60043561018052426101a0526040610180a35b005b63915dde8a8118611b0f57602436103417611b85576004358060a01c611b855760405260046040516020525f5260405f2080546060526001810154608052600281015460a052600381015460c0525060806060f35b6399a5d74781186116d257602436103417611b855760043562018a9354808202811583838304141715611b8557905090506127108104905060405260206040f35b6311648a4d8118611b0f5734611b8557620186a55460405260206040f35b63e8568ed68118611b0f57602436103417611b85576004358060a01c611b8557604052620186a76040516020525f5260405f2080546060526001810154608052600281015460a052600381015460c052600481015460e0526005810154610100525060c06060f35b639b5655dc811861179e5734611b855760206003546370a0823160405230606052602060406024605c845afa611790573d5f5f3e3d5ffd5b60203d10611b855760409050f35b63c70908188118611b0f5734611b855762018a915460405260206040f35b63468765088118611b0f5734611b855762018a915460405260206040f35b633fc6cf818118611b0f57602436103417611b85576004358060a01c611b855760405260046040516020525f5260405f2080546060526001810154608052600281015460a052600381015460c0525060806060f35b638f283970811861195e57602436103417611b85576004358060a01c611b85576040525f543318156118cc5760208060c052600a6060527f4f6e6c792061646d696e0000000000000000000000000000000000000000000060805260608160c001602a82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b6040516119445760208060c052600f6060527f496e76616c69642061646472657373000000000000000000000000000000000060805260608160c001602f82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060a0528060040160bcfd5b600162018a926040516020525f5260405f20556040515f55005b63fc0c546a8118611b0f5734611b855760025460405260206040f35b63f851a4408118611b0f5734611b85575f5460405260206040f35b635aa6e6758118611b0f5734611b855760015460405260206040f35b633e413bee8118611b0f5734611b855760035460405260206040f35b63edee2f058118611b0f57602436103417611b8557600435620186a0811015611b85576005015460405260206040f35b633f936ff58118611b0f5734611b8557620186a55460405260206040f35b63ddf8ef3e8118611b0f57602436103417611b85576004358060a01c611b8557604052620186a76040516020525f5260405f2080546060526001810154608052600281015460a052600381015460c052600481015460e0526005810154610100525060c06060f35b633c652a9a8118611ab457602436103417611b85576004356103e8811015611b8557620186a8015460405260206040f35b632d06ab548118611b0f57602436103417611b85576004358060a01c611b855760405262018a926040516020525f5260405f205460605260206060f35b63a001ecdd8118611b0f5734611b855762018a935460405260206040f35b34611b855760208060a052600f6040527f557365207265636f72644665652829000000000000000000000000000000000060605260408160a001602f82825e8051806020830101601f825f03163682375050601f19601f8251602001011690509050810190506308c379a060805280600401609cfd5b5f80fd1a831b0f17581b0f1b0f19fd1b0f03c717bc169108701b0f182f1b0f1b0f102719b119cd1b0f17da127501351a1b1af10aa319951b0f0cd816f01b0f197a00181b0f02708558207b506d94763f40f3839b6d36a992b04a4e66449577d244a5a5aa3390871eb30c191bcd81184400a1657679706572830004030037"
-}
+[
+  {
+    "name": "FeeReceived",
+    "inputs": [
+      {
+        "name": "fundAddress",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "totalFromFund",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "EarlyRetirementRequested",
+    "inputs": [
+      {
+        "name": "fundAddress",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "requester",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "proposalId",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "EarlyRetirementApproved",
+    "inputs": [
+      {
+        "name": "fundAddress",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "proposalId",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "approver",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "EarlyRetirementRejected",
+    "inputs": [
+      {
+        "name": "fundAddress",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "proposalId",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "FeesWithdrawn",
+    "inputs": [
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "token",
+        "type": "address",
+        "indexed": false
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "ManagerAdded",
+    "inputs": [
+      {
+        "name": "manager",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "ManagerRemoved",
+    "inputs": [
+      {
+        "name": "manager",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "setGovernance",
+    "inputs": [
+      {
+        "name": "_governance",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "setToken",
+    "inputs": [
+      {
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "addTreasuryManager",
+    "inputs": [
+      {
+        "name": "_manager",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "removeTreasuryManager",
+    "inputs": [
+      {
+        "name": "_manager",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "updateFeePercentage",
+    "inputs": [
+      {
+        "name": "_newFee",
+        "type": "uint256"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "recordFee",
+    "inputs": [
+      {
+        "name": "_fundAddress",
+        "type": "address"
+      },
+      {
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "requestEarlyRetirement",
+    "inputs": [
+      {
+        "name": "_fundAddress",
+        "type": "address"
+      },
+      {
+        "name": "_reason",
+        "type": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "linkProposalToRequest",
+    "inputs": [
+      {
+        "name": "_fundAddress",
+        "type": "address"
+      },
+      {
+        "name": "_proposalId",
+        "type": "uint256"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "processEarlyRetirementVote",
+    "inputs": [
+      {
+        "name": "_proposalId",
+        "type": "uint256"
+      },
+      {
+        "name": "_fundAddress",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "calculateFee",
+    "inputs": [
+      {
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "withdrawFees",
+    "inputs": [
+      {
+        "name": "_recipient",
+        "type": "address"
+      },
+      {
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getEarlyRetirementRequest",
+    "inputs": [
+      {
+        "name": "_fundAddress",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "fundAddress",
+            "type": "address"
+          },
+          {
+            "name": "requester",
+            "type": "address"
+          },
+          {
+            "name": "proposalId",
+            "type": "uint256"
+          },
+          {
+            "name": "approved",
+            "type": "bool"
+          },
+          {
+            "name": "processed",
+            "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getPendingRequests",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[]"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getTreasuryBalance",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getTotalFeesCollected",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getFundFeeRecord",
+    "inputs": [
+      {
+        "name": "_fundAddress",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "fundAddress",
+            "type": "address"
+          },
+          {
+            "name": "totalFeesPaid",
+            "type": "uint256"
+          },
+          {
+            "name": "lastFeeTimestamp",
+            "type": "uint256"
+          },
+          {
+            "name": "feeCount",
+            "type": "uint256"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "getFundCount",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "isTreasuryManager",
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "changeAdmin",
+    "inputs": [
+      {
+        "name": "_newAdmin",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "fallback"
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "admin",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "governance",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "token",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "usdc",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "fundFeeRecords",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "fundAddress",
+            "type": "address"
+          },
+          {
+            "name": "totalFeesPaid",
+            "type": "uint256"
+          },
+          {
+            "name": "lastFeeTimestamp",
+            "type": "uint256"
+          },
+          {
+            "name": "feeCount",
+            "type": "uint256"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "registeredFunds",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "fundCount",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "isFundRegistered",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "earlyRetirementRequests",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "fundAddress",
+            "type": "address"
+          },
+          {
+            "name": "requester",
+            "type": "address"
+          },
+          {
+            "name": "proposalId",
+            "type": "uint256"
+          },
+          {
+            "name": "approved",
+            "type": "bool"
+          },
+          {
+            "name": "processed",
+            "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "pendingRequests",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "pendingCount",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "totalFeesCollectedUSDC",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "treasuryManagers",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "feePercentage",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "_usdc",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  }
+]
