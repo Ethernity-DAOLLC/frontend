@@ -233,7 +233,6 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       ],
       account,
       chain,
-      gas: 3000000n,
     });
   };
 
