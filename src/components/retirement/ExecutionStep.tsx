@@ -7,7 +7,7 @@ import type { RetirementPlan } from '@/types/retirement_types';
 import type { Abi } from 'viem';
 import { parseContractError, formatErrorForUI } from '@/utils/contractErrorParser';
 
-const PersonalFundFactoryABI = PersonalFundFactoryArtifact.abi as Abi;
+const PersonalFundFactoryABI = (PersonalFundFactoryArtifact as any).abi as Abi;
 const ERC20_ABI = [
   {
     name: 'approve',
@@ -169,7 +169,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       return;
     }
 
-    console.log('🔐 Starting approval with CORRECT amounts:', {
+    console.log('🔍 Starting approval with CORRECT amounts:', {
       usdcAddress,
       factoryAddress,
       principal: principalWei.toString(),
@@ -181,13 +181,13 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
 
     if (needsApproval) {
       setStep('approving');
-
       writeApproval({
         address: usdcAddress,
         abi: ERC20_ABI,
         functionName: 'approve',
         args: [factoryAddress, initialDepositForFactory],
-        gas: 200000n, 
+        account,
+        chain,
       });
     } else {
       handleCreateFund();
@@ -206,7 +206,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
     }
 
     setStep('creating');
-    console.log('🔐 Creating fund with params:', {
+    console.log('🔍 Creating fund with params:', {
       principal: principalWei.toString(),
       monthlyDeposit: monthlyDepositWei.toString(),
       currentAge: plan.currentAge,
@@ -231,6 +231,8 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
         plan.interestRate,
         plan.timelockYears,
       ],
+      account,
+      chain,
       gas: 3000000n,
     });
   };
@@ -271,14 +273,12 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
             <div className="flex-1">
               <h3 className="text-lg font-bold text-red-800 mb-2">{errorDisplay.title}</h3>
               <p className="text-red-700 mb-3">{errorDisplay.message}</p>
-              
               {errorDisplay.details && (
                 <details className="text-xs text-red-600 mb-3">
                   <summary className="cursor-pointer font-semibold">Detalles técnicos</summary>
                   <p className="mt-2 font-mono bg-red-50 p-2 rounded">{errorDisplay.details}</p>
                 </details>
               )}
-
               {errorDisplay.suggestions && errorDisplay.suggestions.length > 0 && (
                 <div className="bg-red-50 rounded-lg p-3 mt-3">
                   <p className="text-sm font-semibold text-red-800 mb-2">💡 Sugerencias:</p>
@@ -319,7 +319,6 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
           </div>
         </div>
       )}
-
       {/* Progreso */}
       {step !== 'idle' && !isStep(step, 'approved') && !errorDisplay && (
         <div className="space-y-4">
