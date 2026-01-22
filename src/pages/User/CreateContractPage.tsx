@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useRetirementPlan } from '@/context/RetirementContext';
@@ -58,6 +58,21 @@ const CreateContractPage: React.FC = () => {
     }
   }, [hasFund, fundAddress]);
 
+  const retirementPlanForVerification = useMemo(() => {
+    if (!formData) return null;
+      return {
+      principal: Number(formData.principal),
+      initialDeposit: Number(formData.initialDeposit),
+      monthlyDeposit: Number(formData.monthlyDeposit),
+      currentAge: formData.currentAge,
+      retirementAge: formData.retirementAge,
+      desiredMonthlyIncome: formData.desiredMonthlyIncome,
+      yearsPayments: formData.yearsPayments,
+      interestRate: formData.interestRate,
+      timelockYears: formData.timelockYears,
+    };
+  }, [formData]);
+
   const formatNumber = (num: string | number) => {
     return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
   };
@@ -70,8 +85,7 @@ const CreateContractPage: React.FC = () => {
   };
 
   const handleContinueToConfirmation = () => {
-    if (!formData || !FACTORY_ADDRESS) return;
-
+    if (!formData || !FACTORY_ADDRESS || !retirementPlanForVerification) return;
     if (hasFund) {
       alert('Ya tienes un fondo creado. No puedes crear más de uno por wallet.');
       navigate('/dashboard');
@@ -80,7 +94,7 @@ const CreateContractPage: React.FC = () => {
     
     navigate('/contract-created', {
       state: {
-        planData: formData,
+        planData: retirementPlanForVerification,
         factoryAddress: FACTORY_ADDRESS,
         needsApproval
       }
@@ -165,7 +179,7 @@ const CreateContractPage: React.FC = () => {
     );
   }
 
-  if (!isInitialized || !formData || isLoadingFund) {
+  if (!isInitialized || !formData || !retirementPlanForVerification || isLoadingFund) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -255,7 +269,7 @@ const CreateContractPage: React.FC = () => {
               {/* RIGHT: Verificación */}
               <div className="space-y-6">
                 <VerificationStep 
-                  plan={formData} 
+                  plan={retirementPlanForVerification} 
                   onVerificationComplete={handleVerificationComplete}
                 />
 

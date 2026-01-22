@@ -25,7 +25,7 @@ const OFFICIAL_USDC: Record<number, `0x${string}`> = {
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',          // Ethereum
 }
 const MOCK_USDC: Record<number, `0x${string}`> = {
-  421614: '0x58c086c3662f45C76D468063Dc112542732b4562',
+  421614: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81',
 }
 const getUSDCAddress = (chainId: number): `0x${string}` => {
   if (chainId === 421614) {
@@ -41,15 +41,15 @@ export const ZERO_ADDRESS: `0x${string}` = '0x0000000000000000000000000000000000
 export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
 
   421614: {
-    personalFundFactory: '0xe02D1A836A2145c4A87d6f3efAFe546F789823c5',
+    personalFundFactory: '0x5A68a5ecE190F7f2eD90A5EAe2A2f68453C25237',
     usdc: getUSDCAddress(421614),
-    treasury: '0x2189fF07F9F1ab65837a5033F82C46AACa845383',
-    governance: '0x552293C7ec77bfdE14a66EFB026ecfEa2559A811',
-    token: '0xa9370b849f01c984900fAE7A09F6e207aC4AD27c',
-    protocolRegistry: '0x4Ae9b72e8fBABAB03Dd1c29b54e7145528c77432',
-    userPreferences: '0xeC94109984aFEA1b633395cB2492F9C1E5aaa471',
-    dateTime: '0xCDb254ea2A7903E42E7D85B6cda8a3786ff50149',
-    personalFund: '0xfdBB1dc0602bEf383bcAce39C31a45720B134F0F',
+    treasury: '0xf8648e9d00175D947CE75F880A6e08dd95460508',
+    governance: '0x7ae31fD2da49F255aA7f1c954606335027314E10',
+    token: '0xA2741AacdBb3135C7cCc492F1F8b3ddE00998af5',
+    protocolRegistry: '0x159f20aDBADBb0bA43961F011fe99A14BCbC7849',
+    userPreferences: '0xd0275c1906a82A5e09C73a471dE3db0f8a214217',
+    dateTime: '0xed663750Dc3F524224D04A6A6B57e65c911b2337',
+    personalFund: '0x687B782CCcf51cc3aA92F9272DA8A3CA732f3653',
   },
 
   // 🟡 POLYGON AMOY - READY TO DEPLOY

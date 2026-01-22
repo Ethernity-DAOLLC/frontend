@@ -11,7 +11,6 @@ export function useUSDC() {
   const [isApproving, setIsApproving] = useState(false);
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
-
   const formatUSDC = useCallback((amount: bigint | undefined): string => {
     if (!amount) return '0';
     return formatUnits(amount, USDC_DECIMALS);
@@ -57,9 +56,8 @@ export function useUSDC() {
 
 export function useUSDCBalance(address?: `0x${string}`) {
   const USDC_ADDRESS = useUSDCAddress();
-  
-  return useReadContract({
-    address: USDC_ADDRESS,
+  const { data, ...rest } = useReadContract({
+    address: USDC_ADDRESS!,
     abi: erc20Abi,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
@@ -67,12 +65,17 @@ export function useUSDCBalance(address?: `0x${string}`) {
       enabled: !!address && !!USDC_ADDRESS,
     },
   });
+
+  return {
+    data: data as bigint | undefined,
+    ...rest,
+  };
 }
+
 export function useUSDCAllowance(owner?: `0x${string}`, spender?: `0x${string}`) {
   const USDC_ADDRESS = useUSDCAddress();
-  
-  return useReadContract({
-    address: USDC_ADDRESS,
+  const { data, ...rest } = useReadContract({
+    address: USDC_ADDRESS!,
     abi: erc20Abi,
     functionName: 'allowance',
     args: owner && spender ? [owner, spender] : undefined,
@@ -80,57 +83,79 @@ export function useUSDCAllowance(owner?: `0x${string}`, spender?: `0x${string}`)
       enabled: !!owner && !!spender && !!USDC_ADDRESS,
     },
   });
+
+  return {
+    data: data as bigint | undefined,
+    ...rest,
+  };
 }
+
 export function useUSDCSymbol() {
   const USDC_ADDRESS = useUSDCAddress();
-  
-  return useReadContract({
-    address: USDC_ADDRESS,
+  const { data, ...rest } = useReadContract({
+    address: USDC_ADDRESS!,
     abi: erc20Abi,
     functionName: 'symbol',
     query: {
       enabled: !!USDC_ADDRESS,
     },
   });
+
+  return {
+    data: data as string | undefined,
+    ...rest,
+  };
 }
 
 export function useUSDCName() {
   const USDC_ADDRESS = useUSDCAddress();
-  
-  return useReadContract({
-    address: USDC_ADDRESS,
+  const { data, ...rest } = useReadContract({
+    address: USDC_ADDRESS!,
     abi: erc20Abi,
     functionName: 'name',
     query: {
       enabled: !!USDC_ADDRESS,
     },
   });
+
+  return {
+    data: data as string | undefined,
+    ...rest,
+  };
 }
 
 export function useUSDCDecimals() {
   const USDC_ADDRESS = useUSDCAddress();
-  
-  return useReadContract({
-    address: USDC_ADDRESS,
+  const { data, ...rest } = useReadContract({
+    address: USDC_ADDRESS!,
     abi: erc20Abi,
     functionName: 'decimals',
     query: {
       enabled: !!USDC_ADDRESS,
     },
   });
+
+  return {
+    data: data as number | undefined,
+    ...rest,
+  };
 }
 
 export function useUSDCTotalSupply() {
   const USDC_ADDRESS = useUSDCAddress();
-  
-  return useReadContract({
-    address: USDC_ADDRESS,
+  const { data, ...rest } = useReadContract({
+    address: USDC_ADDRESS!,
     abi: erc20Abi,
     functionName: 'totalSupply',
     query: {
       enabled: !!USDC_ADDRESS,
     },
   });
+
+  return {
+    data: data as bigint | undefined,
+    ...rest,
+  };
 }
 
 export function useUSDCInfo() {
@@ -142,9 +167,9 @@ export function useUSDCInfo() {
 
   return {
     address,
-    symbol: symbol as string | undefined,
-    name: name as string | undefined,
-    decimals: decimals as number | undefined,
-    totalSupply: totalSupply as bigint | undefined,
+    symbol,
+    name,
+    decimals,
+    totalSupply,
   };
 }
