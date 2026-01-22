@@ -188,6 +188,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
         args: [factoryAddress, initialDepositForFactory],
         account,
         chain,
+        // Let wagmi calculate gas automatically
       });
     } else {
       handleCreateFund();
@@ -233,6 +234,7 @@ export function ExecutionStep({ plan, factoryAddress, needsApproval, onSuccess }
       ],
       account,
       chain,
+      // Let wagmi calculate gas automatically
     });
   };
 
