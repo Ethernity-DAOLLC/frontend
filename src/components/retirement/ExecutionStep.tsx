@@ -28,8 +28,8 @@ const ERC20_ABI = [
 ] as const;
 
 const USDC_ADDRESSES: Record<number, `0x${string}`> = {
-  421614: '0x58c086c3662f45C76D468063Dc112542732b4562', // Arbitrum Sepolia
-  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',  // Polygon Amoy
+  421614: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81', // Arbitrum Sepolia
+  80002: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81',  // Polygon Amoy
 };
 
 interface ExecutionStepProps {
@@ -286,8 +286,8 @@ export function ExecutionStep({
         account,
         chain,
         gas: 100000n,
-        maxFeePerGas: parseUnits('0.1', 'gwei'), // 0.1 gwei = 100000000 wei
-        maxPriorityFeePerGas: parseUnits('0.01', 'gwei'), // 0.01 gwei = 10000000 wei
+        maxFeePerGas: 100000000n, 
+        maxPriorityFeePerGas: 10000000n, 
       });
     } else {
       handleCreateFund();
@@ -338,8 +338,8 @@ export function ExecutionStep({
       account,
       chain,
       gas: estimatedGas || 2500000n,
-      maxFeePerGas: parseUnits('0.1', 'gwei'), // 0.1 gwei
-      maxPriorityFeePerGas: parseUnits('0.01', 'gwei'), // 0.01 gwei
+      maxFeePerGas: 100000000n, 
+      maxPriorityFeePerGas: 10000000n, 
     });
   };
 
