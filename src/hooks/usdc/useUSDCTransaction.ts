@@ -1,11 +1,26 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useWriteContract, useAccount, useWaitForTransactionReceipt } from 'wagmi';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useWriteContract, useAccount, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { useUSDCAllowance } from './useUSDC';
 import { useUSDCApproval } from './useUSDCApproval';
 import { useUSDCBalance } from './useUSDCBalance';
 import { parseUSDC, needsApproval, formatUSDC } from './usdcUtils';
+import { 
+  calculateTotalRequired, 
+  hasEnoughBalanceWithFees,
+  calculateShortfall,
+  validateDeposit,
+  type DepositValidation 
+} from '@/utils/feeCalculations';
 
-type TransactionStep = 'idle' | 'checking' | 'approving' | 'approved' | 'executing' | 'confirming' | 'success' | 'error';
+type TransactionStep = 
+  | 'idle' 
+  | 'checking' 
+  | 'approving' 
+  | 'approved' 
+  | 'executing' 
+  | 'confirming' 
+  | 'success' 
+  | 'error';
 
 interface UseUSDCTransactionProps {
   contractAddress: `0x${string}`;
@@ -18,20 +33,25 @@ interface UseUSDCTransactionProps {
   onError?: (error: Error) => void;
   enabled?: boolean;
   autoExecuteAfterApproval?: boolean;
+  estimateGas?: boolean; 
 }
 
 interface UseUSDCTransactionReturn {
   step: TransactionStep;
   requiresApproval: boolean;
   currentAllowance?: bigint;
-  userBalance: bigint;        
-  hasEnoughBalance: boolean; 
+  userBalance: bigint;
+  hasEnoughBalance: boolean;
+  validation: DepositValidation | null;
   error: Error | null;
+
   executeApproval: () => Promise<void>;
   executeTransaction: () => Promise<void>;
   executeAll: () => Promise<void>;
   refetchAllowance: () => void;
+  refetchBalance: () => void;
   reset: () => void;
+
   isApproving: boolean;
   isApprovingConfirming: boolean;
   approvalSuccess: boolean;
@@ -43,6 +63,9 @@ interface UseUSDCTransactionReturn {
   isSuccess: boolean;
   isError: boolean;
   progress: number;
+  estimatedGas?: bigint;
+  totalRequired: bigint; 
+  shortfall: bigint; 
 }
 
 export function useUSDCTransaction({
@@ -56,10 +79,24 @@ export function useUSDCTransaction({
   onError,
   enabled = true,
   autoExecuteAfterApproval = true,
+  estimateGas = true,
 }: UseUSDCTransactionProps): UseUSDCTransactionReturn {
   const { address } = useAccount();
+  const publicClient = usePublicClient();
   const [step, setStep] = useState<TransactionStep>('idle');
   const [error, setError] = useState<Error | null>(null);
+  const [estimatedGas, setEstimatedGas] = useState<bigint | undefined>();
+  const [validation, setValidation] = useState<DepositValidation | null>(null);
+  const onApprovalSuccessRef = useRef(onApprovalSuccess);
+  const onTransactionSuccessRef = useRef(onTransactionSuccess);
+  const onErrorRef = useRef(onError);
+  
+  useEffect(() => {
+    onApprovalSuccessRef.current = onApprovalSuccess;
+    onTransactionSuccessRef.current = onTransactionSuccess;
+    onErrorRef.current = onError;
+  });
+
   const {
     data: userBalance = 0n,
     isLoading: isLoadingBalance,
@@ -73,22 +110,36 @@ export function useUSDCTransaction({
   } = useUSDCAllowance(address, contractAddress);
 
   const amountInWei = parseUSDC(usdcAmount);
+  const totalRequired = calculateTotalRequired(amountInWei);
+  const hasEnoughBalance = hasEnoughBalanceWithFees(userBalance, amountInWei);
+  const shortfall = calculateShortfall(userBalance, totalRequired);
   const requiresApproval = enabled && 
     parseFloat(usdcAmount) > 0 && 
     needsApproval(currentAllowance, amountInWei);
-  const hasEnoughBalance = userBalance >= amountInWei;
 
   useEffect(() => {
-    if (enabled && address) {
-      console.log('💰 USDC Balance Check:', {
+    if (enabled && parseFloat(usdcAmount) > 0) {
+      const depositValidation = validateDeposit(
+        amountInWei,
+        userBalance,
+        {
+          checkBalance: true,
+        }
+      );
+      setValidation(depositValidation);
+
+      console.log('💰 USDC Transaction Validation:', {
         userBalance: formatUSDC(userBalance),
         required: formatUSDC(amountInWei),
+        totalRequired: formatUSDC(totalRequired),
         hasEnough: hasEnoughBalance,
+        shortfall: formatUSDC(shortfall),
         currentAllowance: formatUSDC(currentAllowance || 0n),
         requiresApproval,
+        validation: depositValidation,
       });
     }
-  }, [enabled, address, userBalance, amountInWei, hasEnoughBalance, currentAllowance, requiresApproval]);
+  }, [enabled, usdcAmount, amountInWei, userBalance, totalRequired, hasEnoughBalance, shortfall, currentAllowance, requiresApproval]);
 
   const approval = useUSDCApproval({
     amount: usdcAmount,
@@ -97,13 +148,13 @@ export function useUSDCTransaction({
       console.log('✅ Approval successful:', hash);
       setStep('approved');
       refetchAllowance();
-      onApprovalSuccess?.();
+      onApprovalSuccessRef.current?.();
     },
     onError: (err) => {
       console.error('❌ Approval failed:', err);
       setError(err);
       setStep('error');
-      onError?.(err);
+      onErrorRef.current?.(err);
     },
   });
 
@@ -121,48 +172,85 @@ export function useUSDCTransaction({
     error: txError,
   } = useWaitForTransactionReceipt({ hash: txHash });
 
+  const estimateTransactionGas = useCallback(async () => {
+    if (!estimateGas || !publicClient || !address) return;
+    
+    try {
+      const gas = await publicClient.estimateContractGas({
+        address: contractAddress,
+        abi,
+        functionName,
+        args,
+        account: address,
+      });
+
+      const gasWithBuffer = (gas * 120n) / 100n;
+      setEstimatedGas(gasWithBuffer);
+      
+      console.log('⛽ Gas estimado:', {
+        base: gas.toString(),
+        withBuffer: gasWithBuffer.toString(),
+      });
+    } catch (err) {
+      console.warn('⚠️ No se pudo estimar gas, usando default');
+      setEstimatedGas(undefined);
+    }
+  }, [estimateGas, publicClient, address, contractAddress, abi, functionName, args]);
+
   const executeApproval = useCallback(async () => {
     if (!requiresApproval) {
       console.warn('⚠️ Approval not required');
       return;
     }
+
     if (!hasEnoughBalance) {
       const err = new Error(
         `Insufficient USDC balance.\n\n` +
-        `Required: ${formatUSDC(amountInWei)}\n` +
-        `Available: ${formatUSDC(userBalance)}\n\n` +
-        `Please get test tokens from the faucet first.`
+        `Required: ${formatUSDC(totalRequired)} USDC\n` +
+        `Available: ${formatUSDC(userBalance)} USDC\n` +
+        `Shortfall: ${formatUSDC(shortfall)} USDC\n\n` +
+        `Please get test tokens from the faucet.`
       );
       console.error('❌', err.message);
       setError(err);
       setStep('error');
-      onError?.(err);
+      onErrorRef.current?.(err);
       throw err;
     }
+    
     console.log('🔐 Starting USDC approval...');
     setStep('approving');
     setError(null);
+    
     try {
       await approval.approve();
     } catch (err) {
       console.error('❌ Approval failed:', err);
       const error = err as Error;
+
       let enhancedMessage = error.message;
       if (error.message?.includes('User rejected')) {
         enhancedMessage = 'Transaction rejected by user';
       } else if (error.message?.includes('insufficient funds')) {
-        enhancedMessage = 'Insufficient ETH for gas fees';
+        enhancedMessage = 'Insufficient ETH for gas fees. Get ETH from faucet.';
       } else if (error.message?.includes('execution reverted')) {
         enhancedMessage = 'Transaction reverted. Please check your USDC balance and try again.';
+      } else if (error.message?.includes('Internal JSON-RPC error')) {
+        enhancedMessage = 
+          'RPC Error - Most likely insufficient gas.\n\n' +
+          'Solutions:\n' +
+          '1. Check ETH balance for gas\n' +
+          '2. Get ETH from faucet\n' +
+          '3. Wait 30s and retry';
       }
       
       const enhancedError = new Error(enhancedMessage);
       setError(enhancedError);
       setStep('error');
-      onError?.(enhancedError);
+      onErrorRef.current?.(enhancedError);
       throw enhancedError;
     }
-  }, [requiresApproval, hasEnoughBalance, amountInWei, userBalance, approval, onError]);
+  }, [requiresApproval, hasEnoughBalance, totalRequired, userBalance, shortfall, approval]);
 
   const executeTransaction = useCallback(async () => {
     if (requiresApproval && step !== 'approved') {
@@ -170,24 +258,30 @@ export function useUSDCTransaction({
       console.error('❌', err.message);
       setError(err);
       setStep('error');
-      onError?.(err);
+      onErrorRef.current?.(err);
       throw err;
     }
+    
     console.log('🚀 Executing contract transaction...', {
       contractAddress,
       functionName,
       args,
     });
+    
     setStep('executing');
     setError(null);
+    await estimateTransactionGas();
+    
     try {
+      const gasLimit = estimatedGas || 2000000n;
+      
       writeContract({
         address: contractAddress,
         abi,
         functionName,
         args,
         value: 0n,
-        gas: 3000000n,
+        gas: gasLimit,
       } as any);
       
       setStep('confirming');
@@ -195,35 +289,36 @@ export function useUSDCTransaction({
       console.error('❌ Transaction execution failed:', err);
       const error = err as Error;
       let enhancedMessage = error.message;
+      
       if (error.message?.includes('User rejected')) {
         enhancedMessage = 'Transaction rejected by user';
       } else if (error.message?.includes('insufficient funds')) {
         enhancedMessage = 'Insufficient ETH for gas fees';
+      } else if (error.message?.includes('execution reverted')) {
+        enhancedMessage = 'Contract execution reverted. Please check parameters and balances.';
       }
       
       const enhancedError = new Error(enhancedMessage);
       setError(enhancedError);
       setStep('error');
-      onError?.(enhancedError);
+      onErrorRef.current?.(enhancedError);
       throw enhancedError;
     }
-  }, [requiresApproval, step, contractAddress, abi, functionName, args, writeContract, onError]);
+  }, [requiresApproval, step, contractAddress, abi, functionName, args, writeContract, estimatedGas, estimateTransactionGas]);
+
   const executeAll = useCallback(async () => {
     setError(null);
-    if (!hasEnoughBalance) {
-      const err = new Error(
-        `Insufficient USDC balance.\n\n` +
-        `Required: ${formatUSDC(amountInWei)}\n` +
-        `Available: ${formatUSDC(userBalance)}\n\n` +
-        `You need ${formatUSDC(amountInWei - userBalance)} more USDC.`
-      );
+
+    if (!validation?.isValid) {
+      const errorMessage = validation?.errors.join('\n') || 'Validation failed';
+      const err = new Error(errorMessage);
       console.error('❌', err.message);
       setError(err);
       setStep('error');
-      onError?.(err);
+      onErrorRef.current?.(err);
       return;
     }
-
+    
     try {
       if (requiresApproval) {
         console.log('📋 Flow: Approval → Transaction');
@@ -237,21 +332,24 @@ export function useUSDCTransaction({
       const error = err as Error;
       setError(error);
       setStep('error');
-      onError?.(error);
+      onErrorRef.current?.(error);
     }
-  }, [hasEnoughBalance, amountInWei, userBalance, requiresApproval, executeApproval, executeTransaction, onError]);
+  }, [validation, requiresApproval, executeApproval, executeTransaction]);
 
   const reset = useCallback(() => {
     setStep('idle');
     setError(null);
+    setEstimatedGas(undefined);
+    setValidation(null);
     approval.reset();
     resetWrite();
-    refetchBalance(); 
-  }, [approval, resetWrite, refetchBalance]);
+    refetchBalance();
+    refetchAllowance();
+  }, [approval, resetWrite, refetchBalance, refetchAllowance]);
 
   useEffect(() => {
     if (autoExecuteAfterApproval && step === 'approved' && approval.isSuccess) {
-      console.log('✅ Approval confirmed, executing transaction...');
+      console.log('✅ Approval confirmed, auto-executing transaction...');
       executeTransaction();
     }
   }, [autoExecuteAfterApproval, step, approval.isSuccess, executeTransaction]);
@@ -261,9 +359,9 @@ export function useUSDCTransaction({
       console.log('✅ Transaction confirmed!', txHash);
       setStep('success');
       refetchBalance();
-      onTransactionSuccess?.(txHash);
+      onTransactionSuccessRef.current?.(txHash);
     }
-  }, [isTxSuccess, txHash, refetchBalance, onTransactionSuccess]);
+  }, [isTxSuccess, txHash, refetchBalance]);
 
   useEffect(() => {
     if (writeError) {
@@ -271,9 +369,9 @@ export function useUSDCTransaction({
       const error = writeError as Error;
       setError(error);
       setStep('error');
-      onError?.(error);
+      onErrorRef.current?.(error);
     }
-  }, [writeError, onError]);
+  }, [writeError]);
 
   useEffect(() => {
     if (txError) {
@@ -281,9 +379,9 @@ export function useUSDCTransaction({
       const error = txError as Error;
       setError(error);
       setStep('error');
-      onError?.(error);
+      onErrorRef.current?.(error);
     }
-  }, [txError, onError]);
+  }, [txError]);
 
   const progress = (() => {
     switch (step) {
@@ -303,14 +401,18 @@ export function useUSDCTransaction({
     step,
     requiresApproval,
     currentAllowance,
-    userBalance,  
-    hasEnoughBalance, 
+    userBalance,
+    hasEnoughBalance,
+    validation,
     error,
+
     executeApproval,
     executeTransaction,
     executeAll,
     refetchAllowance,
+    refetchBalance,
     reset,
+
     isApproving: approval.isApproving || step === 'approving',
     isApprovingConfirming: approval.isConfirming,
     approvalSuccess: approval.isSuccess,
@@ -320,7 +422,7 @@ export function useUSDCTransaction({
     txHash,
     isLoading:
       isCheckingAllowance ||
-      isLoadingBalance || 
+      isLoadingBalance ||
       approval.isApproving ||
       approval.isConfirming ||
       isWritePending ||
@@ -329,5 +431,8 @@ export function useUSDCTransaction({
     isSuccess: step === 'success' && isTxSuccess,
     isError: step === 'error' || !!error,
     progress,
+    estimatedGas,
+    totalRequired,
+    shortfall,
   };
 }

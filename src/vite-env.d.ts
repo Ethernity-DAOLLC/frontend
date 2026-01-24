@@ -40,11 +40,9 @@ interface ImportMetaEnv {
   readonly VITE_TOKEN_ADDRESS?: string;
   readonly VITE_TREASURY_ADDRESS?: string;
   readonly VITE_GOVERNANCE_ADDRESS?: string;
-  readonly VITE_PERSONAL_FUND_ADDRESS?: string;
+  readonly VITE_PERSONALFUND_ADDRESS?: string;
   readonly VITE_PERSONALFUNDFACTORY_ADDRESS?: string;
-  readonly VITE_PROTOCOL_REGISTRY_ADDRESS?: string;
   readonly VITE_PROTOCOLREGISTRY_ADDRESS?: string;
-  readonly VITE_USER_PREFERENCES_ADDRESS?: string;
   readonly VITE_USERPREFERENCES_ADDRESS?: string;
   readonly VITE_USDC_ADDRESS?: string;
   readonly VITE_ADMIN_ADDRESS?: string;
@@ -52,7 +50,6 @@ interface ImportMetaEnv {
   readonly VITE_WALLETCONNECT_PROJECT_ID?: string;
 
   readonly VITE_CHAIN_ID?: string;
-
   readonly VITE_ARBITRUM_SEPOLIA_RPC?: string;
   readonly VITE_SEPOLIA_RPC?: string;
   readonly VITE_ZKSYNC_SEPOLIA_RPC?: string;
