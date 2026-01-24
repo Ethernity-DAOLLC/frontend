@@ -1,4 +1,3 @@
-// ExecutionStep.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   useWriteContract,
@@ -18,9 +17,7 @@ import {
 } from '@/utils/feeCalculations';
 import { formatUSDC } from '@/hooks/usdc/usdcUtils';
 
-// ABI: el JSON es array directo → no .abi
 const PersonalFundFactoryABI = PersonalFundFactoryArtifact as Abi;
-
 const ERC20_ABI = [
   {
     name: 'approve',
@@ -70,7 +67,6 @@ export function ExecutionStep({
 }: ExecutionStepProps) {
   const { address: account, chain } = useAccount();
   const publicClient = usePublicClient();
-
   const [step, setStep] = useState<TransactionStep>('idle');
   const [errorDisplay, setErrorDisplay] = useState<ErrorDisplay | null>(null);
   const [estimatedGas, setEstimatedGas] = useState<bigint | undefined>();
@@ -95,10 +91,8 @@ export function ExecutionStep({
   const principalWei = parseUSDC(plan.principal);
   const monthlyDepositWei = parseUSDC(plan.monthlyDeposit);
   const amountToApprove = principalWei + monthlyDepositWei;
-
   const depositBreakdown = calculateInitialDepositBreakdown(principalWei, monthlyDepositWei);
   const formattedBreakdown = formatDepositBreakdown(depositBreakdown, formatUSDC);
-
   const {
     writeContract: writeApproval,
     data: approvalHash,
@@ -124,38 +118,38 @@ export function ExecutionStep({
     data: receipt,
   } = useWaitForTransactionReceipt({ hash: txHash });
 
-  // ─── Estimación de gas fresca y realista para testnet ─────────────
   const getFreshGasFees = useCallback(async () => {
     if (!publicClient) return null;
-
     try {
       const block = await publicClient.getBlock({ includeTransactions: false });
-      const baseFee = block.baseFeePerGas || 10000000n; // fallback 0.01 gwei
+      const baseFee = block.baseFeePerGas || 10000000n; // 0.01 gwei fallback
 
-      const priorityFee = await publicClient.estimateMaxPriorityFeePerGas();
+      let priorityFee = await publicClient.estimateMaxPriorityFeePerGas();
+      const minPriority = 10000000n;     
+      const maxPriorityRelative = baseFee / 4n; 
+      priorityFee = priorityFee > maxPriorityRelative ? maxPriorityRelative : priorityFee;
+      priorityFee = priorityFee < minPriority ? minPriority : priorityFee;
+      let maxFee = baseFee + priorityFee;
+      maxFee = (maxFee * 140n) / 100n; 
+      const minMaxFee = 50000000n; 
+      if (maxFee < minMaxFee) {
+        maxFee = minMaxFee;
+        priorityFee = maxFee / 5n; 
+      }
 
-      // Buffer dinámico: base + 50% + priority (suficiente para picos cortos en Sepolia)
-      let maxFee = baseFee + (baseFee / 2n) + priorityFee;
+      if (priorityFee > maxFee - baseFee) {
+        priorityFee = maxFee - baseFee - 1000000n;
+      }
 
-      // Mínimo absoluto razonable para Arbitrum Sepolia
-      const minMaxFee = 30000000n; // 0.03 gwei
-
-      if (maxFee < minMaxFee) maxFee = minMaxFee;
-
-      return {
-        maxFeePerGas: maxFee,
-        maxPriorityFeePerGas: priorityFee > 1000000000n ? priorityFee : 1500000000n,
-      };
+      return { maxFeePerGas: maxFee, maxPriorityFeePerGas: priorityFee };
     } catch {
-      // Fallback muy conservador pero barato
       return {
-        maxFeePerGas: 50000000n,       // 0.05 gwei
-        maxPriorityFeePerGas: 2000000000n,
+        maxFeePerGas: 50000000n,   
+        maxPriorityFeePerGas: 10000000n, 
       };
     }
   }, [publicClient]);
 
-  // Estimar gas limit para createPersonalFund
   const estimateCreateGas = useCallback(async () => {
     if (!publicClient || !account) return;
     try {
@@ -187,7 +181,6 @@ export function ExecutionStep({
     }
   }, [step, estimateCreateGas]);
 
-  // ─── Ejecutar transacciones (refrescando fees justo antes) ────────
   const executeApproval = async () => {
     if (!account || !chain) return;
     setStep('approving');
@@ -216,7 +209,6 @@ export function ExecutionStep({
   const executeCreateFund = async () => {
     if (!account || !chain) return;
     setStep('creating');
-
     const fees = await getFreshGasFees();
     if (!fees) {
       setErrorDisplay({ title: 'Error de red', message: 'No se pudo estimar gas' });
@@ -224,7 +216,6 @@ export function ExecutionStep({
       return;
     }
     setCurrentFees(fees);
-
     writeCreateFund({
       address: factoryAddress,
       abi: PersonalFundFactoryABI,
@@ -252,7 +243,7 @@ export function ExecutionStep({
     if (!account || !chain) {
       setErrorDisplay({
         title: 'Wallet no conectada',
-        message: 'Conecta tu wallet para continuar',
+        message: 'Por favor conecta tu wallet para continuar',
       });
       setStep('error');
       return;
@@ -272,11 +263,9 @@ export function ExecutionStep({
     setStep('idle');
   };
 
-  // ─── Transiciones de estado ───────────────────────────────────────
   useEffect(() => {
     if (isApprovalSuccess && approvalHash && step === 'approving') {
       setStep('approved');
-      // Auto-avanzar a creación si había aprobación pendiente
       if (needsApproval) {
         setTimeout(executeCreateFund, 800);
       }
@@ -287,8 +276,9 @@ export function ExecutionStep({
     if ((approvalError || createError) && ['approving', 'creating', 'approved'].includes(step)) {
       const err = approvalError || createError;
       const formatted = formatErrorForUI(err!);
-      const isGasError = formatted.message?.toLowerCase().includes('fee') || 
-                         formatted.message?.toLowerCase().includes('gas');
+      const isGasError = formatted.message?.toLowerCase().includes('fee') ||
+                         formatted.message?.toLowerCase().includes('gas') ||
+                         formatted.message?.toLowerCase().includes('priority');
 
       setErrorDisplay({ ...formatted, isGasRelated: isGasError });
       setStep('error');
@@ -299,7 +289,7 @@ export function ExecutionStep({
     if (isTxSuccess && receipt && step === 'confirming') {
       let fundAddress: string | undefined;
       try {
-        const log = receipt.logs.find(l => l.topics?.length > 1);
+        const log = receipt.logs.find((l: any) => l.topics?.length > 1);
         if (log?.topics?.[1]) {
           fundAddress = `0x${log.topics[1].slice(-40)}`;
         }
@@ -313,19 +303,19 @@ export function ExecutionStep({
 
   return (
     <div className="space-y-6 p-4">
-      {/* Pasos visuales */}
+      {/* Visualización de pasos */}
       <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
         <h3 className="text-xl font-bold mb-6">
-          {needsApproval ? '2 transacciones requeridas' : 'Creando fondo...'}
+          {needsApproval ? '2 transacciones requeridas' : 'Creando tu fondo...'}
         </h3>
 
         <div className="space-y-5">
           {needsApproval && (
             <div className={`p-4 rounded-xl border-2 transition-all ${
-              step === 'approved' || step === 'creating' || step === 'success' 
-                ? 'bg-green-50 border-green-200' 
-                : step === 'approving' 
-                ? 'bg-blue-50 border-blue-200 animate-pulse' 
+              step === 'approved' || step === 'creating' || step === 'success'
+                ? 'bg-green-50 border-green-200'
+                : step === 'approving'
+                ? 'bg-blue-50 border-blue-200 animate-pulse'
                 : 'bg-gray-50 border-gray-200'
             }`}>
               <div className="flex items-center gap-3">
@@ -337,10 +327,14 @@ export function ExecutionStep({
                   <div className="w-6 h-6 rounded-full border-2 border-gray-400" />
                 )}
                 <div>
-                  <p className="font-semibold">1. Aprobar USDC</p>
-                  <p className="text-sm text-gray-600">{formattedBreakdown.grossAmount} USDC</p>
+                  <p className="font-semibold">1. Aprobar USDC ({formattedBreakdown.grossAmount})</p>
                   {approvalHash && (
-                    <a href={`${explorerUrl}/tx/${approvalHash}`} target="_blank" className="text-xs text-blue-600 flex items-center gap-1 mt-1">
+                    <a
+                      href={`${explorerUrl}/tx/${approvalHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                    >
                       Ver en explorer <ExternalLink size={12} />
                     </a>
                   )}
@@ -350,10 +344,10 @@ export function ExecutionStep({
           )}
 
           <div className={`p-4 rounded-xl border-2 transition-all ${
-            step === 'success' 
-              ? 'bg-green-50 border-green-200' 
-              : step === 'creating' || step === 'confirming' 
-              ? 'bg-blue-50 border-blue-200 animate-pulse' 
+            step === 'success'
+              ? 'bg-green-50 border-green-200'
+              : step === 'creating' || step === 'confirming'
+              ? 'bg-blue-50 border-blue-200 animate-pulse'
               : 'bg-gray-50 border-gray-200'
           }`}>
             <div className="flex items-center gap-3">
@@ -369,7 +363,12 @@ export function ExecutionStep({
                   {needsApproval ? '2. Crear Fondo Personal' : 'Crear Fondo Personal'}
                 </p>
                 {txHash && (
-                  <a href={`${explorerUrl}/tx/${txHash}`} target="_blank" className="text-xs text-blue-600 flex items-center gap-1 mt-1">
+                  <a
+                    href={`${explorerUrl}/tx/${txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                  >
                     Ver en explorer <ExternalLink size={12} />
                   </a>
                 )}
@@ -379,7 +378,7 @@ export function ExecutionStep({
         </div>
       </div>
 
-      {/* Error */}
+      {/* Mensaje de error */}
       {errorDisplay && (
         <div className={`p-5 rounded-2xl border ${isGasError ? 'bg-amber-50 border-amber-300' : 'bg-red-50 border-red-200'}`}>
           <div className="flex items-start gap-3">
@@ -389,7 +388,7 @@ export function ExecutionStep({
               <p className="text-gray-700">{errorDisplay.message}</p>
               {isGasError && (
                 <p className="text-sm text-amber-800 mt-2">
-                  El precio del gas cambió. Haz clic en Reintentar para usar valores actuales.
+                  El precio del gas cambió. Haz clic en "Reintentar" para usar valores actuales.
                 </p>
               )}
             </div>
@@ -397,12 +396,11 @@ export function ExecutionStep({
         </div>
       )}
 
-      {/* Acciones */}
       {step === 'idle' && !errorDisplay && (
         <button
           onClick={handleStart}
           disabled={isApprovalPending || isCreatePending}
-          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-5 rounded-xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-3 text-lg"
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-5 rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg transition-all"
         >
           {isApprovalPending || isCreatePending ? (
             <>
@@ -419,7 +417,7 @@ export function ExecutionStep({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
             onClick={handleRetry}
-            className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-md"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-md"
           >
             <RefreshCw size={20} />
             Reintentar
@@ -450,9 +448,9 @@ export function ExecutionStep({
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
           <Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={32} />
           <p className="text-lg font-semibold text-blue-800">
-            {step === 'approving' && 'Confirmando aprobación...'}
-            {step === 'creating' && 'Confirmando creación...'}
-            {step === 'confirming' && 'Esperando confirmación en blockchain...'}
+            {step === 'approving' && 'Confirmando aprobación en tu wallet...'}
+            {step === 'creating' && 'Confirmando creación del fondo...'}
+            {step === 'confirming' && 'Esperando confirmación en la blockchain...'}
           </p>
         </div>
       )}
