@@ -1,3 +1,4 @@
+// ExecutionStep.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   useWriteContract,
@@ -10,14 +11,16 @@ import { parseUnits, formatUnits } from 'viem';
 import PersonalFundFactoryArtifact from '@/abis/PersonalFundFactory.json';
 import type { RetirementPlan } from '@/types/retirement_types';
 import type { Abi } from 'viem';
-import { parseContractError, formatErrorForUI } from '@/utils/contractErrorParser';
+import { formatErrorForUI } from '@/utils/contractErrorParser';
 import {
   calculateInitialDepositBreakdown,
   formatDepositBreakdown,
 } from '@/utils/feeCalculations';
 import { formatUSDC } from '@/hooks/usdc/usdcUtils';
 
+// ABI: el JSON es array directo → no .abi
 const PersonalFundFactoryABI = PersonalFundFactoryArtifact as Abi;
+
 const ERC20_ABI = [
   {
     name: 'approve',
@@ -56,8 +59,6 @@ type TransactionStep =
 interface ErrorDisplay {
   title: string;
   message: string;
-  details?: string;
-  suggestions?: string[];
   isGasRelated?: boolean;
 }
 
@@ -69,6 +70,7 @@ export function ExecutionStep({
 }: ExecutionStepProps) {
   const { address: account, chain } = useAccount();
   const publicClient = usePublicClient();
+
   const [step, setStep] = useState<TransactionStep>('idle');
   const [errorDisplay, setErrorDisplay] = useState<ErrorDisplay | null>(null);
   const [estimatedGas, setEstimatedGas] = useState<bigint | undefined>();
@@ -89,11 +91,14 @@ export function ExecutionStep({
 
   const parseUSDC = (value: string | number) =>
     parseUnits(typeof value === 'string' ? value : value.toString(), 6);
+
   const principalWei = parseUSDC(plan.principal);
   const monthlyDepositWei = parseUSDC(plan.monthlyDeposit);
   const amountToApprove = principalWei + monthlyDepositWei;
+
   const depositBreakdown = calculateInitialDepositBreakdown(principalWei, monthlyDepositWei);
   const formattedBreakdown = formatDepositBreakdown(depositBreakdown, formatUSDC);
+
   const {
     writeContract: writeApproval,
     data: approvalHash,
@@ -104,6 +109,7 @@ export function ExecutionStep({
 
   const { isLoading: isApprovalConfirming, isSuccess: isApprovalSuccess } =
     useWaitForTransactionReceipt({ hash: approvalHash });
+
   const {
     writeContract: writeCreateFund,
     data: txHash,
@@ -118,27 +124,39 @@ export function ExecutionStep({
     data: receipt,
   } = useWaitForTransactionReceipt({ hash: txHash });
 
-  const fetchCurrentGasFees = useCallback(async () => {
-    if (!publicClient) return;
+  // ─── Estimación de gas fresca y realista para testnet ─────────────
+  const getFreshGasFees = useCallback(async () => {
+    if (!publicClient) return null;
+
     try {
-      const fees = await publicClient.estimateFeesPerGas();
-      setCurrentFees({
-        maxFeePerGas: fees.maxFeePerGas
-          ? (fees.maxFeePerGas * 130n) / 100n 
-          : 30000000n, 
-        maxPriorityFeePerGas: fees.maxPriorityFeePerGas
-          ? fees.maxPriorityFeePerGas + 2000000000n 
-          : 2000000000n,
-      });
+      const block = await publicClient.getBlock({ includeTransactions: false });
+      const baseFee = block.baseFeePerGas || 10000000n; // fallback 0.01 gwei
+
+      const priorityFee = await publicClient.estimateMaxPriorityFeePerGas();
+
+      // Buffer dinámico: base + 50% + priority (suficiente para picos cortos en Sepolia)
+      let maxFee = baseFee + (baseFee / 2n) + priorityFee;
+
+      // Mínimo absoluto razonable para Arbitrum Sepolia
+      const minMaxFee = 30000000n; // 0.03 gwei
+
+      if (maxFee < minMaxFee) maxFee = minMaxFee;
+
+      return {
+        maxFeePerGas: maxFee,
+        maxPriorityFeePerGas: priorityFee > 1000000000n ? priorityFee : 1500000000n,
+      };
     } catch {
-      setCurrentFees({
-        maxFeePerGas: 30000000n,
-        maxPriorityFeePerGas: 3000000000n,
-      });
+      // Fallback muy conservador pero barato
+      return {
+        maxFeePerGas: 50000000n,       // 0.05 gwei
+        maxPriorityFeePerGas: 2000000000n,
+      };
     }
   }, [publicClient]);
 
-  const estimateCreateFundGas = useCallback(async () => {
+  // Estimar gas limit para createPersonalFund
+  const estimateCreateGas = useCallback(async () => {
     if (!publicClient || !account) return;
     try {
       const gas = await publicClient.estimateContractGas({
@@ -157,47 +175,57 @@ export function ExecutionStep({
         ],
         account,
       });
-      setEstimatedGas((gas * 140n) / 100n); 
+      setEstimatedGas((gas * 140n) / 100n);
     } catch {
       setEstimatedGas(3500000n);
     }
   }, [publicClient, account, factoryAddress, principalWei, monthlyDepositWei, plan]);
 
   useEffect(() => {
-    fetchCurrentGasFees();
-    const interval = setInterval(fetchCurrentGasFees, 12000);
-    return () => clearInterval(interval);
-  }, [fetchCurrentGasFees]);
-
-  useEffect(() => {
     if (step === 'idle' || step === 'approved') {
-      estimateCreateFundGas();
+      estimateCreateGas();
     }
-  }, [step, estimateCreateFundGas]);
+  }, [step, estimateCreateGas]);
 
-  const executeApproval = () => {
-    if (!currentFees || !account || !chain) return;
+  // ─── Ejecutar transacciones (refrescando fees justo antes) ────────
+  const executeApproval = async () => {
+    if (!account || !chain) return;
     setStep('approving');
-    const request = {
+
+    const fees = await getFreshGasFees();
+    if (!fees) {
+      setErrorDisplay({ title: 'Error de red', message: 'No se pudo estimar gas' });
+      setStep('error');
+      return;
+    }
+    setCurrentFees(fees);
+
+    writeApproval({
       address: usdcAddress,
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [factoryAddress, amountToApprove],
       gas: estimatedGas ? estimatedGas / 2n : 150000n,
-      maxFeePerGas: currentFees.maxFeePerGas,
-      maxPriorityFeePerGas: currentFees.maxPriorityFeePerGas,
+      maxFeePerGas: fees.maxFeePerGas,
+      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
       account,
       chain,
-    } as const;
-
-    writeApproval(request);
+    } as const);
   };
 
-  const executeCreateFund = () => {
-    if (!currentFees || !account || !chain) return;
+  const executeCreateFund = async () => {
+    if (!account || !chain) return;
     setStep('creating');
 
-    const request = {
+    const fees = await getFreshGasFees();
+    if (!fees) {
+      setErrorDisplay({ title: 'Error de red', message: 'No se pudo estimar gas' });
+      setStep('error');
+      return;
+    }
+    setCurrentFees(fees);
+
+    writeCreateFund({
       address: factoryAddress,
       abi: PersonalFundFactoryABI,
       functionName: 'createPersonalFund',
@@ -212,61 +240,55 @@ export function ExecutionStep({
         plan.timelockYears,
       ],
       gas: estimatedGas,
-      maxFeePerGas: currentFees.maxFeePerGas,
-      maxPriorityFeePerGas: currentFees.maxPriorityFeePerGas,
+      maxFeePerGas: fees.maxFeePerGas,
+      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
       account,
       chain,
-    } as const;
-
-    writeCreateFund(request);
+    } as const);
   };
 
-  const handleStart = () => {
+  const handleStart = async () => {
     setErrorDisplay(null);
-    if (!account || !chain || !currentFees) {
+    if (!account || !chain) {
       setErrorDisplay({
-        title: 'No se puede continuar',
-        message: !account ? 'Conecta tu wallet' : 'No se obtuvieron parámetros de gas',
+        title: 'Wallet no conectada',
+        message: 'Conecta tu wallet para continuar',
       });
       setStep('error');
       return;
     }
 
     setStep('preparing');
+
     if (needsApproval) {
-      executeApproval();
+      await executeApproval();
     } else {
-      executeCreateFund();
+      await executeCreateFund();
     }
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setErrorDisplay(null);
     setStep('idle');
-    fetchCurrentGasFees();
   };
 
+  // ─── Transiciones de estado ───────────────────────────────────────
   useEffect(() => {
     if (isApprovalSuccess && approvalHash && step === 'approving') {
       setStep('approved');
-      if (!needsApproval) return;
-      setTimeout(executeCreateFund, 1000);
+      // Auto-avanzar a creación si había aprobación pendiente
+      if (needsApproval) {
+        setTimeout(executeCreateFund, 800);
+      }
     }
-  }, [isApprovalSuccess, approvalHash, step]);
+  }, [isApprovalSuccess, approvalHash, step, needsApproval]);
 
   useEffect(() => {
-    if (step === 'approved' && needsApproval) {
-      executeCreateFund();
-    }
-  }, [step]);
-
-  useEffect(() => {
-    if ((approvalError && step === 'approving') || (createError && ['creating', 'approved'].includes(step))) {
+    if ((approvalError || createError) && ['approving', 'creating', 'approved'].includes(step)) {
       const err = approvalError || createError;
       const formatted = formatErrorForUI(err!);
-      const isGasError =
-        formatted.message?.toLowerCase().includes('max fee') ||
-        formatted.message?.toLowerCase().includes('base fee');
+      const isGasError = formatted.message?.toLowerCase().includes('fee') || 
+                         formatted.message?.toLowerCase().includes('gas');
 
       setErrorDisplay({ ...formatted, isGasRelated: isGasError });
       setStep('error');
@@ -277,44 +299,49 @@ export function ExecutionStep({
     if (isTxSuccess && receipt && step === 'confirming') {
       let fundAddress: string | undefined;
       try {
-        const fundLog = receipt.logs.find((log: any) => log.topics?.length > 1);
-        if (fundLog?.topics?.[1]) {
-          fundAddress = `0x${fundLog.topics[1].slice(-40)}`;
+        const log = receipt.logs.find(l => l.topics?.length > 1);
+        if (log?.topics?.[1]) {
+          fundAddress = `0x${log.topics[1].slice(-40)}`;
         }
       } catch {}
-
       setStep('success');
       onSuccessRef.current(txHash!, fundAddress);
     }
-  }, [isTxSuccess, receipt, step, txHash]);
+  }, [isTxSuccess, receipt, txHash, step]);
 
   const isGasError = errorDisplay?.isGasRelated ?? false;
 
   return (
-    <div className="space-y-6">
-      {/* Estado visual de los pasos */}
+    <div className="space-y-6 p-4">
+      {/* Pasos visuales */}
       <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-gray-800">
-            {needsApproval ? 'Paso 1 de 2: Aprobación y Creación' : 'Creando tu fondo'}
-          </h3>
-          {currentFees && (
-            <div className="text-sm text-gray-500">
-              Max fee: {formatUnits(currentFees.maxFeePerGas, 9)} gwei
-            </div>
-          )}
-        </div>
+        <h3 className="text-xl font-bold mb-6">
+          {needsApproval ? '2 transacciones requeridas' : 'Creando fondo...'}
+        </h3>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {needsApproval && (
-            <div className={`p-4 rounded-xl border-2 ${step === 'approved' || step === 'creating' || step === 'confirming' || step === 'success' ? 'bg-green-50 border-green-200' : step === 'approving' ? 'bg-blue-50 border-blue-200 animate-pulse' : 'bg-gray-50 border-gray-200'}`}>
+            <div className={`p-4 rounded-xl border-2 transition-all ${
+              step === 'approved' || step === 'creating' || step === 'success' 
+                ? 'bg-green-50 border-green-200' 
+                : step === 'approving' 
+                ? 'bg-blue-50 border-blue-200 animate-pulse' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
               <div className="flex items-center gap-3">
-                {step === 'approved' || step === 'creating' || step === 'confirming' || step === 'success' ? <CheckCircle className="text-green-600" size={24} /> : step === 'approving' ? <Loader2 className="animate-spin text-blue-600" size={24} /> : <div className="w-6 h-6 rounded-full border-2 border-gray-400" />}
+                {step === 'approved' || step === 'creating' || step === 'success' ? (
+                  <CheckCircle className="text-green-600" size={24} />
+                ) : step === 'approving' ? (
+                  <Loader2 className="animate-spin text-blue-600" size={24} />
+                ) : (
+                  <div className="w-6 h-6 rounded-full border-2 border-gray-400" />
+                )}
                 <div>
-                  <p className="font-semibold">Aprobar USDC ({formattedBreakdown.grossAmount})</p>
+                  <p className="font-semibold">1. Aprobar USDC</p>
+                  <p className="text-sm text-gray-600">{formattedBreakdown.grossAmount} USDC</p>
                   {approvalHash && (
-                    <a href={`${explorerUrl}/tx/${approvalHash}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1">
-                      Ver transacción <ExternalLink size={12} />
+                    <a href={`${explorerUrl}/tx/${approvalHash}`} target="_blank" className="text-xs text-blue-600 flex items-center gap-1 mt-1">
+                      Ver en explorer <ExternalLink size={12} />
                     </a>
                   )}
                 </div>
@@ -322,14 +349,28 @@ export function ExecutionStep({
             </div>
           )}
 
-          <div className={`p-4 rounded-xl border-2 ${step === 'success' ? 'bg-green-50 border-green-200' : ['creating', 'confirming'].includes(step) ? 'bg-blue-50 border-blue-200 animate-pulse' : 'bg-gray-50 border-gray-200'}`}>
+          <div className={`p-4 rounded-xl border-2 transition-all ${
+            step === 'success' 
+              ? 'bg-green-50 border-green-200' 
+              : step === 'creating' || step === 'confirming' 
+              ? 'bg-blue-50 border-blue-200 animate-pulse' 
+              : 'bg-gray-50 border-gray-200'
+          }`}>
             <div className="flex items-center gap-3">
-              {step === 'success' ? <CheckCircle className="text-green-600" size={24} /> : ['creating', 'confirming'].includes(step) ? <Loader2 className="animate-spin text-blue-600" size={24} /> : <div className="w-6 h-6 rounded-full border-2 border-gray-400" />}
+              {step === 'success' ? (
+                <CheckCircle className="text-green-600" size={24} />
+              ) : step === 'creating' || step === 'confirming' ? (
+                <Loader2 className="animate-spin text-blue-600" size={24} />
+              ) : (
+                <div className="w-6 h-6 rounded-full border-2 border-gray-400" />
+              )}
               <div>
-                <p className="font-semibold">{needsApproval ? 'Paso 2 de 2' : 'Paso único'}: Crear Fondo Personal</p>
+                <p className="font-semibold">
+                  {needsApproval ? '2. Crear Fondo Personal' : 'Crear Fondo Personal'}
+                </p>
                 {txHash && (
-                  <a href={`${explorerUrl}/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1">
-                    Ver transacción <ExternalLink size={12} />
+                  <a href={`${explorerUrl}/tx/${txHash}`} target="_blank" className="text-xs text-blue-600 flex items-center gap-1 mt-1">
+                    Ver en explorer <ExternalLink size={12} />
                   </a>
                 )}
               </div>
@@ -342,13 +383,13 @@ export function ExecutionStep({
       {errorDisplay && (
         <div className={`p-5 rounded-2xl border ${isGasError ? 'bg-amber-50 border-amber-300' : 'bg-red-50 border-red-200'}`}>
           <div className="flex items-start gap-3">
-            <AlertCircle className={isGasError ? 'text-amber-600' : 'text-red-600'} size={24} />
-            <div>
-              <h4 className="font-bold text-lg">{errorDisplay.title}</h4>
-              <p className="text-gray-700 mt-1">{errorDisplay.message}</p>
+            <AlertCircle className={isGasError ? 'text-amber-600 mt-1' : 'text-red-600 mt-1'} size={24} />
+            <div className="flex-1">
+              <h4 className="font-bold text-lg mb-1">{errorDisplay.title}</h4>
+              <p className="text-gray-700">{errorDisplay.message}</p>
               {isGasError && (
                 <p className="text-sm text-amber-800 mt-2">
-                  El precio del gas subió. Haz click en "Reintentar" para usar valores actualizados.
+                  El precio del gas cambió. Haz clic en Reintentar para usar valores actuales.
                 </p>
               )}
             </div>
@@ -356,12 +397,12 @@ export function ExecutionStep({
         </div>
       )}
 
-      {/* Botones */}
+      {/* Acciones */}
       {step === 'idle' && !errorDisplay && (
         <button
           onClick={handleStart}
-          disabled={isApprovalPending || isCreatePending || !currentFees}
-          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-xl py-5 rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 transition-all"
+          disabled={isApprovalPending || isCreatePending}
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-5 rounded-xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-3 text-lg"
         >
           {isApprovalPending || isCreatePending ? (
             <>
@@ -369,7 +410,7 @@ export function ExecutionStep({
               Procesando...
             </>
           ) : (
-            'Iniciar Creación del Fondo'
+            'Iniciar Creación'
           )}
         </button>
       )}
@@ -378,10 +419,10 @@ export function ExecutionStep({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
             onClick={handleRetry}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-md"
+            className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-md"
           >
             <RefreshCw size={20} />
-            Reintentar con gas actualizado
+            Reintentar
           </button>
           <button
             onClick={() => {
@@ -399,21 +440,20 @@ export function ExecutionStep({
 
       {step === 'success' && (
         <div className="bg-green-50 border-2 border-green-300 rounded-2xl p-8 text-center">
-          <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-4" />
-          <h3 className="text-3xl font-black text-green-800">¡Fondo creado con éxito!</h3>
-          <p className="text-green-700 mt-3">Redirigiendo al dashboard...</p>
+          <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-green-800">¡Fondo creado exitosamente!</h3>
+          <p className="text-green-700 mt-2">Redirigiendo al dashboard...</p>
         </div>
       )}
 
       {['approving', 'creating', 'confirming'].includes(step) && !errorDisplay && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-          <Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={36} />
+          <Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={32} />
           <p className="text-lg font-semibold text-blue-800">
-            {step === 'approving' && 'Confirmando aprobación en tu wallet...'}
-            {step === 'creating' && 'Confirmando creación del fondo...'}
-            {step === 'confirming' && 'Esperando confirmación en la blockchain...'}
+            {step === 'approving' && 'Confirmando aprobación...'}
+            {step === 'creating' && 'Confirmando creación...'}
+            {step === 'confirming' && 'Esperando confirmación en blockchain...'}
           </p>
-          <p className="text-sm text-blue-600 mt-2">No cierres esta ventana</p>
         </div>
       )}
     </div>
