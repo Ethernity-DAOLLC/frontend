@@ -87,7 +87,6 @@ export function ExecutionStep({
 
   const parseUSDC = (value: string | number) =>
     parseUnits(typeof value === 'string' ? value : value.toString(), 6);
-
   const principalWei = parseUSDC(plan.principal);
   const monthlyDepositWei = parseUSDC(plan.monthlyDeposit);
   const amountToApprove = principalWei + monthlyDepositWei;
@@ -103,7 +102,6 @@ export function ExecutionStep({
 
   const { isLoading: isApprovalConfirming, isSuccess: isApprovalSuccess } =
     useWaitForTransactionReceipt({ hash: approvalHash });
-
   const {
     writeContract: writeCreateFund,
     data: txHash,
@@ -117,12 +115,11 @@ export function ExecutionStep({
     isSuccess: isTxSuccess,
     data: receipt,
   } = useWaitForTransactionReceipt({ hash: txHash });
-
   const getFreshGasFees = useCallback(async () => {
     if (!publicClient) return null;
     try {
       const block = await publicClient.getBlock({ includeTransactions: false });
-      const baseFee = block.baseFeePerGas || 10000000n; // 0.01 gwei fallback
+      const baseFee = block.baseFeePerGas || 10000000n; 
 
       let priorityFee = await publicClient.estimateMaxPriorityFeePerGas();
       const minPriority = 10000000n;     
