@@ -132,7 +132,6 @@ function extractRevertReason(error: any): string[] {
         reasons.push(decoded.message);
       }
     } catch {
-      // Ignorar errores de parseo
     }
   }
 

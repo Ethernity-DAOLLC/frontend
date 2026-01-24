@@ -224,7 +224,7 @@ export function ExecutionStep({
         );
         if (fundCreatedLog && fundCreatedLog.topics[1]) {
           fundAddress = `0x${fundCreatedLog.topics[1].slice(26)}`;
-          console.log('📍 Fund address extracted:', fundAddress);
+          console.log('🔍 Fund address extracted:', fundAddress);
         }
       } catch (err) {
         console.warn('⚠️ Could not extract fund address from logs:', err);
@@ -257,7 +257,7 @@ export function ExecutionStep({
       return;
     }
 
-    console.log('🔐 Starting fund creation with amounts:', {
+    console.log('🔍 Starting fund creation with amounts:', {
       usdcAddress,
       factoryAddress,
       principal: principalWei.toString(),
@@ -285,7 +285,9 @@ export function ExecutionStep({
         args: [factoryAddress, amountToApprove],
         account,
         chain,
-        gas: 100000n, 
+        gas: 100000n,
+        maxFeePerGas: parseUnits('0.1', 'gwei'), // 0.1 gwei = 100000000 wei
+        maxPriorityFeePerGas: parseUnits('0.01', 'gwei'), // 0.01 gwei = 10000000 wei
       });
     } else {
       handleCreateFund();
@@ -305,7 +307,7 @@ export function ExecutionStep({
 
     setStep('creating');
     
-    console.log('🏗️ Creating fund with params:', {
+    console.log('🗂️ Creating fund with params:', {
       principal: principalWei.toString(),
       principalUSDC: formatUSDC(principalWei),
       monthlyDeposit: monthlyDepositWei.toString(),
@@ -335,7 +337,9 @@ export function ExecutionStep({
       ],
       account,
       chain,
-      gas: estimatedGas || 2500000n, 
+      gas: estimatedGas || 2500000n,
+      maxFeePerGas: parseUnits('0.1', 'gwei'), // 0.1 gwei
+      maxPriorityFeePerGas: parseUnits('0.01', 'gwei'), // 0.01 gwei
     });
   };
 
