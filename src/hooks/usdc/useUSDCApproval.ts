@@ -50,6 +50,59 @@ export function useUSDCApproval({
     error: txError,
   } = useWaitForTransactionReceipt({ hash });
 
+  // ✅ NUEVA FUNCIÓN: Calcular gas fees dinámicamente
+  const getFreshGasFees = useCallback(async () => {
+    if (!publicClient) {
+      console.warn('⚠️ PublicClient no disponible, usando fallback');
+      return {
+        maxFeePerGas: 2000000000n,  // 2 Gwei
+        maxPriorityFeePerGas: 1000000000n, // 1 Gwei
+      };
+    }
+
+    try {
+      const block = await publicClient.getBlock({ includeTransactions: false });
+      const baseFee = block.baseFeePerGas || 100000000n;
+
+      let priorityFee = await publicClient.estimateMaxPriorityFeePerGas();
+      const minPriority = 100000000n; // 0.1 Gwei mínimo
+      const maxPriorityRelative = baseFee / 2n;
+      
+      priorityFee = priorityFee > maxPriorityRelative ? maxPriorityRelative : priorityFee;
+      priorityFee = priorityFee < minPriority ? minPriority : priorityFee;
+      
+      // Buffer agresivo del 100%
+      let maxFee = baseFee + priorityFee;
+      maxFee = (maxFee * 200n) / 100n;
+      
+      // Mínimo absoluto: doble del baseFee
+      const minMaxFee = baseFee * 2n;
+      if (maxFee < minMaxFee) {
+        maxFee = minMaxFee;
+        priorityFee = (maxFee - baseFee) / 2n;
+      }
+
+      // Validación final
+      if (priorityFee > maxFee - baseFee) {
+        priorityFee = (maxFee - baseFee) / 2n;
+      }
+
+      console.log('🔧 [useUSDCApproval] Gas Fees:', {
+        baseFeeGwei: Number(baseFee) / 1e9,
+        maxFeeGwei: Number(maxFee) / 1e9,
+        priorityFeeGwei: Number(priorityFee) / 1e9,
+      });
+
+      return { maxFeePerGas: maxFee, maxPriorityFeePerGas: priorityFee };
+    } catch (error) {
+      console.error('❌ Error estimando gas fees:', error);
+      return {
+        maxFeePerGas: 2000000000n,
+        maxPriorityFeePerGas: 1000000000n,
+      };
+    }
+  }, [publicClient]);
+
   const approve = useCallback(async (): Promise<void> => {
     if (!address) {
       const err = new Error('Wallet not connected');
@@ -83,17 +136,16 @@ export function useUSDCApproval({
       amount,
       spender: spender.slice(0, 10) + '...',
       from: address.slice(0, 10) + '...',
-      usdcAddress: usdcAddress.slice(0, 10) + '...',
     });
 
     setError(null);
 
     try {
       const amountWei = parseUSDC(amount);
-      console.log('💰 Amount in wei:', amountWei.toString());
+      
+      // ✅ Simular transacción si es posible
       if (publicClient) {
         try {
-          console.log('🧪 Simulating approve transaction...');
           await publicClient.simulateContract({
             address: usdcAddress,
             abi: erc20Abi,
@@ -112,21 +164,27 @@ export function useUSDCApproval({
             errorMessage = 'Invalid spender address (zero address)';
           } else if (simulationError.shortMessage) {
             errorMessage = `Contract error: ${simulationError.shortMessage}`;
-          } else {
-            errorMessage = `Simulation failed: ${simulationError.message || 'Unknown error'}`;
           }
+          
           const err = new Error(errorMessage);
           setError(err);
           onError?.(err);
           throw err;
         }
       }
+
+      // ✅ Obtener gas fees frescos
+      const fees = await getFreshGasFees();
+
+      // ✅ Ejecutar con gas fees dinámicos
       writeContract({
         address: usdcAddress,
         abi: erc20Abi,
         functionName: 'approve',
         args: [spender, amountWei],
         gas: 500000n,
+        maxFeePerGas: fees.maxFeePerGas,           // ✅ AGREGADO
+        maxPriorityFeePerGas: fees.maxPriorityFeePerGas, // ✅ AGREGADO
       } as any);
       
     } catch (err) {
@@ -140,11 +198,7 @@ export function useUSDCApproval({
             'RPC Error. Possible causes:\n\n' +
             '1. Insufficient ETH for gas (most common)\n' +
             '2. RPC node timeout or overload\n' +
-            '3. Network congestion\n\n' +
-            'Solutions:\n' +
-            '• Check your ETH balance\n' +
-            '• Wait 30 seconds and try again\n' +
-            '• Refresh the page';
+            '3. Network congestion';
         } else if (error.message?.includes('insufficient funds')) {
           enhancedMessage = 'Insufficient ETH for gas fees. Get ETH from faucet.';
         } else if (error.message?.includes('User rejected')) {
@@ -157,7 +211,7 @@ export function useUSDCApproval({
       
       throw error;
     }
-  }, [address, usdcAddress, amount, spender, writeContract, publicClient, onError]);
+  }, [address, usdcAddress, amount, spender, writeContract, publicClient, getFreshGasFees, onError]);
 
   const approveMax = useCallback(async (): Promise<void> => {
     if (!address) {
@@ -184,7 +238,6 @@ export function useUSDCApproval({
     console.log('🔐 Approving USDC (MAX)...', {
       amount: 'MAX_UINT256',
       spender: spender.slice(0, 10) + '...',
-      from: address.slice(0, 10) + '...',
     });
     setError(null);
 
@@ -212,12 +265,19 @@ export function useUSDCApproval({
           throw err;
         }
       }
+
+      // ✅ Obtener gas fees frescos
+      const fees = await getFreshGasFees();
+
+      // ✅ Ejecutar con gas fees dinámicos
       writeContract({
         address: usdcAddress,
         abi: erc20Abi,
         functionName: 'approve',
         args: [spender, MAX_UINT256],
         gas: 500000n,
+        maxFeePerGas: fees.maxFeePerGas,           // ✅ AGREGADO
+        maxPriorityFeePerGas: fees.maxPriorityFeePerGas, // ✅ AGREGADO
       } as any);
 
     } catch (err) {
@@ -235,7 +295,7 @@ export function useUSDCApproval({
       }
       throw error;
     }
-  }, [address, usdcAddress, spender, writeContract, publicClient, onError]);
+  }, [address, usdcAddress, spender, writeContract, publicClient, getFreshGasFees, onError]);
 
   const reset = useCallback(() => {
     setError(null);
@@ -268,8 +328,7 @@ export function useUSDCApproval({
           'Quick fixes:\n' +
           '1. Check your ETH balance\n' +
           '2. Get ETH from: faucet.quicknode.com/arbitrum/sepolia\n' +
-          '3. Wait 30s and retry\n\n' +
-          `Technical: ${error.message}`;
+          '3. Wait 30s and retry';
       } else if (error.message?.includes('User rejected')) {
         enhancedMessage = 'Transaction cancelled by user';
       }
