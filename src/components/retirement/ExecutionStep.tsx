@@ -115,34 +115,46 @@ export function ExecutionStep({
     isSuccess: isTxSuccess,
     data: receipt,
   } = useWaitForTransactionReceipt({ hash: txHash });
+
   const getFreshGasFees = useCallback(async () => {
     if (!publicClient) return null;
     try {
       const block = await publicClient.getBlock({ includeTransactions: false });
-      const baseFee = block.baseFeePerGas || 10000000n; 
+      const baseFee = block.baseFeePerGas || 100000000n; 
 
       let priorityFee = await publicClient.estimateMaxPriorityFeePerGas();
-      const minPriority = 10000000n;     
+      const minPriority = 100000000n;     
       const maxPriorityRelative = baseFee / 4n; 
       priorityFee = priorityFee > maxPriorityRelative ? maxPriorityRelative : priorityFee;
       priorityFee = priorityFee < minPriority ? minPriority : priorityFee;
+      
       let maxFee = baseFee + priorityFee;
-      maxFee = (maxFee * 140n) / 100n; 
-      const minMaxFee = 50000000n; 
+      maxFee = (maxFee * 150n) / 100n; // ✅ AUMENTADO de 140n a 150n (50% buffer)
+      
+      const minMaxFee = 100000000n; // ✅ AUMENTADO de 50000000n a 100000000n
       if (maxFee < minMaxFee) {
         maxFee = minMaxFee;
         priorityFee = maxFee / 5n; 
       }
 
       if (priorityFee > maxFee - baseFee) {
-        priorityFee = maxFee - baseFee - 1000000n;
+        priorityFee = maxFee - baseFee - 10000000n; 
       }
 
+      console.log('🔧 Gas Fees Calculados:', {
+        baseFee: baseFee.toString(),
+        priorityFee: priorityFee.toString(),
+        maxFee: maxFee.toString(),
+        baseFeeGwei: Number(baseFee) / 1e9,
+        maxFeeGwei: Number(maxFee) / 1e9,
+      });
+
       return { maxFeePerGas: maxFee, maxPriorityFeePerGas: priorityFee };
-    } catch {
+    } catch (error) {
+      console.error('❌ Error estimando gas fees:', error);
       return {
-        maxFeePerGas: 50000000n,   
-        maxPriorityFeePerGas: 10000000n, 
+        maxFeePerGas: 200000000n,  
+        maxPriorityFeePerGas: 100000000n, 
       };
     }
   }, [publicClient]);
@@ -166,8 +178,14 @@ export function ExecutionStep({
         ],
         account,
       });
-      setEstimatedGas((gas * 140n) / 100n);
-    } catch {
+      const estimatedWithBuffer = (gas * 150n) / 100n; 
+      console.log('⛽ Gas estimado para createPersonalFund:', {
+        estimated: gas.toString(),
+        withBuffer: estimatedWithBuffer.toString(),
+      });
+      setEstimatedGas(estimatedWithBuffer);
+    } catch (error) {
+      console.warn('⚠️ No se pudo estimar gas, usando valor por defecto:', error);
       setEstimatedGas(3500000n);
     }
   }, [publicClient, account, factoryAddress, principalWei, monthlyDepositWei, plan]);
@@ -190,12 +208,14 @@ export function ExecutionStep({
     }
     setCurrentFees(fees);
 
+    console.log('📝 Ejecutando aprobación con fees:', fees);
+
     writeApproval({
       address: usdcAddress,
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [factoryAddress, amountToApprove],
-      gas: estimatedGas ? estimatedGas / 2n : 150000n,
+      gas: estimatedGas ? estimatedGas / 2n : 200000n, 
       maxFeePerGas: fees.maxFeePerGas,
       maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
       account,
@@ -213,6 +233,19 @@ export function ExecutionStep({
       return;
     }
     setCurrentFees(fees);
+
+    console.log('🏗️ Ejecutando createPersonalFund con fees:', fees);
+    console.log('📊 Parámetros del fondo:', {
+      principal: principalWei.toString(),
+      monthlyDeposit: monthlyDepositWei.toString(),
+      currentAge: plan.currentAge,
+      retirementAge: plan.retirementAge,
+      desiredMonthlyIncome: parseUSDC(plan.desiredMonthlyIncome).toString(),
+      yearsPayments: plan.yearsPayments,
+      interestRate: plan.interestRate,
+      timelockYears: plan.timelockYears,
+    });
+
     writeCreateFund({
       address: factoryAddress,
       abi: PersonalFundFactoryABI,
@@ -245,7 +278,6 @@ export function ExecutionStep({
       setStep('error');
       return;
     }
-
     setStep('preparing');
 
     if (needsApproval) {
@@ -262,6 +294,7 @@ export function ExecutionStep({
 
   useEffect(() => {
     if (isApprovalSuccess && approvalHash && step === 'approving') {
+      console.log('✅ Aprobación confirmada:', approvalHash);
       setStep('approved');
       if (needsApproval) {
         setTimeout(executeCreateFund, 800);
@@ -272,10 +305,12 @@ export function ExecutionStep({
   useEffect(() => {
     if ((approvalError || createError) && ['approving', 'creating', 'approved'].includes(step)) {
       const err = approvalError || createError;
+      console.error('❌ Error en transacción:', err);
       const formatted = formatErrorForUI(err!);
       const isGasError = formatted.message?.toLowerCase().includes('fee') ||
                          formatted.message?.toLowerCase().includes('gas') ||
-                         formatted.message?.toLowerCase().includes('priority');
+                         formatted.message?.toLowerCase().includes('priority') ||
+                         formatted.message?.toLowerCase().includes('base fee');
 
       setErrorDisplay({ ...formatted, isGasRelated: isGasError });
       setStep('error');
@@ -284,20 +319,22 @@ export function ExecutionStep({
 
   useEffect(() => {
     if (isTxSuccess && receipt && step === 'confirming') {
+      console.log('✅ Transacción confirmada:', receipt);
       let fundAddress: string | undefined;
       try {
         const log = receipt.logs.find((l: any) => l.topics?.length > 1);
         if (log?.topics?.[1]) {
           fundAddress = `0x${log.topics[1].slice(-40)}`;
+          console.log('🎯 Fondo creado en:', fundAddress);
         }
-      } catch {}
+      } catch (error) {
+        console.warn('⚠️ No se pudo extraer dirección del fondo:', error);
+      }
       setStep('success');
       onSuccessRef.current(txHash!, fundAddress);
     }
   }, [isTxSuccess, receipt, txHash, step]);
-
   const isGasError = errorDisplay?.isGasRelated ?? false;
-
   return (
     <div className="space-y-6 p-4">
       {/* Visualización de pasos */}
@@ -373,6 +410,16 @@ export function ExecutionStep({
             </div>
           </div>
         </div>
+
+        {currentFees && (
+          <div className="mt-4 text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+            <p className="font-semibold mb-1">Gas Fees Actuales:</p>
+            <div className="space-y-0.5 font-mono">
+              <p>Max Fee: {(Number(currentFees.maxFeePerGas) / 1e9).toFixed(4)} Gwei</p>
+              <p>Priority Fee: {(Number(currentFees.maxPriorityFeePerGas) / 1e9).toFixed(4)} Gwei</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mensaje de error */}
@@ -385,7 +432,7 @@ export function ExecutionStep({
               <p className="text-gray-700">{errorDisplay.message}</p>
               {isGasError && (
                 <p className="text-sm text-amber-800 mt-2">
-                  El precio del gas cambió. Haz clic en "Reintentar" para usar valores actuales.
+                  💡 El precio del gas cambió. Haz clic en "Reintentar" para usar valores actuales.
                 </p>
               )}
             </div>
