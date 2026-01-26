@@ -123,38 +123,42 @@ export function ExecutionStep({
       const baseFee = block.baseFeePerGas || 100000000n; 
 
       let priorityFee = await publicClient.estimateMaxPriorityFeePerGas();
-      const minPriority = 100000000n;     
-      const maxPriorityRelative = baseFee / 4n; 
+      const minPriority = 100000000n; 
+      const maxPriorityRelative = baseFee / 2n; 
+      
       priorityFee = priorityFee > maxPriorityRelative ? maxPriorityRelative : priorityFee;
       priorityFee = priorityFee < minPriority ? minPriority : priorityFee;
-      
       let maxFee = baseFee + priorityFee;
-      maxFee = (maxFee * 150n) / 100n; // ✅ AUMENTADO de 140n a 150n (50% buffer)
-      
-      const minMaxFee = 100000000n; // ✅ AUMENTADO de 50000000n a 100000000n
+      maxFee = (maxFee * 200n) / 100n; 
+
+      const minMaxFee = baseFee * 2n;
       if (maxFee < minMaxFee) {
         maxFee = minMaxFee;
-        priorityFee = maxFee / 5n; 
+        priorityFee = maxFee - baseFee - 10000000n;
       }
 
+      // Validación final
       if (priorityFee > maxFee - baseFee) {
-        priorityFee = maxFee - baseFee - 10000000n; 
+        priorityFee = (maxFee - baseFee) / 2n;
       }
 
       console.log('🔧 Gas Fees Calculados:', {
         baseFee: baseFee.toString(),
-        priorityFee: priorityFee.toString(),
-        maxFee: maxFee.toString(),
         baseFeeGwei: Number(baseFee) / 1e9,
+        priorityFee: priorityFee.toString(),
+        priorityFeeGwei: Number(priorityFee) / 1e9,
+        maxFee: maxFee.toString(),
         maxFeeGwei: Number(maxFee) / 1e9,
+        buffer: `${((Number(maxFee - baseFee - priorityFee) / Number(baseFee)) * 100).toFixed(0)}%`
       });
 
       return { maxFeePerGas: maxFee, maxPriorityFeePerGas: priorityFee };
     } catch (error) {
       console.error('❌ Error estimando gas fees:', error);
+
       return {
-        maxFeePerGas: 200000000n,  
-        maxPriorityFeePerGas: 100000000n, 
+        maxFeePerGas: 2000000000n, 
+        maxPriorityFeePerGas: 1000000000n, 
       };
     }
   }, [publicClient]);
@@ -208,7 +212,7 @@ export function ExecutionStep({
     }
     setCurrentFees(fees);
 
-    console.log('📝 Ejecutando aprobación con fees:', fees);
+    console.log('🔐 Ejecutando aprobación con fees:', fees);
 
     writeApproval({
       address: usdcAddress,
@@ -334,7 +338,9 @@ export function ExecutionStep({
       onSuccessRef.current(txHash!, fundAddress);
     }
   }, [isTxSuccess, receipt, txHash, step]);
+  
   const isGasError = errorDisplay?.isGasRelated ?? false;
+  
   return (
     <div className="space-y-6 p-4">
       {/* Visualización de pasos */}
