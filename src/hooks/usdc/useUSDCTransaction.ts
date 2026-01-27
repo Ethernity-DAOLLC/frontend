@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useWriteContract, useAccount, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
+import { useAccount, useWaitForTransactionReceipt } from 'wagmi';
 import { useUSDCAllowance } from './useUSDC';
 import { useUSDCApproval } from './useUSDCApproval';
 import { useUSDCBalance } from './useUSDCBalance';
 import { parseUSDC, needsApproval, formatUSDC } from './usdcUtils';
+import { useWriteContractWithGas } from '@/hooks/gas/useWriteContractWithGas';
 import { 
   calculateTotalRequired, 
   hasEnoughBalanceWithFees,
@@ -33,7 +34,6 @@ interface UseUSDCTransactionProps {
   onError?: (error: Error) => void;
   enabled?: boolean;
   autoExecuteAfterApproval?: boolean;
-  estimateGas?: boolean; 
 }
 
 interface UseUSDCTransactionReturn {
@@ -44,14 +44,12 @@ interface UseUSDCTransactionReturn {
   hasEnoughBalance: boolean;
   validation: DepositValidation | null;
   error: Error | null;
-
   executeApproval: () => Promise<void>;
   executeTransaction: () => Promise<void>;
   executeAll: () => Promise<void>;
   refetchAllowance: () => void;
   refetchBalance: () => void;
   reset: () => void;
-
   isApproving: boolean;
   isApprovingConfirming: boolean;
   approvalSuccess: boolean;
@@ -63,7 +61,6 @@ interface UseUSDCTransactionReturn {
   isSuccess: boolean;
   isError: boolean;
   progress: number;
-  estimatedGas?: bigint;
   totalRequired: bigint; 
   shortfall: bigint; 
 }
@@ -79,13 +76,10 @@ export function useUSDCTransaction({
   onError,
   enabled = true,
   autoExecuteAfterApproval = true,
-  estimateGas = true,
 }: UseUSDCTransactionProps): UseUSDCTransactionReturn {
   const { address } = useAccount();
-  const publicClient = usePublicClient();
   const [step, setStep] = useState<TransactionStep>('idle');
   const [error, setError] = useState<Error | null>(null);
-  const [estimatedGas, setEstimatedGas] = useState<bigint | undefined>();
   const [validation, setValidation] = useState<DepositValidation | null>(null);
   const onApprovalSuccessRef = useRef(onApprovalSuccess);
   const onTransactionSuccessRef = useRef(onTransactionSuccess);
@@ -127,7 +121,6 @@ export function useUSDCTransaction({
         }
       );
       setValidation(depositValidation);
-
       console.log('💰 USDC Transaction Validation:', {
         userBalance: formatUSDC(userBalance),
         required: formatUSDC(amountInWei),
@@ -164,38 +157,13 @@ export function useUSDCTransaction({
     isPending: isWritePending,
     error: writeError,
     reset: resetWrite,
-  } = useWriteContract();
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isTxConfirming,
     isSuccess: isTxSuccess,
     error: txError,
   } = useWaitForTransactionReceipt({ hash: txHash });
-
-  const estimateTransactionGas = useCallback(async () => {
-    if (!estimateGas || !publicClient || !address) return;
-    
-    try {
-      const gas = await publicClient.estimateContractGas({
-        address: contractAddress,
-        abi,
-        functionName,
-        args,
-        account: address,
-      });
-
-      const gasWithBuffer = (gas * 120n) / 100n;
-      setEstimatedGas(gasWithBuffer);
-      
-      console.log('⛽ Gas estimado:', {
-        base: gas.toString(),
-        withBuffer: gasWithBuffer.toString(),
-      });
-    } catch (err) {
-      console.warn('⚠️ No se pudo estimar gas, usando default');
-      setEstimatedGas(undefined);
-    }
-  }, [estimateGas, publicClient, address, contractAddress, abi, functionName, args]);
 
   const executeApproval = useCallback(async () => {
     if (!requiresApproval) {
@@ -270,19 +238,14 @@ export function useUSDCTransaction({
     
     setStep('executing');
     setError(null);
-    await estimateTransactionGas();
     
     try {
-      const gasLimit = estimatedGas || 2000000n;
-      
       writeContract({
         address: contractAddress,
         abi,
         functionName,
         args,
-        value: 0n,
-        gas: gasLimit,
-      } as any);
+      });
       
       setStep('confirming');
     } catch (err) {
@@ -304,7 +267,7 @@ export function useUSDCTransaction({
       onErrorRef.current?.(enhancedError);
       throw enhancedError;
     }
-  }, [requiresApproval, step, contractAddress, abi, functionName, args, writeContract, estimatedGas, estimateTransactionGas]);
+  }, [requiresApproval, step, contractAddress, abi, functionName, args, writeContract]);
 
   const executeAll = useCallback(async () => {
     setError(null);
@@ -339,7 +302,6 @@ export function useUSDCTransaction({
   const reset = useCallback(() => {
     setStep('idle');
     setError(null);
-    setEstimatedGas(undefined);
     setValidation(null);
     approval.reset();
     resetWrite();
@@ -405,14 +367,12 @@ export function useUSDCTransaction({
     hasEnoughBalance,
     validation,
     error,
-
     executeApproval,
     executeTransaction,
     executeAll,
     refetchAllowance,
     refetchBalance,
     reset,
-
     isApproving: approval.isApproving || step === 'approving',
     isApprovingConfirming: approval.isConfirming,
     approvalSuccess: approval.isSuccess,
@@ -431,7 +391,6 @@ export function useUSDCTransaction({
     isSuccess: step === 'success' && isTxSuccess,
     isError: step === 'error' || !!error,
     progress,
-    estimatedGas,
     totalRequired,
     shortfall,
   };

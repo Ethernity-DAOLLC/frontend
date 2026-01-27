@@ -1,12 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  useWriteContract,
   useWaitForTransactionReceipt,
   useAccount,
-  usePublicClient,
 } from 'wagmi';
 import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
-import { parseUnits, formatUnits } from 'viem';
+import { parseUnits } from 'viem';
 import PersonalFundFactoryArtifact from '@/abis/PersonalFundFactory.json';
 import type { RetirementPlan } from '@/types/retirement_types';
 import type { Abi } from 'viem';
@@ -16,6 +14,7 @@ import {
   formatDepositBreakdown,
 } from '@/utils/feeCalculations';
 import { formatUSDC } from '@/hooks/usdc/usdcUtils';
+import { useWriteContractWithGas } from '@/hooks/gas/useWriteContractWithGas';
 
 const PersonalFundFactoryABI = PersonalFundFactoryArtifact as Abi;
 const ERC20_ABI = [
@@ -66,14 +65,8 @@ export function ExecutionStep({
   onSuccess,
 }: ExecutionStepProps) {
   const { address: account, chain } = useAccount();
-  const publicClient = usePublicClient();
   const [step, setStep] = useState<TransactionStep>('idle');
   const [errorDisplay, setErrorDisplay] = useState<ErrorDisplay | null>(null);
-  const [estimatedGas, setEstimatedGas] = useState<bigint | undefined>();
-  const [currentFees, setCurrentFees] = useState<{
-    maxFeePerGas: bigint;
-    maxPriorityFeePerGas: bigint;
-  } | null>(null);
 
   const onSuccessRef = useRef(onSuccess);
   useEffect(() => {
@@ -87,28 +80,34 @@ export function ExecutionStep({
 
   const parseUSDC = (value: string | number) =>
     parseUnits(typeof value === 'string' ? value : value.toString(), 6);
+  
   const principalWei = parseUSDC(plan.principal);
   const monthlyDepositWei = parseUSDC(plan.monthlyDeposit);
   const amountToApprove = principalWei + monthlyDepositWei;
   const depositBreakdown = calculateInitialDepositBreakdown(principalWei, monthlyDepositWei);
   const formattedBreakdown = formatDepositBreakdown(depositBreakdown, formatUSDC);
+
+  // ✅ Usar useWriteContractWithGas en lugar de useWriteContract
   const {
     writeContract: writeApproval,
     data: approvalHash,
     isPending: isApprovalPending,
     error: approvalError,
     reset: resetApproval,
-  } = useWriteContract();
+    gasConfig: approvalGasConfig,
+  } = useWriteContractWithGas();
 
   const { isLoading: isApprovalConfirming, isSuccess: isApprovalSuccess } =
     useWaitForTransactionReceipt({ hash: approvalHash });
+
   const {
     writeContract: writeCreateFund,
     data: txHash,
     isPending: isCreatePending,
     error: createError,
     reset: resetCreate,
-  } = useWriteContract();
+    gasConfig: createGasConfig,
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isTxConfirming,
@@ -116,145 +115,36 @@ export function ExecutionStep({
     data: receipt,
   } = useWaitForTransactionReceipt({ hash: txHash });
 
-  const getFreshGasFees = useCallback(async () => {
-    if (!publicClient) return null;
-    try {
-      const block = await publicClient.getBlock({ includeTransactions: false });
-      const baseFee = block.baseFeePerGas || 100000000n; 
-
-      let priorityFee = await publicClient.estimateMaxPriorityFeePerGas();
-      const minPriority = 100000000n; 
-      const maxPriorityRelative = baseFee / 2n; 
-      
-      priorityFee = priorityFee > maxPriorityRelative ? maxPriorityRelative : priorityFee;
-      priorityFee = priorityFee < minPriority ? minPriority : priorityFee;
-      let maxFee = baseFee + priorityFee;
-      maxFee = (maxFee * 200n) / 100n; 
-
-      const minMaxFee = baseFee * 2n;
-      if (maxFee < minMaxFee) {
-        maxFee = minMaxFee;
-        priorityFee = maxFee - baseFee - 10000000n;
-      }
-
-      // Validación final
-      if (priorityFee > maxFee - baseFee) {
-        priorityFee = (maxFee - baseFee) / 2n;
-      }
-
-      console.log('🔧 Gas Fees Calculados:', {
-        baseFee: baseFee.toString(),
-        baseFeeGwei: Number(baseFee) / 1e9,
-        priorityFee: priorityFee.toString(),
-        priorityFeeGwei: Number(priorityFee) / 1e9,
-        maxFee: maxFee.toString(),
-        maxFeeGwei: Number(maxFee) / 1e9,
-        buffer: `${((Number(maxFee - baseFee - priorityFee) / Number(baseFee)) * 100).toFixed(0)}%`
-      });
-
-      return { maxFeePerGas: maxFee, maxPriorityFeePerGas: priorityFee };
-    } catch (error) {
-      console.error('❌ Error estimando gas fees:', error);
-
-      return {
-        maxFeePerGas: 2000000000n, 
-        maxPriorityFeePerGas: 1000000000n, 
-      };
-    }
-  }, [publicClient]);
-
-  const estimateCreateGas = useCallback(async () => {
-    if (!publicClient || !account) return;
-    try {
-      const gas = await publicClient.estimateContractGas({
-        address: factoryAddress,
-        abi: PersonalFundFactoryABI,
-        functionName: 'createPersonalFund',
-        args: [
-          principalWei,
-          monthlyDepositWei,
-          plan.currentAge,
-          plan.retirementAge,
-          parseUSDC(plan.desiredMonthlyIncome),
-          plan.yearsPayments,
-          plan.interestRate,
-          plan.timelockYears,
-        ],
-        account,
-      });
-      const estimatedWithBuffer = (gas * 150n) / 100n; 
-      console.log('⛽ Gas estimado para createPersonalFund:', {
-        estimated: gas.toString(),
-        withBuffer: estimatedWithBuffer.toString(),
-      });
-      setEstimatedGas(estimatedWithBuffer);
-    } catch (error) {
-      console.warn('⚠️ No se pudo estimar gas, usando valor por defecto:', error);
-      setEstimatedGas(3500000n);
-    }
-  }, [publicClient, account, factoryAddress, principalWei, monthlyDepositWei, plan]);
-
-  useEffect(() => {
-    if (step === 'idle' || step === 'approved') {
-      estimateCreateGas();
-    }
-  }, [step, estimateCreateGas]);
-
-  const executeApproval = async () => {
+  const executeApproval = useCallback(async () => {
     if (!account || !chain) return;
+    
+    console.log('🔐 Iniciando aprobación de USDC...');
     setStep('approving');
 
-    const fees = await getFreshGasFees();
-    if (!fees) {
-      setErrorDisplay({ title: 'Error de red', message: 'No se pudo estimar gas' });
+    try {
+      // ✅ Gas se maneja automáticamente
+      writeApproval({
+        address: usdcAddress,
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [factoryAddress, amountToApprove],
+      });
+    } catch (err: any) {
+      console.error('❌ Error en aprobación:', err);
+      const formatted = formatErrorForUI(err);
+      setErrorDisplay(formatted);
       setStep('error');
-      return;
     }
-    setCurrentFees(fees);
+  }, [account, chain, usdcAddress, factoryAddress, amountToApprove, writeApproval]);
 
-    console.log('🔐 Ejecutando aprobación con fees:', fees);
+  const executeCreateFund = useCallback(async () => {
+    if (!account) return;
 
-    writeApproval({
-      address: usdcAddress,
-      abi: ERC20_ABI,
-      functionName: 'approve',
-      args: [factoryAddress, amountToApprove],
-      gas: estimatedGas ? estimatedGas / 2n : 200000n, 
-      maxFeePerGas: fees.maxFeePerGas,
-      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
-      account,
-      chain,
-    } as const);
-  };
-
-  const executeCreateFund = async () => {
-    if (!account || !chain) return;
+    console.log('🚀 Creando fondo personal...');
     setStep('creating');
-    const fees = await getFreshGasFees();
-    if (!fees) {
-      setErrorDisplay({ title: 'Error de red', message: 'No se pudo estimar gas' });
-      setStep('error');
-      return;
-    }
-    setCurrentFees(fees);
 
-    console.log('🏗️ Ejecutando createPersonalFund con fees:', fees);
-    console.log('📊 Parámetros del fondo:', {
-      principal: principalWei.toString(),
-      monthlyDeposit: monthlyDepositWei.toString(),
-      currentAge: plan.currentAge,
-      retirementAge: plan.retirementAge,
-      desiredMonthlyIncome: parseUSDC(plan.desiredMonthlyIncome).toString(),
-      yearsPayments: plan.yearsPayments,
-      interestRate: plan.interestRate,
-      timelockYears: plan.timelockYears,
-    });
-
-    writeCreateFund({
-      address: factoryAddress,
-      abi: PersonalFundFactoryABI,
-      functionName: 'createPersonalFund',
-      args: [
+    try {
+      const args = [
         principalWei,
         monthlyDepositWei,
         plan.currentAge,
@@ -263,37 +153,53 @@ export function ExecutionStep({
         plan.yearsPayments,
         plan.interestRate,
         plan.timelockYears,
-      ],
-      gas: estimatedGas,
-      maxFeePerGas: fees.maxFeePerGas,
-      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
-      account,
-      chain,
-    } as const);
-  };
+      ];
 
-  const handleStart = async () => {
-    setErrorDisplay(null);
-    if (!account || !chain) {
-      setErrorDisplay({
-        title: 'Wallet no conectada',
-        message: 'Por favor conecta tu wallet para continuar',
+      console.log('📊 Parámetros del contrato:', {
+        principal: (Number(principalWei) / 1e6).toFixed(2),
+        monthlyDeposit: (Number(monthlyDepositWei) / 1e6).toFixed(2),
+        currentAge: plan.currentAge,
+        retirementAge: plan.retirementAge,
+        desiredMonthly: (Number(parseUSDC(plan.desiredMonthlyIncome)) / 1e6).toFixed(2),
+        yearsPayments: plan.yearsPayments,
+        interestRate: plan.interestRate,
+        timelockYears: plan.timelockYears,
       });
+      writeCreateFund({
+        address: factoryAddress,
+        abi: PersonalFundFactoryABI,
+        functionName: 'createPersonalFund',
+        args,
+      });
+      setStep('confirming');
+    } catch (err: any) {
+      console.error('❌ Error creando fondo:', err);
+      const formatted = formatErrorForUI(err);
+      setErrorDisplay(formatted);
       setStep('error');
-      return;
     }
-    setStep('preparing');
+  }, [
+    account,
+    factoryAddress,
+    principalWei,
+    monthlyDepositWei,
+    plan,
+    writeCreateFund,
+  ]);
 
+  const handleStart = () => {
     if (needsApproval) {
-      await executeApproval();
+      executeApproval();
     } else {
-      await executeCreateFund();
+      executeCreateFund();
     }
   };
 
-  const handleRetry = async () => {
+  const handleRetry = () => {
     setErrorDisplay(null);
     setStep('idle');
+    resetApproval();
+    resetCreate();
   };
 
   useEffect(() => {
@@ -304,7 +210,7 @@ export function ExecutionStep({
         setTimeout(executeCreateFund, 800);
       }
     }
-  }, [isApprovalSuccess, approvalHash, step, needsApproval]);
+  }, [isApprovalSuccess, approvalHash, step, needsApproval, executeCreateFund]);
 
   useEffect(() => {
     if ((approvalError || createError) && ['approving', 'creating', 'approved'].includes(step)) {
@@ -340,7 +246,7 @@ export function ExecutionStep({
   }, [isTxSuccess, receipt, txHash, step]);
   
   const isGasError = errorDisplay?.isGasRelated ?? false;
-  
+  const currentGasConfig = step === 'approving' ? approvalGasConfig : createGasConfig;
   return (
     <div className="space-y-6 p-4">
       {/* Visualización de pasos */}
@@ -417,18 +323,17 @@ export function ExecutionStep({
           </div>
         </div>
 
-        {currentFees && (
+        {currentGasConfig?.maxFeePerGas && (
           <div className="mt-4 text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-            <p className="font-semibold mb-1">Gas Fees Actuales:</p>
+            <p className="font-semibold mb-1">⛽ Gas Fees Automáticos:</p>
             <div className="space-y-0.5 font-mono">
-              <p>Max Fee: {(Number(currentFees.maxFeePerGas) / 1e9).toFixed(4)} Gwei</p>
-              <p>Priority Fee: {(Number(currentFees.maxPriorityFeePerGas) / 1e9).toFixed(4)} Gwei</p>
+              <p>Max Fee: {(Number(currentGasConfig.maxFeePerGas) / 1e9).toFixed(4)} Gwei</p>
+              <p>Priority Fee: {(Number(currentGasConfig.maxPriorityFeePerGas || 0n) / 1e9).toFixed(4)} Gwei</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Mensaje de error */}
       {errorDisplay && (
         <div className={`p-5 rounded-2xl border ${isGasError ? 'bg-amber-50 border-amber-300' : 'bg-red-50 border-red-200'}`}>
           <div className="flex items-start gap-3">

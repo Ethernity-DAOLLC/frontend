@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useWriteContract, useWaitForTransactionReceipt, useAccount, usePublicClient } from 'wagmi';
+import { useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import { erc20Abi } from 'viem';
 import { parseUSDC, useUSDCAddress } from './usdcUtils';
+import { useWriteContractWithGas } from '@/hooks/gas/useWriteContractWithGas';
 
 interface UseUSDCApprovalProps {
   amount: string;
@@ -14,7 +15,6 @@ interface UseUSDCApprovalReturn {
   approve: () => Promise<void>;
   approveMax: () => Promise<void>;
   reset: () => void;
-
   isApproving: boolean;
   isConfirming: boolean;
   isSuccess: boolean;
@@ -33,75 +33,20 @@ export function useUSDCApproval({
 }: UseUSDCApprovalProps): UseUSDCApprovalReturn {
   const { address } = useAccount();
   const usdcAddress = useUSDCAddress();
-  const publicClient = usePublicClient();
   const [error, setError] = useState<Error | null>(null);
-
   const {
     writeContract,
     data: hash,
     isPending: isWritePending,
     error: writeError,
     reset: resetWrite,
-  } = useWriteContract();
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isConfirming,
     isSuccess,
     error: txError,
   } = useWaitForTransactionReceipt({ hash });
-
-  // ✅ NUEVA FUNCIÓN: Calcular gas fees dinámicamente
-  const getFreshGasFees = useCallback(async () => {
-    if (!publicClient) {
-      console.warn('⚠️ PublicClient no disponible, usando fallback');
-      return {
-        maxFeePerGas: 2000000000n,  // 2 Gwei
-        maxPriorityFeePerGas: 1000000000n, // 1 Gwei
-      };
-    }
-
-    try {
-      const block = await publicClient.getBlock({ includeTransactions: false });
-      const baseFee = block.baseFeePerGas || 100000000n;
-
-      let priorityFee = await publicClient.estimateMaxPriorityFeePerGas();
-      const minPriority = 100000000n; // 0.1 Gwei mínimo
-      const maxPriorityRelative = baseFee / 2n;
-      
-      priorityFee = priorityFee > maxPriorityRelative ? maxPriorityRelative : priorityFee;
-      priorityFee = priorityFee < minPriority ? minPriority : priorityFee;
-      
-      // Buffer agresivo del 100%
-      let maxFee = baseFee + priorityFee;
-      maxFee = (maxFee * 200n) / 100n;
-      
-      // Mínimo absoluto: doble del baseFee
-      const minMaxFee = baseFee * 2n;
-      if (maxFee < minMaxFee) {
-        maxFee = minMaxFee;
-        priorityFee = (maxFee - baseFee) / 2n;
-      }
-
-      // Validación final
-      if (priorityFee > maxFee - baseFee) {
-        priorityFee = (maxFee - baseFee) / 2n;
-      }
-
-      console.log('🔧 [useUSDCApproval] Gas Fees:', {
-        baseFeeGwei: Number(baseFee) / 1e9,
-        maxFeeGwei: Number(maxFee) / 1e9,
-        priorityFeeGwei: Number(priorityFee) / 1e9,
-      });
-
-      return { maxFeePerGas: maxFee, maxPriorityFeePerGas: priorityFee };
-    } catch (error) {
-      console.error('❌ Error estimando gas fees:', error);
-      return {
-        maxFeePerGas: 2000000000n,
-        maxPriorityFeePerGas: 1000000000n,
-      };
-    }
-  }, [publicClient]);
 
   const approve = useCallback(async (): Promise<void> => {
     if (!address) {
@@ -142,76 +87,35 @@ export function useUSDCApproval({
 
     try {
       const amountWei = parseUSDC(amount);
-      
-      // ✅ Simular transacción si es posible
-      if (publicClient) {
-        try {
-          await publicClient.simulateContract({
-            address: usdcAddress,
-            abi: erc20Abi,
-            functionName: 'approve',
-            args: [spender, amountWei],
-            account: address,
-          });
-          console.log('✅ Simulation successful');
-        } catch (simulationError: any) {
-          console.error('❌ Simulation failed:', simulationError);
-          let errorMessage = 'Transaction simulation failed';
-          
-          if (simulationError.message?.includes('insufficient funds')) {
-            errorMessage = 'Insufficient ETH for gas fees. Please add ETH to your wallet.';
-          } else if (simulationError.message?.includes('Cannot approve zero address')) {
-            errorMessage = 'Invalid spender address (zero address)';
-          } else if (simulationError.shortMessage) {
-            errorMessage = `Contract error: ${simulationError.shortMessage}`;
-          }
-          
-          const err = new Error(errorMessage);
-          setError(err);
-          onError?.(err);
-          throw err;
-        }
-      }
-
-      // ✅ Obtener gas fees frescos
-      const fees = await getFreshGasFees();
-
-      // ✅ Ejecutar con gas fees dinámicos
       writeContract({
         address: usdcAddress,
         abi: erc20Abi,
         functionName: 'approve',
         args: [spender, amountWei],
-        gas: 500000n,
-        maxFeePerGas: fees.maxFeePerGas,           // ✅ AGREGADO
-        maxPriorityFeePerGas: fees.maxPriorityFeePerGas, // ✅ AGREGADO
-      } as any);
+      });
       
     } catch (err) {
       console.error('❌ Approval error:', err);
       const error = err as Error;
-
-      if (!error.message?.includes('simulation failed')) {
-        let enhancedMessage = error.message;
-        if (error.message?.includes('Internal JSON-RPC error')) {
-          enhancedMessage = 
-            'RPC Error. Possible causes:\n\n' +
-            '1. Insufficient ETH for gas (most common)\n' +
-            '2. RPC node timeout or overload\n' +
-            '3. Network congestion';
-        } else if (error.message?.includes('insufficient funds')) {
-          enhancedMessage = 'Insufficient ETH for gas fees. Get ETH from faucet.';
-        } else if (error.message?.includes('User rejected')) {
-          enhancedMessage = 'Transaction rejected by user';
-        }
-        const enhancedError = new Error(enhancedMessage);
-        setError(enhancedError);
-        onError?.(enhancedError);
+      let enhancedMessage = error.message;
+      if (error.message?.includes('Internal JSON-RPC error')) {
+        enhancedMessage = 
+          'RPC Error. Possible causes:\n\n' +
+          '1. Insufficient ETH for gas (most common)\n' +
+          '2. RPC node timeout or overload\n' +
+          '3. Network congestion';
+      } else if (error.message?.includes('insufficient funds')) {
+        enhancedMessage = 'Insufficient ETH for gas fees. Get ETH from faucet.';
+      } else if (error.message?.includes('User rejected')) {
+        enhancedMessage = 'Transaction rejected by user';
       }
       
+      const enhancedError = new Error(enhancedMessage);
+      setError(enhancedError);
+      onError?.(enhancedError);
       throw error;
     }
-  }, [address, usdcAddress, amount, spender, writeContract, publicClient, getFreshGasFees, onError]);
+  }, [address, usdcAddress, amount, spender, writeContract, onError]);
 
   const approveMax = useCallback(async (): Promise<void> => {
     if (!address) {
@@ -239,63 +143,32 @@ export function useUSDCApproval({
       amount: 'MAX_UINT256',
       spender: spender.slice(0, 10) + '...',
     });
+    
     setError(null);
 
     try {
-      if (publicClient) {
-        try {
-          await publicClient.simulateContract({
-            address: usdcAddress,
-            abi: erc20Abi,
-            functionName: 'approve',
-            args: [spender, MAX_UINT256],
-            account: address,
-          });
-        } catch (simulationError: any) {
-          console.error('❌ Max approval simulation failed:', simulationError);
-          
-          let errorMessage = 'Transaction simulation failed';
-          if (simulationError.message?.includes('insufficient funds')) {
-            errorMessage = 'Insufficient ETH for gas fees';
-          }
-          
-          const err = new Error(errorMessage);
-          setError(err);
-          onError?.(err);
-          throw err;
-        }
-      }
-
-      // ✅ Obtener gas fees frescos
-      const fees = await getFreshGasFees();
-
-      // ✅ Ejecutar con gas fees dinámicos
       writeContract({
         address: usdcAddress,
         abi: erc20Abi,
         functionName: 'approve',
         args: [spender, MAX_UINT256],
-        gas: 500000n,
-        maxFeePerGas: fees.maxFeePerGas,           // ✅ AGREGADO
-        maxPriorityFeePerGas: fees.maxPriorityFeePerGas, // ✅ AGREGADO
-      } as any);
+      });
 
     } catch (err) {
       console.error('❌ Approval error:', err);
       const error = err as Error;
       
-      if (!error.message?.includes('simulation failed')) {
-        let enhancedMessage = error.message;
-        if (error.message?.includes('Internal JSON-RPC error')) {
-          enhancedMessage = 'RPC Error. Check ETH balance and try again.';
-        }
-        const enhancedError = new Error(enhancedMessage);
-        setError(enhancedError);
-        onError?.(enhancedError);
+      let enhancedMessage = error.message;
+      if (error.message?.includes('Internal JSON-RPC error')) {
+        enhancedMessage = 'RPC Error. Check ETH balance and try again.';
       }
+      
+      const enhancedError = new Error(enhancedMessage);
+      setError(enhancedError);
+      onError?.(enhancedError);
       throw error;
     }
-  }, [address, usdcAddress, spender, writeContract, publicClient, getFreshGasFees, onError]);
+  }, [address, usdcAddress, spender, writeContract, onError]);
 
   const reset = useCallback(() => {
     setError(null);
@@ -332,6 +205,7 @@ export function useUSDCApproval({
       } else if (error.message?.includes('User rejected')) {
         enhancedMessage = 'Transaction cancelled by user';
       }
+      
       const enhancedError = new Error(enhancedMessage);
       setError(enhancedError);
       onError?.(enhancedError);

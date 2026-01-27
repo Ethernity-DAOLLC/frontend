@@ -1,15 +1,16 @@
 import { useState, useCallback } from 'react';
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
+import { useReadContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import { parseUnits, formatUnits, type Address } from 'viem';
 import { erc20Abi } from 'viem';
 import { useUSDCAddress } from './usdcUtils';
+import { useWriteContractWithGas } from '@/hooks/gas/useWriteContractWithGas';
 
 const USDC_DECIMALS = 6;
 
 export function useUSDC() {
   const USDC_ADDRESS = useUSDCAddress();
   const [isApproving, setIsApproving] = useState(false);
-  const { writeContract, data: hash, isPending } = useWriteContract();
+  const { writeContract, data: hash, isPending } = useWriteContractWithGas();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
   const formatUSDC = useCallback((amount: bigint | undefined): string => {
     if (!amount) return '0';
@@ -152,6 +153,7 @@ export function useUSDCInfo() {
   const { data: name } = useUSDCName();
   const { data: decimals } = useUSDCDecimals();
   const { data: totalSupply } = useUSDCTotalSupply();
+  
   return {
     address,
     symbol,
