@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useAccount, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { erc20Abi, parseUnits } from 'viem';
 import { useUSDCAddress } from '@/hooks/usdc/usdcUtils';
 import FactoryABI from '@/abis/PersonalFundFactory.json';
+import { useWriteContractWithGas } from '@/hooks/gas/WritecontractWithGas';
 import type { RetirementPlan } from '@/types/retirement_types';
 
 type CreateFundStep = 'idle' | 'checking' | 'approving' | 'approved' | 'creating' | 'confirming' | 'success' | 'error';
@@ -55,11 +56,13 @@ export function useCreateFund({
   const usdcAddress = useUSDCAddress();
   const [step, setStep] = useState<CreateFundStep>('idle');
   const [error, setError] = useState<string | null>(null);
+  
   const principal = parseUnits(plan.principal.toString(), 6);
   const monthlyDeposit = parseUnits(plan.monthlyDeposit.toString(), 6);
   const initialDeposit = principal + monthlyDeposit;
   const feeAmount = (initialDeposit * 3n) / 100n;
   const netToOwner = (initialDeposit * 97n) / 100n;
+
   const { data: userBalance = 0n } = useReadContract({
     address: usdcAddress,
     abi: erc20Abi,
@@ -84,15 +87,17 @@ export function useCreateFund({
   });
 
   const hasEnoughUSDC = userBalance >= initialDeposit;
-  const hasEnoughGas = gasBalance >= parseUnits('0.005', 18); // 0.005 ETH
+  const hasEnoughGas = gasBalance >= parseUnits('0.005', 18);
   const needsApproval = currentAllowance < initialDeposit;
+
+  // ✅ Usar useWriteContractWithGas en lugar de useWriteContract
   const {
     writeContract: writeApproval,
     data: approvalHash,
     isPending: isApprovePending,
     error: approvalError,
     reset: resetApproval,
-  } = useWriteContract();
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isApprovingConfirming,
@@ -105,7 +110,7 @@ export function useCreateFund({
     isPending: isCreatePending,
     error: createError,
     reset: resetCreate,
-  } = useWriteContract();
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isCreatingConfirming,
@@ -139,7 +144,7 @@ export function useCreateFund({
       throw err;
     }
 
-    console.log('📝 Starting USDC approval...');
+    console.log('🔐 Starting USDC approval...');
     setStep('approving');
     setError(null);
 
@@ -325,6 +330,7 @@ export function useCreateFund({
       onError?.(createError as Error);
     }
   }, [createError, step, onError]);
+
   useEffect(() => {
     if (isCreateSuccess && createHash && step === 'confirming') {
       console.log('✅ Fund created successfully!', createReceipt);

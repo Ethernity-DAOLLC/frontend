@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useAccount, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { erc20Abi, parseUnits } from 'viem';
 import { useUSDCAddress } from '@/hooks/usdc/usdcUtils';
 import PersonalFundABI from '@/abis/PersonalFund.json';
+import { useWriteContractWithGas } from '@/hooks/gas/useWriteContractWithGas';
 
 type ExtraDepositStep = 'idle' | 'checking' | 'approving' | 'approved' | 'depositing' | 'confirming' | 'success' | 'error';
 
@@ -15,33 +16,27 @@ interface UseExtraDepositProps {
 interface UseExtraDepositReturn {
   step: ExtraDepositStep;
   error: string | null;
-
   amount: string;
   setAmount: (amount: string) => void;
   amountInWei: bigint;
-
   feeAmount: bigint;
   netToFund: bigint;
-
   hasEnoughUSDC: boolean;
   hasEnoughGas: boolean;
   needsApproval: boolean;
   isValidAmount: boolean;
   currentAllowance: bigint;
   userBalance: bigint;
-
   approve: () => Promise<void>;
   deposit: () => Promise<void>;
   executeAll: () => Promise<void>;
   reset: () => void;
-
   isApproving: boolean;
   isApprovingConfirming: boolean;
   approvalHash?: `0x${string}`;
   isDepositing: boolean;
   isDepositingConfirming: boolean;
   depositHash?: `0x${string}`;
-  
   isLoading: boolean;
   isSuccess: boolean;
   progress: number;
@@ -92,7 +87,7 @@ export function useExtraDeposit({
   });
 
   const hasEnoughUSDC = userBalance >= amountInWei && amountInWei > 0n;
-  const hasEnoughGas = gasBalance >= parseUnits('0.003', 18); // 0.003 ETH
+  const hasEnoughGas = gasBalance >= parseUnits('0.003', 18);
   const needsApproval = currentAllowance < amountInWei;
   const {
     writeContract: writeApproval,
@@ -100,7 +95,7 @@ export function useExtraDeposit({
     isPending: isApprovePending,
     error: approvalError,
     reset: resetApproval,
-  } = useWriteContract();
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isApprovingConfirming,
@@ -113,7 +108,7 @@ export function useExtraDeposit({
     isPending: isDepositPending,
     error: depositError,
     reset: resetDeposit,
-  } = useWriteContract();
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isDepositingConfirming,
@@ -154,7 +149,7 @@ export function useExtraDeposit({
       throw err;
     }
 
-    console.log('📝 Approving USDC for extra deposit...');
+    console.log('🔐 Approving USDC for extra deposit...');
     setStep('approving');
     setError(null);
 
@@ -363,33 +358,27 @@ export function useExtraDeposit({
   return {
     step,
     error,
-
     amount,
     setAmount,
     amountInWei,
-
     feeAmount,
     netToFund,
-
     hasEnoughUSDC,
     hasEnoughGas,
     needsApproval,
     isValidAmount,
     currentAllowance,
     userBalance,
-
     approve,
     deposit,
     executeAll,
     reset,
-
     isApproving: isApprovePending,
     isApprovingConfirming,
     approvalHash,
     isDepositing: isDepositPending,
     isDepositingConfirming,
     depositHash,
-
     isLoading: step !== 'idle' && step !== 'success' && step !== 'error',
     isSuccess: step === 'success',
     progress,

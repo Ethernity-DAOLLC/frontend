@@ -1,16 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
   useAccount,
-  useWriteContract,
   useWaitForTransactionReceipt,
   useReadContract,
 } from 'wagmi';
 import { erc20Abi } from 'viem';
 import PersonalFundJSON from '@/abis/PersonalFund.json';
 import { parseUSDC, useUSDCAddress, needsApproval } from '../usdc/usdcUtils';
+import { useWriteContractWithGas } from '@/hooks/gas/useWriteContractWithGas';
 
 const PersonalFundABI = PersonalFundJSON.abi;
-
 type TransactionStep = 'idle' | 'approving' | 'approved' | 'depositing' | 'success' | 'error';
 
 interface UsePersonalFundWithApprovalProps {
@@ -26,12 +25,10 @@ export function usePersonalFundWithApproval({
 }: UsePersonalFundWithApprovalProps) {
   const { address: userAddress } = useAccount();
   const USDC_ADDRESS = useUSDCAddress();
-  
   const [step, setStep] = useState<TransactionStep>('idle');
   const [pendingAmount, setPendingAmount] = useState<bigint>(0n);
   const [depositType, setDepositType] = useState<'regular' | 'monthly' | 'extra'>('regular');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const { data: currentAllowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS,
     abi: erc20Abi,
@@ -45,7 +42,7 @@ export function usePersonalFundWithApproval({
     data: approveHash,
     isPending: isApprovePending,
     reset: resetApprove,
-  } = useWriteContract();
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isApproveConfirming,
@@ -58,7 +55,7 @@ export function usePersonalFundWithApproval({
     data: depositHash,
     isPending: isDepositPending,
     reset: resetDeposit,
-  } = useWriteContract();
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isDepositConfirming,
@@ -70,7 +67,6 @@ export function usePersonalFundWithApproval({
     if (isApproveSuccess && step === 'approving') {
       setStep('approved');
       refetchAllowance();
-      
       setTimeout(() => {
         executeDeposit();
       }, 1000);
@@ -94,7 +90,6 @@ export function usePersonalFundWithApproval({
 
   const executeDeposit = useCallback(() => {
     if (!fundAddress || pendingAmount === 0n) return;
-
     setStep('depositing');
 
     const functionName = depositType === 'monthly' 
@@ -109,7 +104,6 @@ export function usePersonalFundWithApproval({
       abi: PersonalFundABI,
       functionName,
       args,
-      value: 0n,
     });
   }, [fundAddress, pendingAmount, depositType, writeDeposit]);
 
@@ -131,7 +125,6 @@ export function usePersonalFundWithApproval({
         abi: erc20Abi,
         functionName: 'approve',
         args: [fundAddress, amountWei],
-        value: 0n,
       });
     } else {
       setStep('depositing');
@@ -140,7 +133,6 @@ export function usePersonalFundWithApproval({
         abi: PersonalFundABI,
         functionName: 'deposit',
         args: [amountWei],
-        value: 0n,
       });
     }
   }, [fundAddress, userAddress, USDC_ADDRESS, currentAllowance, writeApprove, writeDeposit]);
@@ -162,7 +154,6 @@ export function usePersonalFundWithApproval({
         abi: erc20Abi,
         functionName: 'approve',
         args: [fundAddress, monthlyAmount],
-        value: 0n,
       });
     } else {
       setStep('depositing');
@@ -170,7 +161,6 @@ export function usePersonalFundWithApproval({
         address: fundAddress,
         abi: PersonalFundABI,
         functionName: 'depositMonthly',
-        value: 0n,
       });
     }
   }, [fundAddress, userAddress, USDC_ADDRESS, currentAllowance, writeApprove, writeDeposit]);
@@ -193,7 +183,6 @@ export function usePersonalFundWithApproval({
         abi: erc20Abi,
         functionName: 'approve',
         args: [fundAddress, amountWei],
-        value: 0n,
       });
     } else {
       setStep('depositing');
@@ -202,23 +191,19 @@ export function usePersonalFundWithApproval({
         abi: PersonalFundABI,
         functionName: 'depositExtra',
         args: [amountWei],
-        value: 0n,
       });
     }
   }, [fundAddress, userAddress, USDC_ADDRESS, currentAllowance, writeApprove, writeDeposit]);
 
   const approveMax = useCallback(() => {
     if (!fundAddress || !USDC_ADDRESS) return;
-
     setStep('approving');
     const maxUint256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
-    
-    writeApprove({
+      writeApprove({
       address: USDC_ADDRESS,
       abi: erc20Abi,
       functionName: 'approve',
       args: [fundAddress, maxUint256],
-      value: 0n,
     });
   }, [fundAddress, USDC_ADDRESS, writeApprove]);
 
@@ -260,7 +245,6 @@ export function usePersonalFundWithApproval({
     isConfirming,
     isSuccess: step === 'success',
     isError: step === 'error',
-
     approveHash,
     depositHash,
     needsApproval: (amount: bigint) => needsApproval(currentAllowance, amount),

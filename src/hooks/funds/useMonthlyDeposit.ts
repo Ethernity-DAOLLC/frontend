@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useAccount, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { erc20Abi, parseUnits } from 'viem';
 import { useUSDCAddress } from '@/hooks/usdc/usdcUtils';
 import PersonalFundABI from '@/abis/PersonalFund.json';
+import { useWriteContractWithGas } from '@/hooks/gas/useWriteContractWithGas';
 
 type MonthlyDepositStep = 'idle' | 'checking' | 'approving' | 'approved' | 'depositing' | 'confirming' | 'success' | 'error';
 
@@ -16,29 +17,24 @@ interface UseMonthlyDepositProps {
 interface UseMonthlyDepositReturn {
   step: MonthlyDepositStep;
   error: string | null;
-
   monthlyAmount: bigint;
   feeAmount: bigint;
   netToFund: bigint;
-
   hasEnoughUSDC: boolean;
   hasEnoughGas: boolean;
   needsApproval: boolean;
   currentAllowance: bigint;
   userBalance: bigint;
-
   approve: () => Promise<void>;
   deposit: () => Promise<void>;
   executeAll: () => Promise<void>;
   reset: () => void;
-
   isApproving: boolean;
   isApprovingConfirming: boolean;
   approvalHash?: `0x${string}`;
   isDepositing: boolean;
   isDepositingConfirming: boolean;
   depositHash?: `0x${string}`;
-
   isLoading: boolean;
   isSuccess: boolean;
   progress: number;
@@ -80,7 +76,7 @@ export function useMonthlyDeposit({
   });
 
   const hasEnoughUSDC = userBalance >= monthlyAmount;
-  const hasEnoughGas = gasBalance >= parseUnits('0.003', 18); // 0.003 ETH
+  const hasEnoughGas = gasBalance >= parseUnits('0.003', 18);
   const needsApproval = currentAllowance < monthlyAmount;
   const {
     writeContract: writeApproval,
@@ -88,7 +84,7 @@ export function useMonthlyDeposit({
     isPending: isApprovePending,
     error: approvalError,
     reset: resetApproval,
-  } = useWriteContract();
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isApprovingConfirming,
@@ -101,7 +97,7 @@ export function useMonthlyDeposit({
     isPending: isDepositPending,
     error: depositError,
     reset: resetDeposit,
-  } = useWriteContract();
+  } = useWriteContractWithGas();
 
   const {
     isLoading: isDepositingConfirming,
@@ -134,7 +130,7 @@ export function useMonthlyDeposit({
       throw err;
     }
 
-    console.log('📝 Approving USDC for monthly deposit...');
+    console.log('🔐 Approving USDC for monthly deposit...');
     setStep('approving');
     setError(null);
 
@@ -291,6 +287,7 @@ export function useMonthlyDeposit({
       onSuccess?.(depositHash);
     }
   }, [isDepositSuccess, depositHash, step, onSuccess]);
+  
   useEffect(() => {
     if (isDepositingConfirming && step === 'depositing') {
       setStep('confirming');
@@ -314,29 +311,24 @@ export function useMonthlyDeposit({
   return {
     step,
     error,
-
     monthlyAmount,
     feeAmount,
     netToFund,
-
     hasEnoughUSDC,
     hasEnoughGas,
     needsApproval,
     currentAllowance,
     userBalance,
-
     approve,
     deposit,
     executeAll,
     reset,
-
     isApproving: isApprovePending,
     isApprovingConfirming,
     approvalHash,
     isDepositing: isDepositPending,
     isDepositingConfirming,
     depositHash,
-
     isLoading: step !== 'idle' && step !== 'success' && step !== 'error',
     isSuccess: step === 'success',
     progress,
