@@ -1,39 +1,20 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import {
-  useWaitForTransactionReceipt,
-  useAccount,
-} from 'wagmi';
+import { useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { parseUnits } from 'viem';
 import PersonalFundFactoryArtifact from '@/abis/PersonalFundFactory.json';
 import type { RetirementPlan } from '@/types/retirement_types';
 import type { Abi } from 'viem';
 import { formatErrorForUI } from '@/utils/contractErrorParser';
-import {
-  calculateInitialDepositBreakdown,
-  formatDepositBreakdown,
+import { 
+  calculateDepositBreakdown, 
+  formatBreakdown, 
+  formatUSD 
 } from '@/utils/feeCalculations';
-import { formatUSDC } from '@/hooks/usdc/usdcUtils';
+import { USDC_ADDRESSES, ERC20_ABI } from '@/config/tokens';
 import { useWriteContractWithGas } from '@/hooks/gas/useWriteContractWithGas';
 
 const PersonalFundFactoryABI = PersonalFundFactoryArtifact as Abi;
-const ERC20_ABI = [
-  {
-    name: 'approve',
-    type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'spender', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'bool' }],
-  },
-] as const;
-
-const USDC_ADDRESSES: Record<number, `0x${string}`> = {
-  421614: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81', // Arbitrum Sepolia
-  80002: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81',  // Polygon Amoy
-};
 
 interface ExecutionStepProps {
   plan: RetirementPlan;
@@ -67,7 +48,6 @@ export function ExecutionStep({
   const { address: account, chain } = useAccount();
   const [step, setStep] = useState<TransactionStep>('idle');
   const [errorDisplay, setErrorDisplay] = useState<ErrorDisplay | null>(null);
-
   const onSuccessRef = useRef(onSuccess);
   useEffect(() => {
     onSuccessRef.current = onSuccess;
@@ -75,19 +55,20 @@ export function ExecutionStep({
 
   const chainId = chain?.id ?? 421614;
   const usdcAddress = USDC_ADDRESSES[chainId];
+  if (!usdcAddress) {
+    throw new Error(`USDC not supported on chain ${chainId}`);
+  }
+  
   const explorerUrl =
     chainId === 421614 ? 'https://sepolia.arbiscan.io' : 'https://amoy.polygonscan.com';
 
   const parseUSDC = (value: string | number) =>
     parseUnits(typeof value === 'string' ? value : value.toString(), 6);
-  
-  const principalWei = parseUSDC(plan.principal);
+  const initialDepositWei = parseUSDC(plan.initialDeposit);
   const monthlyDepositWei = parseUSDC(plan.monthlyDeposit);
-  const amountToApprove = principalWei + monthlyDepositWei;
-  const depositBreakdown = calculateInitialDepositBreakdown(principalWei, monthlyDepositWei);
-  const formattedBreakdown = formatDepositBreakdown(depositBreakdown, formatUSDC);
-
-  // ✅ Usar useWriteContractWithGas en lugar de useWriteContract
+  const breakdown = calculateDepositBreakdown(initialDepositWei, monthlyDepositWei);
+  const formattedBreakdown = formatBreakdown(breakdown);
+  const amountToApprove = breakdown.totalGross;
   const {
     writeContract: writeApproval,
     data: approvalHash,
@@ -117,12 +98,10 @@ export function ExecutionStep({
 
   const executeApproval = useCallback(async () => {
     if (!account || !chain) return;
-    
     console.log('🔐 Iniciando aprobación de USDC...');
+    console.log('📊 Monto a aprobar:', formatUSD(amountToApprove));
     setStep('approving');
-
     try {
-      // ✅ Gas se maneja automáticamente
       writeApproval({
         address: usdcAddress,
         abi: ERC20_ABI,
@@ -136,17 +115,14 @@ export function ExecutionStep({
       setStep('error');
     }
   }, [account, chain, usdcAddress, factoryAddress, amountToApprove, writeApproval]);
-
   const executeCreateFund = useCallback(async () => {
     if (!account) return;
-
     console.log('🚀 Creando fondo personal...');
     setStep('creating');
-
     try {
       const args = [
-        principalWei,
-        monthlyDepositWei,
+        breakdown.initialNet,  
+        breakdown.monthlyNet,  
         plan.currentAge,
         plan.retirementAge,
         parseUSDC(plan.desiredMonthlyIncome),
@@ -154,23 +130,24 @@ export function ExecutionStep({
         plan.interestRate,
         plan.timelockYears,
       ];
-
       console.log('📊 Parámetros del contrato:', {
-        principal: (Number(principalWei) / 1e6).toFixed(2),
-        monthlyDeposit: (Number(monthlyDepositWei) / 1e6).toFixed(2),
+        principalNet: formatUSD(breakdown.initialNet),
+        monthlyNet: formatUSD(breakdown.monthlyNet),
         currentAge: plan.currentAge,
         retirementAge: plan.retirementAge,
-        desiredMonthly: (Number(parseUSDC(plan.desiredMonthlyIncome)) / 1e6).toFixed(2),
+        desiredMonthly: formatUSD(parseUSDC(plan.desiredMonthlyIncome)),
         yearsPayments: plan.yearsPayments,
         interestRate: plan.interestRate,
         timelockYears: plan.timelockYears,
       });
+      
       writeCreateFund({
         address: factoryAddress,
         abi: PersonalFundFactoryABI,
         functionName: 'createPersonalFund',
         args,
       });
+      
       setStep('confirming');
     } catch (err: any) {
       console.error('❌ Error creando fondo:', err);
@@ -181,8 +158,7 @@ export function ExecutionStep({
   }, [
     account,
     factoryAddress,
-    principalWei,
-    monthlyDepositWei,
+    breakdown,
     plan,
     writeCreateFund,
   ]);
@@ -201,17 +177,22 @@ export function ExecutionStep({
     resetApproval();
     resetCreate();
   };
-
   useEffect(() => {
     if (isApprovalSuccess && approvalHash && step === 'approving') {
       console.log('✅ Aprobación confirmada:', approvalHash);
       setStep('approved');
-      if (needsApproval) {
-        setTimeout(executeCreateFund, 800);
-      }
     }
-  }, [isApprovalSuccess, approvalHash, step, needsApproval, executeCreateFund]);
+  }, [isApprovalSuccess, approvalHash, step]);
 
+  useEffect(() => {
+    if (step === 'approved' && needsApproval) {
+      const timer = setTimeout(() => {
+        executeCreateFund();
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [step, needsApproval]); 
   useEffect(() => {
     if ((approvalError || createError) && ['approving', 'creating', 'approved'].includes(step)) {
       const err = approvalError || createError;
@@ -226,11 +207,11 @@ export function ExecutionStep({
       setStep('error');
     }
   }, [approvalError, createError, step]);
-
   useEffect(() => {
     if (isTxSuccess && receipt && step === 'confirming') {
       console.log('✅ Transacción confirmada:', receipt);
       let fundAddress: string | undefined;
+      
       try {
         const log = receipt.logs.find((l: any) => l.topics?.length > 1);
         if (log?.topics?.[1]) {
@@ -240,6 +221,7 @@ export function ExecutionStep({
       } catch (error) {
         console.warn('⚠️ No se pudo extraer dirección del fondo:', error);
       }
+      
       setStep('success');
       onSuccessRef.current(txHash!, fundAddress);
     }
@@ -247,14 +229,40 @@ export function ExecutionStep({
   
   const isGasError = errorDisplay?.isGasRelated ?? false;
   const currentGasConfig = step === 'approving' ? approvalGasConfig : createGasConfig;
+  
   return (
     <div className="space-y-6 p-4">
-      {/* Visualización de pasos */}
+
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-200">
+        <h4 className="font-bold text-gray-800 mb-4">📊 Breakdown de Depósito</h4>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-gray-600">Depósito Inicial (bruto):</span>
+            <strong className="text-gray-800">{formatUSD(breakdown.initialGross)}</strong>
+          </div>
+          <div className="flex justify-between text-orange-600">
+            <span>Fee DAO (3%):</span>
+            <strong>{formatUSD(breakdown.initialFee)}</strong>
+          </div>
+          <div className="flex justify-between text-emerald-600 border-t pt-2">
+            <span>A tu fondo:</span>
+            <strong>{formatUSD(breakdown.initialNet)}</strong>
+          </div>
+          <div className="flex justify-between mt-3 pt-3 border-t border-blue-200">
+            <span className="text-gray-600">Depósito Mensual:</span>
+            <strong className="text-gray-800">{formatUSD(breakdown.monthlyGross)}</strong>
+          </div>
+          <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t-2 border-blue-300">
+            <span>Total a aprobar:</span>
+            <strong className="text-indigo-700">{formatUSD(breakdown.totalGross)}</strong>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
         <h3 className="text-xl font-bold mb-6">
           {needsApproval ? '2 transacciones requeridas' : 'Creando tu fondo...'}
         </h3>
-
         <div className="space-y-5">
           {needsApproval && (
             <div className={`p-4 rounded-xl border-2 transition-all ${
@@ -273,7 +281,7 @@ export function ExecutionStep({
                   <div className="w-6 h-6 rounded-full border-2 border-gray-400" />
                 )}
                 <div>
-                  <p className="font-semibold">1. Aprobar USDC ({formattedBreakdown.grossAmount})</p>
+                  <p className="font-semibold">1. Aprobar USDC ({formatUSD(breakdown.totalGross)})</p>
                   {approvalHash && (
                     <a
                       href={`${explorerUrl}/tx/${approvalHash}`}
@@ -288,7 +296,6 @@ export function ExecutionStep({
               </div>
             </div>
           )}
-
           <div className={`p-4 rounded-xl border-2 transition-all ${
             step === 'success'
               ? 'bg-green-50 border-green-200'
