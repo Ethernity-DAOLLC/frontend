@@ -6,13 +6,11 @@ import {
   useWaitForTransactionReceipt,
 } from 'wagmi';
 import { erc20Abi } from 'viem';
-import PersonalFundJSON from '@/abis/PersonalFund.json';
+import PersonalFundABI from '@/abis/PersonalFund.json';
 import { useUSDCAddress } from '@/hooks/usdc/usdcUtils';
 
-const PersonalFundABI = PersonalFundJSON.abi;
-
 export function usePersonalFund(fundAddress?: `0x${string}`) {
-  const { address: userAddress } = useAccount();
+  const { address: userAddress, chain } = useAccount();
   const USDC_ADDRESS = useUSDCAddress(); 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { data, isLoading, isError, error, refetch } = useReadContracts({
@@ -141,34 +139,46 @@ export function usePersonalFund(fundAddress?: `0x${string}`) {
 
   const depositMonthly = () => {
     if (!fundAddress) throw new Error('Fund address not provided');
+    if (!userAddress) throw new Error('Wallet not connected');
+    if (!chain) throw new Error('Chain not connected');
 
     writeContract({
       address: fundAddress,
       abi: PersonalFundABI,
       functionName: 'depositMonthly',
       args: [],
+      chainId: chain.id,
+      account: userAddress,
     });
   };
 
   const startRetirement = () => {
     if (!fundAddress) throw new Error('Fund address not provided');
+    if (!userAddress) throw new Error('Wallet not connected');
+    if (!chain) throw new Error('Chain not connected');
 
     writeContract({
       address: fundAddress,
       abi: PersonalFundABI,
       functionName: 'startRetirement',
       args: [],
+      chainId: chain.id,
+      account: userAddress,
     });
   };
 
   const approveEarlyRetirement = () => {
     if (!fundAddress) throw new Error('Fund address not provided');
+    if (!userAddress) throw new Error('Wallet not connected');
+    if (!chain) throw new Error('Chain not connected');
 
     writeContract({
       address: fundAddress,
       abi: PersonalFundABI,
       functionName: 'approveEarlyRetirement',
       args: [],
+      chainId: chain.id,
+      account: userAddress,
     });
   };
 

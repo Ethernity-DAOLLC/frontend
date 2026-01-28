@@ -44,7 +44,18 @@ export function VerificationStep({ plan, onVerificationComplete }: VerificationS
     );
   }
 
-  const depositAmount = parseUnits(plan.initialDeposit.toString(), 6);
+  const principal = Number(plan.principal) || 0;
+  const monthlyDeposit = Number(plan.monthlyDeposit) || 0;
+  const initialDepositTotal = principal + monthlyDeposit;
+
+  let depositAmount: bigint;
+  try {
+    depositAmount = parseUnits(initialDepositTotal.toFixed(2), 6);
+  } catch (error) {
+    console.error('❌ Error parsing deposit amount:', error);
+    depositAmount = 0n;
+  }
+  
   const feeAmount = (depositAmount * 3n) / 100n;
   const CheckItem: React.FC<{
     passed: boolean;
@@ -91,11 +102,21 @@ export function VerificationStep({ plan, onVerificationComplete }: VerificationS
                 </strong>
               </div>
               <div className="bg-white/60 rounded-lg p-3 space-y-1 text-xs">
+                {principal > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Capital Inicial:</span>
+                    <span className="font-mono">{formatUnits(parseUnits(principal.toFixed(2), 6), 6)} USDC</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Depósito:</span>
-                  <span className="font-mono">{formatUnits(depositAmount, 6)} USDC</span>
+                  <span className="text-gray-600">Depósito Mensual:</span>
+                  <span className="font-mono">{formatUnits(parseUnits(monthlyDeposit.toFixed(2), 6), 6)} USDC</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between font-semibold pt-1 border-t border-gray-300">
+                  <span className="text-gray-700">Depósito Inicial Total:</span>
+                  <span className="font-mono text-indigo-700">{formatUnits(depositAmount, 6)} USDC</span>
+                </div>
+                <div className="flex justify-between text-orange-600">
                   <span className="text-gray-600">Fee (3%):</span>
                   <span className="font-mono">{formatUnits(feeAmount, 6)} USDC</span>
                 </div>

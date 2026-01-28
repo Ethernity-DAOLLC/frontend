@@ -9,7 +9,8 @@ import PersonalFundJSON from '@/abis/PersonalFund.json';
 import { parseUSDC, useUSDCAddress, needsApproval } from '../usdc/usdcUtils';
 import { useWriteContractWithGas } from '@/hooks/gas/useWriteContractWithGas';
 
-const PersonalFundABI = PersonalFundJSON.abi;
+const PersonalFundABI = (PersonalFundJSON as any).abi;
+
 type TransactionStep = 'idle' | 'approving' | 'approved' | 'depositing' | 'success' | 'error';
 
 interface UsePersonalFundWithApprovalProps {
@@ -90,6 +91,7 @@ export function usePersonalFundWithApproval({
 
   const executeDeposit = useCallback(() => {
     if (!fundAddress || pendingAmount === 0n) return;
+
     setStep('depositing');
 
     const functionName = depositType === 'monthly' 
@@ -98,7 +100,6 @@ export function usePersonalFundWithApproval({
         ? 'depositExtra' 
         : 'deposit';
     const args = depositType === 'monthly' ? [] : [pendingAmount];
-
     writeDeposit({
       address: fundAddress,
       abi: PersonalFundABI,
@@ -117,7 +118,6 @@ export function usePersonalFundWithApproval({
     setPendingAmount(amountWei);
     setDepositType('regular');
     setErrorMessage(null);
-
     if (needsApproval(currentAllowance, amountWei)) {
       setStep('approving');
       writeApprove({
@@ -146,7 +146,6 @@ export function usePersonalFundWithApproval({
     setPendingAmount(monthlyAmount);
     setDepositType('monthly');
     setErrorMessage(null);
-
     if (needsApproval(currentAllowance, monthlyAmount)) {
       setStep('approving');
       writeApprove({
@@ -175,7 +174,6 @@ export function usePersonalFundWithApproval({
     setPendingAmount(amountWei);
     setDepositType('extra');
     setErrorMessage(null);
-
     if (needsApproval(currentAllowance, amountWei)) {
       setStep('approving');
       writeApprove({
@@ -199,7 +197,7 @@ export function usePersonalFundWithApproval({
     if (!fundAddress || !USDC_ADDRESS) return;
     setStep('approving');
     const maxUint256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
-      writeApprove({
+    writeApprove({
       address: USDC_ADDRESS,
       abi: erc20Abi,
       functionName: 'approve',
