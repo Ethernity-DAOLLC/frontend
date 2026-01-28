@@ -3,6 +3,7 @@ import { parseUnits, formatUnits } from 'viem';
 export const FEE_PERCENTAGE = 3; // 3%
 export const FEE_BASIS_POINTS = 300; // 3% en basis points
 export const BASIS_POINTS_DIVISOR = 10000;
+
 export function calculateFeeFromGross(grossAmount: bigint): bigint {
   return (grossAmount * BigInt(FEE_BASIS_POINTS)) / BigInt(BASIS_POINTS_DIVISOR);
 }
@@ -17,17 +18,15 @@ export function calculateGrossFromNet(netAmount: bigint): bigint {
 }
 
 export interface DepositBreakdown {
-  initialGross: bigint;      // Monto bruto del depósito inicial
-  monthlyGross: bigint;      // Monto bruto del depósito mensual
-  totalGross: bigint;        // Total que el usuario debe aprobar/transferir
-
-  initialFee: bigint;        // Fee sobre el depósito inicial
-  monthlyFee: bigint;        // Fee sobre el depósito mensual
-  totalFees: bigint;         // Total de fees
-
-  initialNet: bigint;        // Neto del inicial que va al fondo
-  monthlyNet: bigint;        // Neto del mensual que va al fondo
-  totalNet: bigint;          // Total neto en el fondo
+  initialGross: bigint;     
+  monthlyGross: bigint; 
+  totalGross: bigint;     
+  initialFee: bigint;       
+  monthlyFee: bigint;     
+  totalFees: bigint;     
+  initialNet: bigint;     
+  monthlyNet: bigint;   
+  totalNet: bigint;        
 }
 
 export function calculateDepositBreakdown(
@@ -43,20 +42,31 @@ export function calculateDepositBreakdown(
     initialGross: initialDeposit,
     monthlyGross: monthlyDeposit,
     totalGross: initialDeposit + monthlyDeposit,
-
     initialFee,
     monthlyFee,
     totalFees: initialFee + monthlyFee,
-
     initialNet,
     monthlyNet,
     totalNet: initialNet + monthlyNet,
   };
 }
 
+export function calculateInitialDepositBreakdown(
+  principal: bigint,
+  monthlyDeposit: bigint
+): DepositBreakdown & { grossAmount: string; netAmount: string } {
+  const breakdown = calculateDepositBreakdown(principal, monthlyDeposit);
+  
+  return {
+    ...breakdown,
+    grossAmount: formatUnits(breakdown.totalGross, 6),
+    netAmount: formatUnits(breakdown.totalNet, 6),
+  };
+}
+
 export interface RequiredBalances {
-  usdcRequired: bigint;      // Total USDC necesario
-  gasRequired: bigint;       // Gas estimado necesario
+  usdcRequired: bigint;    
+  gasRequired: bigint;     
   breakdown: DepositBreakdown;
 }
 
@@ -78,11 +88,9 @@ export interface FormattedBreakdown {
   initialGross: string;
   monthlyGross: string;
   totalGross: string;
-  
   initialFee: string;
   monthlyFee: string;
   totalFees: string;
-  
   initialNet: string;
   monthlyNet: string;
   totalNet: string;
@@ -98,14 +106,23 @@ export function formatBreakdown(
     initialGross: format(breakdown.initialGross),
     monthlyGross: format(breakdown.monthlyGross),
     totalGross: format(breakdown.totalGross),
-    
     initialFee: format(breakdown.initialFee),
     monthlyFee: format(breakdown.monthlyFee),
     totalFees: format(breakdown.totalFees),
-    
     initialNet: format(breakdown.initialNet),
     monthlyNet: format(breakdown.monthlyNet),
     totalNet: format(breakdown.totalNet),
+  };
+}
+
+export function formatDepositBreakdown(
+  breakdown: DepositBreakdown & { grossAmount?: string; netAmount?: string },
+  formatFn: (amount: bigint) => string
+): { grossAmount: string; netAmount: string; feeAmount: string } {
+  return {
+    grossAmount: breakdown.grossAmount || formatFn(breakdown.totalGross),
+    netAmount: breakdown.netAmount || formatFn(breakdown.totalNet),
+    feeAmount: formatFn(breakdown.totalFees),
   };
 }
 
@@ -123,9 +140,9 @@ export function formatUSD(amount: bigint, decimals: number = 6): string {
 export interface BalanceValidation {
   hasEnoughUSDC: boolean;
   hasEnoughGas: boolean;
-  usdcShortfall: bigint;     // Cuánto le falta de USDC
-  gasShortfall: bigint;      // Cuánto le falta de gas
-  isValid: boolean;          // true si tiene todo lo necesario
+  usdcShortfall: bigint;
+  gasShortfall: bigint;
+  isValid: boolean;
 }
 
 export function validateBalance(
@@ -145,6 +162,74 @@ export function validateBalance(
   };
 }
 
+export function calculateTotalRequired(depositAmount: bigint): bigint {
+  return depositAmount;
+}
+
+export function hasEnoughBalanceWithFees(
+  userBalance: bigint,
+  depositAmount: bigint
+): boolean {
+  return userBalance >= depositAmount;
+}
+
+export function calculateShortfall(
+  userBalance: bigint,
+  totalRequired: bigint
+): bigint {
+  if (userBalance >= totalRequired) return 0n;
+  return totalRequired - userBalance;
+}
+
+export interface DepositValidation {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  breakdown?: DepositBreakdown;
+}
+
+export function validateDeposit(
+  depositAmount: bigint,
+  userBalance: bigint,
+  options: {
+    checkBalance?: boolean;
+    minAmount?: bigint;
+    maxAmount?: bigint;
+  } = {}
+): DepositValidation {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (options.minAmount && depositAmount < options.minAmount) {
+    errors.push(`Deposit amount is below minimum: ${formatUnits(options.minAmount, 6)} USDC`);
+  }
+
+  if (options.maxAmount && depositAmount > options.maxAmount) {
+    errors.push(`Deposit amount exceeds maximum: ${formatUnits(options.maxAmount, 6)} USDC`);
+  }
+
+  if (options.checkBalance !== false) {
+    if (!hasEnoughBalanceWithFees(userBalance, depositAmount)) {
+      const shortfall = calculateShortfall(userBalance, depositAmount);
+      errors.push(
+        `Insufficient balance. You need ${formatUnits(shortfall, 6)} more USDC`
+      );
+    }
+  }
+
+  // Calcular breakdown
+  const breakdown = depositAmount > 0n 
+    ? calculateDepositBreakdown(depositAmount, 0n)
+    : undefined;
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+    breakdown,
+  };
+}
+
 export function runFeeCalculationTests() {
   console.log('🧪 Running fee calculation tests...');
 
@@ -152,7 +237,6 @@ export function runFeeCalculationTests() {
   const fee1 = calculateFeeFromGross(amount1);
   const expected1 = parseUnits('30', 6);
   console.assert(fee1 === expected1, `Fee test 1 failed: ${formatUnits(fee1, 6)} !== 30`);
-
   const net1 = calculateNetAmount(amount1);
   const expectedNet1 = parseUnits('970', 6);
   console.assert(net1 === expectedNet1, `Net test 1 failed: ${formatUnits(net1, 6)} !== 970`);
@@ -160,6 +244,14 @@ export function runFeeCalculationTests() {
   const requiredGross = calculateGrossFromNet(desiredNet);
   const actualNet = calculateNetAmount(requiredGross);
   console.assert(actualNet >= desiredNet, `Gross from net test failed`);
+  const totalReq = calculateTotalRequired(amount1);
+  console.assert(totalReq === amount1, 'calculateTotalRequired failed');
+  const hasEnough = hasEnoughBalanceWithFees(parseUnits('2000', 6), amount1);
+  console.assert(hasEnough === true, 'hasEnoughBalanceWithFees test 1 failed');
+  const notEnough = hasEnoughBalanceWithFees(parseUnits('500', 6), amount1);
+  console.assert(notEnough === false, 'hasEnoughBalanceWithFees test 2 failed');
+  const shortfall = calculateShortfall(parseUnits('500', 6), amount1);
+  console.assert(shortfall === parseUnits('500', 6), 'calculateShortfall failed');
   console.log('✅ All fee calculation tests passed');
   console.log(`   1000 USDC gross → ${formatUnits(net1, 6)} net (fee: ${formatUnits(fee1, 6)})`);
   console.log(`   1000 USDC net ← ${formatUnits(requiredGross, 6)} gross required`);
