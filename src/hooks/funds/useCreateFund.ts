@@ -3,7 +3,7 @@ import { useAccount, useWaitForTransactionReceipt, useReadContract } from 'wagmi
 import { erc20Abi, parseUnits } from 'viem';
 import { useUSDCAddress } from '@/hooks/usdc/usdcUtils';
 import FactoryABI from '@/abis/PersonalFundFactory.json';
-import { useWriteContractWithGas } from '@/hooks/gas/WritecontractWithGas';
+import { useWriteContractWithGas } from '@/hooks/gas/useWriteContractWithGas';
 import type { RetirementPlan } from '@/types/retirement_types';
 
 type CreateFundStep = 'idle' | 'checking' | 'approving' | 'approved' | 'creating' | 'confirming' | 'success' | 'error';
