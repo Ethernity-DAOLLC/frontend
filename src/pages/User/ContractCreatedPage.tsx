@@ -61,7 +61,6 @@ const ContractCreatedPage: React.FC = () => {
 
   const totalFee = Number(planData.initialDeposit) * 0.03;
   const netToFund = Number(planData.initialDeposit) * 0.97;
-
   if (txSuccess && successTxHash) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 flex items-center justify-center px-4 py-16">
@@ -183,7 +182,6 @@ const ContractCreatedPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Plan Summary */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-6 border-2 border-emerald-200">
                 <div className="flex items-center gap-2 mb-2">
@@ -215,7 +213,6 @@ const ContractCreatedPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Detailed Parameters */}
             <div className="bg-gray-50 rounded-2xl p-6 border-2 border-gray-200">
               <h3 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
                 <Info size={20} className="text-indigo-600" />
@@ -238,7 +235,6 @@ const ContractCreatedPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Execution Component */}
             {!confirmed ? (
               <div className="space-y-4">
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200">

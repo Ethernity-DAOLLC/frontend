@@ -11,7 +11,7 @@ export interface ContractAddresses {
 }
 
 const OFFICIAL_USDC: Record<number, `0x${string}`> = {
-  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
+  421614: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81',
   80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',       // Polygon Amoy
   84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',       // Base Sepolia
   11155420: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',    // Optimism Sepolia

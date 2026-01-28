@@ -30,10 +30,8 @@ const CreateContractPage: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [verificationPassed, setVerificationPassed] = useState(false);
   const [needsApproval, setNeedsApproval] = useState(true);
-  
   const FACTORY_ADDRESS = useFactoryAddress(chainId);
 
-  // ✅ VALIDACIÓN Y SANITIZACIÓN DEL PLAN
   useEffect(() => {
     console.log('🔍 Initializing CreateContractPage with planData:', planData);
 
@@ -43,7 +41,6 @@ const CreateContractPage: React.FC = () => {
       return;
     }
 
-    // ✅ Validar y sanitizar todos los campos
     try {
       const sanitizedPlan: RetirementPlan = {
         principal: typeof planData.principal === 'number' ? planData.principal : Number(planData.principal) || 0,
@@ -57,7 +54,6 @@ const CreateContractPage: React.FC = () => {
         timelockYears: typeof planData.timelockYears === 'number' ? planData.timelockYears : Number(planData.timelockYears) || 1,
       };
 
-      // ✅ Validar que los valores críticos no sean 0 o NaN
       if (isNaN(sanitizedPlan.initialDeposit) || sanitizedPlan.initialDeposit === 0) {
         console.error('❌ Invalid initialDeposit:', planData.initialDeposit);
         navigate('/calculator', { 
@@ -94,7 +90,6 @@ const CreateContractPage: React.FC = () => {
     }
   }, [hasFund, fundAddress]);
 
-  // ✅ PLAN PARA VERIFICACIÓN CON VALIDACIÓN ADICIONAL
   const retirementPlanForVerification = useMemo(() => {
     if (!formData) {
       console.warn('⚠️ No formData available for verification');
@@ -114,7 +109,6 @@ const CreateContractPage: React.FC = () => {
         timelockYears: Number(formData.timelockYears) || 1,
       };
 
-      // ✅ Validación adicional
       if (isNaN(plan.initialDeposit) || plan.initialDeposit === 0) {
         console.error('❌ Invalid plan for verification:', formData);
         return null;
@@ -136,7 +130,6 @@ const CreateContractPage: React.FC = () => {
 
   const totalFee = formData ? Number(formData.initialDeposit) * 0.03 : 0;
   const netToFund = formData ? Number(formData.initialDeposit) * 0.97 : 0;
-
   const handleVerificationComplete = (requiresApproval: boolean) => {
     setVerificationPassed(true);
     setNeedsApproval(requiresApproval);
