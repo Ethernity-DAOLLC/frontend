@@ -1,61 +1,95 @@
 import { useAccount, useReadContract, useBalance, useChainId } from 'wagmi';
 import { parseUnits } from 'viem';
 import { getContractAddress } from '@/config/addresses';
-import { USDC_ADDRESSES, ERC20_ABI } from '@/config/tokens';
-import { 
-  calculateRequiredBalances,
-  validateBalance,
-  type RequiredBalances,
-  type BalanceValidation,
-  type DepositBreakdown
-} from '@/utils/feeCalculations';
-import type { RetirementPlan } from '@/types/retirement_types';
+import type { BalanceCheck, RetirementPlan } from '@/types/retirement_types';
 
-export interface BalanceCheck {
-  hasEnoughUSDC: boolean;
-  hasEnoughGas: boolean;
-  hasEnoughAllowance: boolean;
-  usdcBalance: bigint;
-  gasBalance: bigint;
-  allowance: bigint;
-  usdcRequired: bigint;
-  gasRequired: bigint;
-  breakdown: DepositBreakdown | null;
-  validation: BalanceValidation | null;
-  isLoading: boolean;
-  chainId: number;
-  usdcAddress: `0x${string}` | undefined;
-  factoryAddress: `0x${string}` | undefined;
-}
+const USDC_ABI = [
+  {
+    name: 'balanceOf',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ type: 'uint256' }]
+  },
+  {
+    name: 'allowance',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'owner', type: 'address' },
+      { name: 'spender', type: 'address' }
+    ],
+    outputs: [{ type: 'uint256' }]
+  }
+] as const;
+
+const USDC_ADDRESSES: Record<number, `0x${string}`> = {
+  421614: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81', // Arbitrum Sepolia
+  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',  // Polygon Amoy
+};
 
 export function useBalanceVerification(plan: RetirementPlan | null): BalanceCheck {
   const { address } = useAccount();
   const chainId = useChainId();
   const usdcAddress = USDC_ADDRESSES[chainId];
   const factoryAddress = getContractAddress(chainId, 'personalFundFactory');
-  const initialDeposit = plan ? parseUnits(plan.initialDeposit.toString(), 6) : 0n;
-  const monthlyDeposit = plan ? parseUnits(plan.monthlyDeposit.toString(), 6) : 0n;
-  const required: RequiredBalances | null = plan 
-    ? calculateRequiredBalances(initialDeposit, monthlyDeposit)
-    : null;
+
+  if (!plan) {
+    console.warn('⚠️ useBalanceVerification: plan is null or undefined');
+    return {
+      hasEnoughUSDC: false,
+      hasEnoughGas: false,
+      hasEnoughAllowance: false,
+      usdcBalance: 0n,
+      gasBalance: 0n,
+      allowance: 0n,
+      requiredUSDC: 0n,
+      requiredGas: 0n,
+      isLoading: false,
+    };
+  }
+
+  let depositAmount: bigint;
+  try {
+    const depositValue = typeof plan.initialDeposit === 'number' 
+      ? plan.initialDeposit 
+      : typeof plan.initialDeposit === 'string'
+      ? parseFloat(plan.initialDeposit)
+      : 0;
+
+    if (isNaN(depositValue) || depositValue <= 0) {
+      console.error('❌ Invalid initialDeposit:', plan.initialDeposit, '→ Using 0');
+      depositAmount = 0n;
+    } else {
+      depositAmount = parseUnits(depositValue.toFixed(2), 6);
+    }
+  } catch (error) {
+    console.error('❌ Error parsing initialDeposit:', error, plan);
+    depositAmount = 0n;
+  }
+
+  const feeAmount = (depositAmount * 3n) / 100n;
+  const totalRequired = depositAmount;
   const { data: usdcBalance = 0n, isLoading: isLoadingUSDC } = useReadContract({
     address: usdcAddress,
-    abi: ERC20_ABI,
+    abi: USDC_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     query: {
       enabled: !!address && !!usdcAddress
     }
   });
+
   const { data: gasBalanceData, isLoading: isLoadingGas } = useBalance({
     address: address,
     query: {
       enabled: !!address
     }
   });
+
   const { data: allowance = 0n, isLoading: isLoadingAllowance } = useReadContract({
     address: usdcAddress,
-    abi: ERC20_ABI,
+    abi: USDC_ABI,
     functionName: 'allowance',
     args: address && factoryAddress 
       ? [address, factoryAddress] 
@@ -64,58 +98,19 @@ export function useBalanceVerification(plan: RetirementPlan | null): BalanceChec
       enabled: !!address && !!factoryAddress && !!usdcAddress
     }
   });
+
   const gasBalance = gasBalanceData?.value ?? 0n;
-  const validation: BalanceValidation | null = required
-    ? validateBalance(usdcBalance, gasBalance, required)
-    : null;
-  const hasEnoughAllowance = required 
-    ? allowance >= required.usdcRequired
-    : false;
+  const minGasRequired = parseUnits('0.005', 18); 
 
   return {
-    hasEnoughUSDC: validation?.hasEnoughUSDC ?? false,
-    hasEnoughGas: validation?.hasEnoughGas ?? false,
-    hasEnoughAllowance,
-    usdcBalance,
-    gasBalance,
-    allowance,
-    usdcRequired: required?.usdcRequired ?? 0n,
-    gasRequired: required?.gasRequired ?? 0n,
-    breakdown: required?.breakdown ?? null,
-    validation,
-    isLoading: isLoadingUSDC || isLoadingGas || isLoadingAllowance,
-    chainId,
-    usdcAddress,
-    factoryAddress,
+    hasEnoughUSDC: usdcBalance >= totalRequired,
+    hasEnoughGas: gasBalance >= minGasRequired,
+    hasEnoughAllowance: allowance >= totalRequired,
+    usdcBalance: usdcBalance,
+    gasBalance: gasBalance,
+    allowance: allowance,
+    requiredUSDC: totalRequired,
+    requiredGas: minGasRequired,
+    isLoading: isLoadingUSDC || isLoadingGas || isLoadingAllowance
   };
-}
-
-export function useCanProceed(plan: RetirementPlan | null): {
-  canProceed: boolean;
-  reason: string | null;
-  isLoading: boolean;
-} {
-  const check = useBalanceVerification(plan);
-  
-  if (check.isLoading) {
-    return { canProceed: false, reason: 'Loading...', isLoading: true };
-  }
-  
-  if (!check.hasEnoughUSDC) {
-    return { 
-      canProceed: false, 
-      reason: 'Insufficient USDC balance', 
-      isLoading: false 
-    };
-  }
-  
-  if (!check.hasEnoughGas) {
-    return { 
-      canProceed: false, 
-      reason: 'Insufficient gas balance', 
-      isLoading: false 
-    };
-  }
-  
-  return { canProceed: true, reason: null, isLoading: false };
 }

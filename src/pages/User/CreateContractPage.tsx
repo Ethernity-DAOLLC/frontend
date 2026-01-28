@@ -9,24 +9,12 @@ import {
 } from 'lucide-react';
 import { getContractAddress } from '@/config/addresses';
 import { VerificationStep } from '@/components/retirement/VerificationStep';
-import { formatErrorForUI } from '@/utils/contractErrorParser';
+import type { RetirementPlan } from '@/types/retirement_types';
 
 const EXPECTED_CHAIN_ID = 421614;
 
 function useFactoryAddress(chainId: number): `0x${string}` | undefined {
   return getContractAddress(chainId, 'personalFundFactory');
-}
-
-interface FormData {
-  principal: string;
-  initialDeposit: string;
-  monthlyDeposit: string;
-  currentAge: number;
-  retirementAge: number;
-  desiredMonthlyIncome: number;
-  yearsPayments: number;
-  interestRate: number;
-  timelockYears: number;
 }
 
 const CreateContractPage: React.FC = () => {
@@ -36,20 +24,68 @@ const CreateContractPage: React.FC = () => {
   const { isConnected: authConnected } = useAuth();
   const { planData } = useRetirementPlan();
   const { hasFund, fundAddress, isLoading: isLoadingFund } = useHasFund();
+  
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<FormData | null>(null);
+  const [formData, setFormData] = useState<RetirementPlan | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [verificationPassed, setVerificationPassed] = useState(false);
   const [needsApproval, setNeedsApproval] = useState(true);
+  
   const FACTORY_ADDRESS = useFactoryAddress(chainId);
 
+  // ✅ VALIDACIÓN Y SANITIZACIÓN DEL PLAN
   useEffect(() => {
+    console.log('🔍 Initializing CreateContractPage with planData:', planData);
+
     if (!planData || !isConnected || !authConnected) {
+      console.warn('⚠️ Missing requirements, redirecting to calculator');
       navigate('/calculator', { replace: true });
       return;
     }
-    setFormData(planData);
-    setIsInitialized(true);
+
+    // ✅ Validar y sanitizar todos los campos
+    try {
+      const sanitizedPlan: RetirementPlan = {
+        principal: typeof planData.principal === 'number' ? planData.principal : Number(planData.principal) || 0,
+        initialDeposit: typeof planData.initialDeposit === 'number' ? planData.initialDeposit : Number(planData.initialDeposit) || 0,
+        monthlyDeposit: typeof planData.monthlyDeposit === 'number' ? planData.monthlyDeposit : Number(planData.monthlyDeposit) || 0,
+        currentAge: typeof planData.currentAge === 'number' ? planData.currentAge : Number(planData.currentAge) || 25,
+        retirementAge: typeof planData.retirementAge === 'number' ? planData.retirementAge : Number(planData.retirementAge) || 65,
+        desiredMonthlyIncome: typeof planData.desiredMonthlyIncome === 'number' ? planData.desiredMonthlyIncome : Number(planData.desiredMonthlyIncome) || 0,
+        yearsPayments: typeof planData.yearsPayments === 'number' ? planData.yearsPayments : Number(planData.yearsPayments) || 20,
+        interestRate: typeof planData.interestRate === 'number' ? planData.interestRate : Number(planData.interestRate) || 5,
+        timelockYears: typeof planData.timelockYears === 'number' ? planData.timelockYears : Number(planData.timelockYears) || 1,
+      };
+
+      // ✅ Validar que los valores críticos no sean 0 o NaN
+      if (isNaN(sanitizedPlan.initialDeposit) || sanitizedPlan.initialDeposit === 0) {
+        console.error('❌ Invalid initialDeposit:', planData.initialDeposit);
+        navigate('/calculator', { 
+          replace: true,
+          state: { error: 'Invalid initial deposit. Please recalculate.' }
+        });
+        return;
+      }
+
+      if (sanitizedPlan.retirementAge <= sanitizedPlan.currentAge) {
+        console.error('❌ Invalid ages:', { currentAge: sanitizedPlan.currentAge, retirementAge: sanitizedPlan.retirementAge });
+        navigate('/calculator', { 
+          replace: true,
+          state: { error: 'Retirement age must be greater than current age.' }
+        });
+        return;
+      }
+
+      console.log('✅ Plan sanitized successfully:', sanitizedPlan);
+      setFormData(sanitizedPlan);
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('❌ Error sanitizing plan:', error);
+      navigate('/calculator', { 
+        replace: true,
+        state: { error: 'Failed to process plan data. Please try again.' }
+      });
+    }
   }, [planData, isConnected, authConnected, navigate]);
 
   useEffect(() => {
@@ -58,40 +94,72 @@ const CreateContractPage: React.FC = () => {
     }
   }, [hasFund, fundAddress]);
 
+  // ✅ PLAN PARA VERIFICACIÓN CON VALIDACIÓN ADICIONAL
   const retirementPlanForVerification = useMemo(() => {
-    if (!formData) return null;
-      return {
-      principal: Number(formData.principal),
-      initialDeposit: Number(formData.initialDeposit),
-      monthlyDeposit: Number(formData.monthlyDeposit),
-      currentAge: formData.currentAge,
-      retirementAge: formData.retirementAge,
-      desiredMonthlyIncome: formData.desiredMonthlyIncome,
-      yearsPayments: formData.yearsPayments,
-      interestRate: formData.interestRate,
-      timelockYears: formData.timelockYears,
-    };
+    if (!formData) {
+      console.warn('⚠️ No formData available for verification');
+      return null;
+    }
+
+    try {
+      const plan: RetirementPlan = {
+        principal: Number(formData.principal) || 0,
+        initialDeposit: Number(formData.initialDeposit) || 0,
+        monthlyDeposit: Number(formData.monthlyDeposit) || 0,
+        currentAge: Number(formData.currentAge) || 25,
+        retirementAge: Number(formData.retirementAge) || 65,
+        desiredMonthlyIncome: Number(formData.desiredMonthlyIncome) || 0,
+        yearsPayments: Number(formData.yearsPayments) || 20,
+        interestRate: Number(formData.interestRate) || 5,
+        timelockYears: Number(formData.timelockYears) || 1,
+      };
+
+      // ✅ Validación adicional
+      if (isNaN(plan.initialDeposit) || plan.initialDeposit === 0) {
+        console.error('❌ Invalid plan for verification:', formData);
+        return null;
+      }
+
+      console.log('✅ Verification plan created:', plan);
+      return plan;
+    } catch (error) {
+      console.error('❌ Error creating verification plan:', error);
+      return null;
+    }
   }, [formData]);
 
   const formatNumber = (num: string | number) => {
-    return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Number(num));
+    const value = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(value)) return '0';
+    return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(value);
   };
 
   const totalFee = formData ? Number(formData.initialDeposit) * 0.03 : 0;
   const netToFund = formData ? Number(formData.initialDeposit) * 0.97 : 0;
+
   const handleVerificationComplete = (requiresApproval: boolean) => {
     setVerificationPassed(true);
     setNeedsApproval(requiresApproval);
   };
 
   const handleContinueToConfirmation = () => {
-    if (!formData || !FACTORY_ADDRESS || !retirementPlanForVerification) return;
+    if (!formData || !FACTORY_ADDRESS || !retirementPlanForVerification) {
+      console.error('❌ Missing data for confirmation:', {
+        hasFormData: !!formData,
+        hasFactory: !!FACTORY_ADDRESS,
+        hasVerificationPlan: !!retirementPlanForVerification
+      });
+      alert('Error: Datos incompletos. Por favor vuelve a la calculadora.');
+      return;
+    }
+
     if (hasFund) {
       alert('Ya tienes un fondo creado. No puedes crear más de uno por wallet.');
       navigate('/dashboard');
       return;
     }
     
+    console.log('✅ Proceeding to confirmation with plan:', retirementPlanForVerification);
     navigate('/contract-created', {
       state: {
         planData: retirementPlanForVerification,
@@ -185,6 +253,7 @@ const CreateContractPage: React.FC = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-xl text-gray-700">Cargando datos del plan...</p>
+          {!formData && <p className="text-sm text-gray-500 mt-2">Validando información...</p>}
         </div>
       </div>
     );
