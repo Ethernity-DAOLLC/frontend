@@ -47,7 +47,7 @@ export const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
     treasury: '0xf8648e9d00175D947CE75F880A6e08dd95460508',
     governance: '0x7ae31fD2da49F255aA7f1c954606335027314E10',
     token: '0xA2741AacdBb3135C7cCc492F1F8b3ddE00998af5',
-    faucet: ZERO_ADDRESS, // Agregar dirección del faucet si existe
+    faucet: '0x53E691B568B87f0124bb3A88C8b9958bF8396E81', 
     protocolRegistry: '0x159f20aDBADBb0bA43961F011fe99A14BCbC7849',
     userPreferences: '0xd0275c1906a82A5e09C73a471dE3db0f8a214217',
     dateTime: '0xed663750Dc3F524224D04A6A6B57e65c911b2337',
@@ -233,7 +233,6 @@ export const getUSDCForChain = (chainId: number): `0x${string}` | undefined => {
 export const getDeployedContracts = (chainId: number): (keyof ContractAddresses)[] => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return []
-  
   return Object.entries(addresses)
     .filter(([_, address]) => isValidAddress(address))
     .map(([name]) => name as keyof ContractAddresses)
@@ -242,7 +241,6 @@ export const getDeployedContracts = (chainId: number): (keyof ContractAddresses)
 export const getPendingContracts = (chainId: number): (keyof ContractAddresses)[] => {
   const addresses = CONTRACT_ADDRESSES[chainId]
   if (!addresses) return []
-  
   return Object.entries(addresses)
     .filter(([_, address]) => !isValidAddress(address))
     .map(([name]) => name as keyof ContractAddresses)
@@ -317,7 +315,6 @@ export const updateChainAddresses = (
 
 export type ContractName = keyof ContractAddresses
 export type ChainId = keyof typeof CONTRACT_ADDRESSES
-
 export const DEPLOYMENT_STATUS = {
   421614: {
     status: 'deployed' as const,
